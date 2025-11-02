@@ -83,11 +83,14 @@ data class GetEventsResponse(
 }
 
 /**
- * Type of event filter for getEvents requests.
+ * Type of event filter for getEvents requests and responses.
  *
  * @property CONTRACT Events emitted by smart contracts
  * @property SYSTEM System events emitted by the Stellar network
  * @property DIAGNOSTIC Diagnostic events for debugging (not part of transaction results)
+ *
+ * Note: DIAGNOSTIC events can only be returned in responses when the filter type is omitted.
+ * They cannot be filtered exclusively in requests.
  */
 @Serializable
 enum class EventFilterType {

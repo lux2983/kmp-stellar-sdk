@@ -411,37 +411,96 @@ suspend fun simulateTransaction() {
 Query contract events for monitoring and debugging:
 
 ```kotlin
+import com.soneso.stellar.sdk.rpc.requests.GetEventsRequest
+import com.soneso.stellar.sdk.scval.Scv
+
 suspend fun queryEvents() {
     val server = SorobanServer("https://soroban-testnet.stellar.org")
 
-    // Query all contract events from a specific ledger
-    val eventsRequest = GetEventsRequest(
+    // Basic query: all contract events from a ledger range
+    val basicRequest = GetEventsRequest(
         startLedger = 1000000L,
+        endLedger = 1001000L,  // Optional: specify end of range
         filters = listOf(
-            EventFilter(
-                type = EventFilterType.CONTRACT,
-                contractIds = listOf("CONTRACT_ID_HERE"),
-                topics = null
+            GetEventsRequest.EventFilter(
+                type = GetEventsRequest.EventFilterType.CONTRACT,  // Optional: SYSTEM, CONTRACT, or null for all
+                contractIds = listOf("CDZJ..."),  // Optional: up to 5 contract IDs
+                topics = null  // No topic filtering
             )
         ),
-        pagination = Pagination(
-            cursor = null,
-            limit = 100
-        )
+        pagination = GetEventsRequest.Pagination(limit = 100)
     )
 
-    val events = server.getEvents(eventsRequest)
+    val events = server.getEvents(basicRequest)
+    println("Found ${events.events.size} events")
 
-    events.events.forEach { event ->
+    // Advanced query: filter by topics with wildcards
+    // Topic filters require base64-encoded XDR SCVal values
+    val incrementTopic = Scv.toSymbol("increment").toXdrBase64()
+    val counterTopic = Scv.toSymbol("COUNTER").toXdrBase64()
+
+    val advancedRequest = GetEventsRequest(
+        startLedger = 1000000L,
+        filters = listOf(
+            GetEventsRequest.EventFilter(
+                type = null,  // null matches all types (SYSTEM, CONTRACT, DIAGNOSTIC)
+                contractIds = listOf("CDZJ..."),
+                topics = listOf(
+                    // Example 1: Match events with "COUNTER" as first topic and any remaining topics
+                    listOf(counterTopic, "**"),  // "**" matches zero or more segments (end only)
+
+                    // Example 2: Match events with any first topic and "increment" as second
+                    listOf("*", incrementTopic)  // "*" matches exactly one segment
+                )
+            )
+        ),
+        pagination = GetEventsRequest.Pagination(limit = 100)
+    )
+
+    val filteredEvents = server.getEvents(advancedRequest)
+
+    filteredEvents.events.forEach { event ->
         println("Event ID: ${event.id}")
         println("Contract: ${event.contractId}")
-        println("Topics: ${event.topics}")
+        println("Ledger: ${event.ledger}")
+
+        // Parse topics from base64 XDR back to values
+        val parsedTopics = event.parseTopic()
+        parsedTopics.forEach { topic ->
+            // Convert SCVal back to native types
+            when {
+                topic.sym != null -> println("Topic (symbol): ${Scv.fromSymbol(topic)}")
+                topic.u32 != null -> println("Topic (u32): ${Scv.fromUint32(topic)}")
+                // ... handle other types
+            }
+        }
+
         println("Value: ${event.value}")
     }
 
     server.close()
 }
 ```
+
+**Topic Filter Rules**:
+- Topics must be base64-encoded XDR SCVal values (use `Scv.toSymbol().toXdrBase64()`, etc.)
+- Wildcards: `*` matches exactly one segment, `**` matches zero or more (only at end)
+- Max 4 segments per topic filter (excluding trailing `**`)
+- Max 5 topic filters per event filter
+- Multiple topic filters are OR'd together
+- Exact match example: `listOf(counterTopic)` matches events with exactly 1 topic
+- Prefix match example: `listOf(counterTopic, "**")` matches events with 1+ topics where first is "COUNTER"
+
+**Event Type Filtering**:
+- Valid filter types: `SYSTEM`, `CONTRACT`, or `null`
+- `null` (or omitted) matches all event types including DIAGNOSTIC events
+- DIAGNOSTIC events cannot be filtered explicitly but are included when type is null
+
+**Limits**:
+- Max 5 filters per request
+- Max 5 contract IDs per filter
+- Max 5 topic filters per filter
+- Ledger range: Use `startLedger`/`endLedger` OR cursor (mutually exclusive)
 
 ### Contract Data Queries
 

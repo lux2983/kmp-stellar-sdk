@@ -224,24 +224,56 @@ class RequestSerializationTest {
         val systemFilter = GetEventsRequest.EventFilter(
             type = GetEventsRequest.EventFilterType.SYSTEM
         )
-        val diagnosticFilter = GetEventsRequest.EventFilter(
-            type = GetEventsRequest.EventFilterType.DIAGNOSTIC
-        )
 
         // When: Serializing to JSON
         val contractJson = json.encodeToString(contractFilter)
         val systemJson = json.encodeToString(systemFilter)
-        val diagnosticJson = json.encodeToString(diagnosticFilter)
 
         // Then: Types use lowercase @SerialName
         assertTrue(contractJson.contains("\"type\":\"contract\""))
         assertTrue(systemJson.contains("\"type\":\"system\""))
-        assertTrue(diagnosticJson.contains("\"type\":\"diagnostic\""))
     }
 
     @Test
-    fun testGetEventsRequest_withPagination() {
-        // Given: Request with pagination
+    fun testGetEventsRequest_omittedTypeForDiagnostics() {
+        // Given: Filter without type (to include diagnostics)
+        val filter = GetEventsRequest.EventFilter(
+            type = null,  // Omitted type includes all events (including diagnostics)
+            contractIds = listOf("CCJZ5D...")
+        )
+
+        // When: Serializing to JSON
+        val jsonString = json.encodeToString(filter)
+
+        // Then: Type field is omitted when null (encodeDefaults = false)
+        assertFalse(jsonString.contains("\"type\""))
+        assertTrue(jsonString.contains("\"contractIds\""))
+    }
+
+    @Test
+    fun testGetEventsRequest_withEndLedger() {
+        // Given: Request with endLedger
+        val request = GetEventsRequest(
+            startLedger = 1000,
+            endLedger = 2000,
+            filters = listOf(
+                GetEventsRequest.EventFilter(
+                    type = GetEventsRequest.EventFilterType.CONTRACT
+                )
+            )
+        )
+
+        // When: Serializing to JSON
+        val jsonString = json.encodeToString(request)
+
+        // Then: Both ledgers are included
+        assertTrue(jsonString.contains("\"startLedger\":1000"))
+        assertTrue(jsonString.contains("\"endLedger\":2000"))
+    }
+
+    @Test
+    fun testGetEventsRequest_withPaginationLimit() {
+        // Given: Request with pagination limit (no cursor)
         val request = GetEventsRequest(
             startLedger = 1000,
             filters = listOf(
@@ -250,7 +282,6 @@ class RequestSerializationTest {
                 )
             ),
             pagination = GetEventsRequest.Pagination(
-                cursor = "cursor-123",
                 limit = 100
             )
         )
@@ -258,18 +289,39 @@ class RequestSerializationTest {
         // When: Serializing to JSON
         val jsonString = json.encodeToString(request)
 
-        // Then: Pagination is included
+        // Then: Pagination with limit is included
         assertTrue(jsonString.contains("\"pagination\""))
-        assertTrue(jsonString.contains("\"cursor\":\"cursor-123\""))
         assertTrue(jsonString.contains("\"limit\":100"))
+        assertFalse(jsonString.contains("\"cursor\""))  // No cursor in this test
     }
 
     @Test
-    fun testGetEventsRequest_zeroStartLedger_throwsException() {
-        // When/Then: Zero start ledger should fail validation
+    fun testGetEventsRequest_withCursor_startLedgerOmitted() {
+        // Given: Request with cursor (startLedger should be null)
+        val request = GetEventsRequest(
+            startLedger = null,
+            filters = listOf(
+                GetEventsRequest.EventFilter(
+                    type = GetEventsRequest.EventFilterType.CONTRACT
+                )
+            ),
+            pagination = GetEventsRequest.Pagination(cursor = "cursor-123")
+        )
+
+        // When: Serializing to JSON
+        val jsonString = json.encodeToString(request)
+
+        // Then: startLedger is omitted
+        assertFalse(jsonString.contains("\"startLedger\""))
+        assertTrue(jsonString.contains("\"cursor\":\"cursor-123\""))
+    }
+
+    @Test
+    fun testGetEventsRequest_noStartLedgerNoCursor_throwsException() {
+        // When/Then: Missing startLedger without cursor should fail
         val exception = assertFailsWith<IllegalArgumentException> {
             GetEventsRequest(
-                startLedger = 0,
+                startLedger = null,
                 filters = listOf(
                     GetEventsRequest.EventFilter(
                         type = GetEventsRequest.EventFilterType.CONTRACT
@@ -283,17 +335,57 @@ class RequestSerializationTest {
     }
 
     @Test
-    fun testGetEventsRequest_emptyFilters_throwsException() {
-        // When/Then: Empty filters should fail validation
+    fun testGetEventsRequest_startLedgerWithCursor_throwsException() {
+        // When/Then: startLedger with cursor should fail
         val exception = assertFailsWith<IllegalArgumentException> {
             GetEventsRequest(
                 startLedger = 1000,
-                filters = emptyList()
+                filters = listOf(
+                    GetEventsRequest.EventFilter(
+                        type = GetEventsRequest.EventFilterType.CONTRACT
+                    )
+                ),
+                pagination = GetEventsRequest.Pagination(cursor = "cursor-123")
             )
         }
 
-        assertTrue(exception.message?.contains("filters") ?: false)
-        assertTrue(exception.message?.contains("not be empty") ?: false)
+        assertTrue(exception.message?.contains("startLedger") ?: false)
+        assertTrue(exception.message?.contains("omitted when cursor") ?: false)
+    }
+
+    @Test
+    fun testGetEventsRequest_endLedgerLessThanStart_throwsException() {
+        // When/Then: endLedger < startLedger should fail
+        val exception = assertFailsWith<IllegalArgumentException> {
+            GetEventsRequest(
+                startLedger = 2000,
+                endLedger = 1000,
+                filters = listOf(
+                    GetEventsRequest.EventFilter(
+                        type = GetEventsRequest.EventFilterType.CONTRACT
+                    )
+                )
+            )
+        }
+
+        assertTrue(exception.message?.contains("endLedger") ?: false)
+        assertTrue(exception.message?.contains("greater than startLedger") ?: false)
+    }
+
+    @Test
+    fun testGetEventsRequest_emptyFilters_allowed() {
+        // Given: Request with empty filters (now allowed)
+        val request = GetEventsRequest(
+            startLedger = 1000,
+            filters = emptyList()
+        )
+
+        // When: Serializing to JSON
+        val jsonString = json.encodeToString(request)
+
+        // Then: Empty filters are allowed
+        assertTrue(jsonString.contains("\"startLedger\":1000"))
+        assertTrue(jsonString.contains("\"filters\":[]"))
     }
 
     @Test
@@ -334,17 +426,75 @@ class RequestSerializationTest {
     }
 
     @Test
-    fun testEventFilter_tooManyTopics_throwsException() {
-        // When/Then: More than 4 topics should fail validation
+    fun testEventFilter_tooManyContractIds_throwsException() {
+        // When/Then: More than 5 contractIds should fail validation
         val exception = assertFailsWith<IllegalArgumentException> {
             GetEventsRequest.EventFilter(
                 type = GetEventsRequest.EventFilterType.CONTRACT,
-                topics = List(5) { listOf("topic") }
+                contractIds = List(6) { "CCJZ5D$it..." }
+            )
+        }
+
+        assertTrue(exception.message?.contains("contractIds") ?: false)
+        assertTrue(exception.message?.contains("exceed 5") ?: false)
+    }
+
+    @Test
+    fun testEventFilter_tooManyTopicFilters_throwsException() {
+        // When/Then: More than 5 topic filters should fail validation
+        val exception = assertFailsWith<IllegalArgumentException> {
+            GetEventsRequest.EventFilter(
+                type = GetEventsRequest.EventFilterType.CONTRACT,
+                topics = List(6) { listOf("topic") }
             )
         }
 
         assertTrue(exception.message?.contains("topics") ?: false)
-        assertTrue(exception.message?.contains("exceed 4") ?: false)
+        assertTrue(exception.message?.contains("exceed 5 topic filters") ?: false)
+    }
+
+    @Test
+    fun testEventFilter_tooManyTopicSegments_throwsException() {
+        // When/Then: More than 4 segments in a topic filter should fail
+        val exception = assertFailsWith<IllegalArgumentException> {
+            GetEventsRequest.EventFilter(
+                type = GetEventsRequest.EventFilterType.CONTRACT,
+                topics = listOf(List(5) { "segment$it" })
+            )
+        }
+
+        assertTrue(exception.message?.contains("topic filter") ?: false)
+        assertTrue(exception.message?.contains("exceed 4 segments") ?: false)
+    }
+
+    @Test
+    fun testEventFilter_doubleWildcardNotAtEnd_throwsException() {
+        // When/Then: ** not at the end should fail validation
+        val exception = assertFailsWith<IllegalArgumentException> {
+            GetEventsRequest.EventFilter(
+                type = GetEventsRequest.EventFilterType.CONTRACT,
+                topics = listOf(listOf("topic1", "**", "topic3"))
+            )
+        }
+
+        assertTrue(exception.message?.contains("**") ?: false)
+        assertTrue(exception.message?.contains("last segment") ?: false)
+    }
+
+    @Test
+    fun testEventFilter_doubleWildcardAtEnd_allowed() {
+        // Given: Topic filter with ** at the end
+        val filter = GetEventsRequest.EventFilter(
+            type = GetEventsRequest.EventFilterType.CONTRACT,
+            topics = listOf(listOf("topic1", "topic2", "**"))
+        )
+
+        // When: Serializing to JSON
+        val jsonString = json.encodeToString(filter)
+
+        // Then: Trailing ** is allowed
+        assertTrue(jsonString.contains("\"topics\""))
+        assertTrue(jsonString.contains("**"))
     }
 
     @Test

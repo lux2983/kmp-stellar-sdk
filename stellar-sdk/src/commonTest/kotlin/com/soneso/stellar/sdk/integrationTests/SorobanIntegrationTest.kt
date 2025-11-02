@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.seconds
  * - Contract upload and deployment
  * - Contract invocation
  * - Contract information retrieval
- * - Contract events emission and querying
+ * - Contract events emission and querying with topic filtering
  * - Ledger entries retrieval
  * - Stellar Asset Contract (SAC) deployment
  * - Footprint restoration (state restoration)
@@ -57,7 +57,7 @@ import kotlin.time.Duration.Companion.seconds
  * - test upload contract
  * - test create contract
  * - test invoke contract
- * - test events
+ * - test events (with comprehensive topic filtering)
  * - test get ledger entries
  * - test deploy SAC with source account
  * - test SAC with asset
@@ -1247,7 +1247,7 @@ class SorobanIntegrationTest {
     }
 
     /**
-     * Tests contract events emission and querying.
+     * Tests contract events emission and querying with comprehensive topic filtering.
      *
      * This test validates the complete events workflow for Soroban smart contracts:
      * 1. Creates a new test account (independent from shared test state)
@@ -1255,28 +1255,33 @@ class SorobanIntegrationTest {
      * 3. Deploys an instance of the events contract using helper method
      * 4. Invokes the "increment" function which emits contract events using helper method
      * 5. Retrieves the transaction from Horizon to get the ledger number
-     * 6. Queries the emitted events using getEvents RPC endpoint
+     * 6. Queries the emitted events using getEvents RPC endpoint with various topic filters:
+     *    - No topic filter (all events for the contract)
+     *    - Wildcard and specific symbol: ["*", "increment"]
+     *    - Specific symbol: ["COUNTER"]
+     *    - Multiple topic alternatives (OR matching): ["COUNTER", "OTHER"]
+     *    - Trailing wildcard: ["COUNTER", "**"]
      * 7. Validates event structure, topics, and contract ID filtering
      * 8. Verifies event XDR parsing (diagnostic, transaction, and contract events)
      *
      * The test demonstrates:
      * - Complete contract lifecycle: upload → deploy → invoke using helper methods
      * - Contract event emission during invocation
-     * - Event filtering by contract ID and topics
+     * - Event filtering by contract ID and various topic patterns
      * - Event pagination with limits
      * - Cross-referencing between Horizon and Soroban RPC
      * - Event XDR parsing and validation
      *
      * The events contract has an "increment" function that:
      * - Increments an internal counter
-     * - Emits a contract event with topic "increment"
+     * - Emits a contract event with topics including "COUNTER" and "increment"
      * - Returns the updated counter value
      *
      * **Prerequisites**: Network connectivity to Stellar testnet
      * **Duration**: ~90-120 seconds (includes three transactions with polling)
      *
      * **Reference**: Ported from Flutter SDK's test events
-     * (soroban_test.dart lines 636-779)
+     * (soroban_test.dart lines 636-779 and 752-762)
      *
      * @see SorobanServer.getEvents
      * @see GetEventsRequest
@@ -1420,16 +1425,24 @@ class SorobanIntegrationTest {
         println("Transaction executed in ledger: $startLedger")
 
         // Step 5: Query emitted events using getEvents RPC
-        // Try without topic filter first to see if any events exist
-        println("Querying events for contract: $eventsContractId starting from ledger: $startLedger")
-
         // Query a broader ledger range in case of off-by-one issues
         val queryStartLedger = maxOf(1L, startLedger - 5)
 
+        // Step 6: Test topic filtering
+        // The events contract emits events with topics. We test various topic filter patterns:
+        // 1. No topic filter - get all events for the contract
+        // 2. Wildcard matching: ["*", symbol] - any first topic, specific second
+        // 3. Specific symbol: [symbol] - exact match for first topic
+        // 4. Alternatives: [symbol1, symbol2] - OR matching
+        // 5. Trailing wildcard: [symbol, "**"] - specific first, any remaining
+        println("\n=== Step 6: Testing Topic Filtering ===")
+
+        // Test 1: No topic filter (baseline - get all events for the contract)
+        println("\n--- Testing without topic filter (all events) ---")
         val eventFilter = GetEventsRequest.EventFilter(
             type = GetEventsRequest.EventFilterType.CONTRACT,
             contractIds = listOf(eventsContractId),
-            topics = null // Try without topic filter first
+            topics = null
         )
 
         val pagination = GetEventsRequest.Pagination(limit = 10)
@@ -1472,7 +1485,117 @@ class SorobanIntegrationTest {
 
         println("Event validated: contractId=$eventsContractId, topics=${parsedTopics.size}, ledger=${event.ledger}")
 
-        // Step 6: Validate transaction events XDR parsing from GetTransactionResponse
+        // Test 2: Filter with wildcard and specific symbol
+        println("\n--- Testing topic filter: [*, 'increment'] ---")
+        val incrementTopic = Scv.toSymbol("increment").toXdrBase64()
+        val topicFilter1 = GetEventsRequest.EventFilter(
+            type = GetEventsRequest.EventFilterType.CONTRACT,
+            contractIds = listOf(eventsContractId),
+            topics = listOf(
+                listOf("*", incrementTopic)  // Any first topic, "increment" as second
+            )
+        )
+
+        val eventsRequest1 = GetEventsRequest(
+            startLedger = queryStartLedger,
+            filters = listOf(topicFilter1),
+            pagination = GetEventsRequest.Pagination(limit = 10)
+        )
+
+        val eventsResponse1 = sorobanServer.getEvents(eventsRequest1)
+        println("Events with topic filter [*, 'increment']: ${eventsResponse1.events.size}")
+
+        // Validate that filtered events match the criteria
+        assertTrue(eventsResponse1.events.isNotEmpty(), "Should have events matching topic filter")
+        eventsResponse1.events.forEach { evt ->
+            val topics = evt.parseTopic()
+            assertTrue(topics.size >= 2, "Event should have at least 2 topics")
+
+            // Verify second topic is "increment"
+            val secondTopic = topics[1]
+            assertEquals(
+                Scv.fromSymbol(secondTopic),
+                "increment",
+                "Second topic should be 'increment'"
+            )
+            println("✓ Event validated: topics=${topics.size}, second='increment'")
+        }
+
+        // Test 3: Filter with specific symbol for first topic (with trailing wildcard)
+        // Note: Without "**", the filter would only match events with exactly 1 topic.
+        // With "**", it matches events with 1+ topics where topic[0] == "COUNTER".
+        println("\n--- Testing topic filter: ['COUNTER', '**'] (first topic must be COUNTER) ---")
+        val counterTopic = Scv.toSymbol("COUNTER").toXdrBase64()
+        val topicFilter2 = GetEventsRequest.EventFilter(
+            type = GetEventsRequest.EventFilterType.CONTRACT,
+            contractIds = listOf(eventsContractId),
+            topics = listOf(
+                listOf(counterTopic, "**")  // First topic must be "COUNTER", any remaining topics
+            )
+        )
+
+        val eventsRequest2 = GetEventsRequest(
+            startLedger = queryStartLedger,
+            filters = listOf(topicFilter2),
+            pagination = GetEventsRequest.Pagination(limit = 10)
+        )
+
+        val eventsResponse2 = sorobanServer.getEvents(eventsRequest2)
+        assertTrue(eventsResponse2.events.isNotEmpty(), "Should have events matching topic filter")
+
+        println("Events with topic filter ['COUNTER', '**']: ${eventsResponse2.events.size}")
+
+        eventsResponse2.events.forEach { evt ->
+            val topics = evt.parseTopic()
+            assertTrue(topics.isNotEmpty(), "Event should have topics")
+
+            // Verify first topic is "COUNTER"
+            val firstTopic = topics[0]
+            assertEquals(
+                Scv.fromSymbol(firstTopic),
+                "COUNTER",
+                "First topic should be 'COUNTER'"
+            )
+            println("✓ Event validated: first topic='COUNTER', total topics=${topics.size}")
+        }
+
+        // Test 4: Multiple topic filters (OR matching across filters)
+        // Each topic filter is a separate alternative. Events match if they satisfy ANY filter.
+        // This tests OR matching for topic[0] == "COUNTER" OR topic[0] == "OTHER"
+        println("\n--- Testing multiple topic filters: [['COUNTER', '**'], ['OTHER', '**']] (OR matching) ---")
+        val otherTopic = Scv.toSymbol("OTHER").toXdrBase64()
+        val topicFilter3 = GetEventsRequest.EventFilter(
+            type = GetEventsRequest.EventFilterType.CONTRACT,
+            contractIds = listOf(eventsContractId),
+            topics = listOf(
+                listOf(counterTopic, "**"),  // Filter 1: topic[0] == "COUNTER"
+                listOf(otherTopic, "**")     // Filter 2: topic[0] == "OTHER"
+            )
+        )
+
+        val eventsRequest3 = GetEventsRequest(
+            startLedger = queryStartLedger,
+            filters = listOf(topicFilter3),
+            pagination = GetEventsRequest.Pagination(limit = 10)
+        )
+
+        val eventsResponse3 = sorobanServer.getEvents(eventsRequest3)
+        assertTrue(eventsResponse3.events.isNotEmpty(), "Should have events matching topic filter")
+        println("Events with topic filters ['COUNTER', '**'] OR ['OTHER', '**']: ${eventsResponse3.events.size}")
+
+        eventsResponse3.events.forEach { evt ->
+            val topics = evt.parseTopic()
+            assertTrue(topics.isNotEmpty(), "Event should have topics")
+
+            val firstTopic = Scv.fromSymbol(topics[0])
+            assertTrue(
+                firstTopic == "COUNTER" || firstTopic == "OTHER",
+                "First topic should be 'COUNTER' or 'OTHER', got: $firstTopic"
+            )
+            println("✓ Event validated: first topic='$firstTopic' (matches one of the filters)")
+        }
+
+        // Step 7: Validate transaction events XDR parsing from GetTransactionResponse
         // This validates that events can be parsed from transaction results
         if (rpcResponse.events != null) {
             val events = rpcResponse.events
