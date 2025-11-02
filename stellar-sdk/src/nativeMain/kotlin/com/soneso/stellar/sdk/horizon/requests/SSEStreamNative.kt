@@ -1,5 +1,6 @@
 package com.soneso.stellar.sdk.horizon.requests
 
+import com.soneso.stellar.sdk.Util
 import com.soneso.stellar.sdk.horizon.responses.Response
 import io.ktor.client.*
 import io.ktor.client.plugins.*
@@ -43,9 +44,10 @@ internal actual suspend fun <T : Response> sseRequest(
                 }
             }
             timeout {
-                requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                // Ktor 3.x: Use null for infinite timeout instead of INFINITE_TIMEOUT_MS
+                requestTimeoutMillis = null
                 connectTimeoutMillis = 30_000
-                socketTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                socketTimeoutMillis = null
             }
         }.execute { response ->
             val statusCode = response.status.value
@@ -149,15 +151,8 @@ private suspend fun parseSSEStream(
 private fun addClientIdentification(url: Url): Url {
     return URLBuilder(url).apply {
         parameters.append("X-Client-Name", "kotlin-stellar-sdk")
-        parameters.append("X-Client-Version", getSdkVersion())
+        parameters.append("X-Client-Version", Util.getSdkVersion())
     }.build()
-}
-
-/**
- * Gets the SDK version.
- */
-private fun getSdkVersion(): String {
-    return "dev" // In production, this could be injected during build
 }
 
 /**

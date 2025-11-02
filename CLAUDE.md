@@ -732,9 +732,10 @@ StellarTopBar(
 
 **COMPLETED** (October 2025):
 - ✅ FormValidation enforcement - 180 lines removed across 10 screens
+- ✅ InfoCard component - Created and deployed across multiple screens
 
 **MEDIUM PRIORITY** (not yet done):
-- Create InfoCard, ResultCard, DetailCard components (138 Card instances to migrate)
+- Create ResultCard, DetailCard components (remaining Card instances to migrate)
 - Replace hardcoded `Color(0xFF...)` values with `MaterialTheme.colorScheme` references
 - Clean up unused theme colors (dark theme defined but unused)
 

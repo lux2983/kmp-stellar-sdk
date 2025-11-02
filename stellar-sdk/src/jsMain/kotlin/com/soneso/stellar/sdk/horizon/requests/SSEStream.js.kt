@@ -1,5 +1,6 @@
 package com.soneso.stellar.sdk.horizon.requests
 
+import com.soneso.stellar.sdk.Util
 import com.soneso.stellar.sdk.horizon.responses.Response
 import io.ktor.client.*
 import io.ktor.http.*
@@ -12,6 +13,9 @@ import kotlin.js.Date
 /**
  * JS implementation of SSE request handling.
  * Uses the browser's EventSource API for SSE support.
+ *
+ * This implementation is specific to the JS target and uses DOM APIs
+ * that are available in classic JavaScript environments.
  */
 internal actual suspend fun <T : Response> sseRequest(
     httpClient: HttpClient,
@@ -25,7 +29,7 @@ internal actual suspend fun <T : Response> sseRequest(
     suspendCancellableCoroutine<Unit> { continuation ->
         val fullUrl = addClientIdentification(url)
 
-        // Create EventSource with optional last event ID
+        // Create EventSource
         val eventSource = EventSource(fullUrl)
 
         // Handle incoming messages
@@ -36,7 +40,6 @@ internal actual suspend fun <T : Response> sseRequest(
 
                 if (data != null) {
                     // EventSource automatically handles the "id" field
-                    // The last event ID is available via lastEventId property
                     val eventId = messageEvent.lastEventId?.takeIf { it.isNotEmpty() }
                     onEvent(eventId, data)
                 }
@@ -49,7 +52,6 @@ internal actual suspend fun <T : Response> sseRequest(
         eventSource.onerror = { _ ->
             val error = SSEException("EventSource error")
             onFailure(error, null)
-            // Don't close here - let the reconnection logic handle it
         }
 
         // Handle open
@@ -64,7 +66,6 @@ internal actual suspend fun <T : Response> sseRequest(
         }
 
         // The coroutine will remain suspended until cancelled
-        // EventSource handles reconnection automatically
     }
 }
 
@@ -74,15 +75,8 @@ internal actual suspend fun <T : Response> sseRequest(
 private fun addClientIdentification(url: Url): String {
     return URLBuilder(url).apply {
         parameters.append("X-Client-Name", "kotlin-stellar-sdk")
-        parameters.append("X-Client-Version", getSdkVersion())
+        parameters.append("X-Client-Version", Util.getSdkVersion())
     }.buildString()
-}
-
-/**
- * Gets the SDK version.
- */
-private fun getSdkVersion(): String {
-    return "dev" // In production, this could be injected during build
 }
 
 /**
@@ -119,7 +113,7 @@ internal actual fun isNetworkError(error: Throwable): Boolean {
 private class SSEException(message: String) : Exception(message)
 
 /**
- * External declaration for browser EventSource API.
+ * External declaration for browser EventSource API (JS-specific).
  */
 external class EventSource(url: String, eventSourceInitDict: EventSourceInit = definedExternally) {
     val url: String
@@ -144,7 +138,7 @@ external interface EventSourceInit {
 }
 
 /**
- * External declaration for MessageEvent data structure.
+ * External declaration for MessageEvent data structure (JS-specific).
  */
 external interface MessageEventData {
     val data: Any?

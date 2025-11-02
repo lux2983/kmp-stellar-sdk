@@ -8,6 +8,7 @@ gradle-app.setting
 # Kotlin
 .kotlin/
 *.kotlin_module
+kotlin-js-store/
 
 # Java/JVM
 *.class

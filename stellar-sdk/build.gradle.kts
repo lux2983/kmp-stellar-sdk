@@ -49,6 +49,21 @@ kotlin {
         binaries.executable()
     }
 
+    // NEW: Add wasmJs target
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
+    wasmJs {
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                    useConfigDirectory(project.projectDir)
+                }
+            }
+        }
+        binaries.library()
+        binaries.executable()
+    }
+
     // Configure NODE_PATH for test environment
     tasks.withType<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest> {
         if (name == "jsNodeTest") {
@@ -76,6 +91,14 @@ kotlin {
         dependsOn("jsProductionLibraryCompileSync")
     }
 
+    // Fix Gradle 9.0.0 task dependency validation for wasmJs binary compilation
+    // Same pattern as JS: explicit dependencies for library() and executable() binaries
+    tasks.named("wasmJsBrowserProductionLibraryDistribution") {
+        dependsOn("wasmJsProductionExecutableCompileSync")
+    }
+    tasks.named("wasmJsBrowserProductionWebpack") {
+        dependsOn("wasmJsProductionLibraryCompileSync")
+    }
 
     // iOS targets
     val iosX64 = iosX64()
@@ -84,7 +107,16 @@ kotlin {
 
     // Skip iosX64 tests - libsodium.a only has ARM64, not x86_64
     // x86_64 simulators are rare now with Apple Silicon
-    tasks.matching { it.name.contains("iosX64Test") }.configureEach {
+    tasks.matching {
+        it.name.contains("iosX64Test") || it.name.contains("TestIosX64")
+    }.configureEach {
+        enabled = false
+    }
+
+    // Skip wasmJs tests temporarily - same bundling issues as JS
+    tasks.matching {
+        it.name.contains("wasmJsTest") || it.name.contains("TestWasmJs")
+    }.configureEach {
         enabled = false
     }
 
@@ -123,11 +155,11 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
-                implementation("io.ktor:ktor-client-core:2.3.8")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
+                implementation("io.ktor:ktor-client-core:3.0.0")
+                implementation("io.ktor:ktor-client-content-negotiation:3.0.0")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.0")
                 // BigInteger support for multiplatform
-                implementation("com.ionspin.kotlin:bignum:0.3.9")
+                implementation("com.ionspin.kotlin:bignum:0.3.10")
             }
         }
 
@@ -135,13 +167,26 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
-                implementation("io.ktor:ktor-client-mock:2.3.8")
+                implementation("io.ktor:ktor-client-mock:3.0.0")
             }
+        }
+
+        // NEW: Shared web source set for js and wasmJs
+        val webMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                implementation("io.ktor:ktor-client-core:3.0.0")
+                implementation(npm("libsodium-wrappers-sumo", "0.7.13"))
+            }
+        }
+
+        val webTest by creating {
+            dependsOn(commonTest)
         }
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-cio:2.3.8")
+                implementation("io.ktor:ktor-client-cio:3.0.0")
                 implementation("org.bouncycastle:bcprov-jdk18on:1.78")
                 implementation("commons-codec:commons-codec:1.16.1")
             }
@@ -157,19 +202,30 @@ kotlin {
         }
 
         val jsMain by getting {
+            dependsOn(webMain)  // NEW: Depend on shared webMain
             dependencies {
-                implementation("io.ktor:ktor-client-js:2.3.8")
-                // Use libsodium-wrappers-sumo instead of standard build
-                // The sumo build includes all functions including crypto_hash_sha256
-                // which is needed for SHA-256 hashing (used in contract deployment)
-                implementation(npm("libsodium-wrappers-sumo", "0.7.13"))
+                implementation("io.ktor:ktor-client-js:3.0.0")
+                // libsodium already in webMain, removed duplicate
             }
         }
 
         val jsTest by getting {
+            dependsOn(webTest)  // NEW: Depend on shared webTest
             dependencies {
                 implementation(kotlin("test-js"))
             }
+        }
+
+        // NEW: wasmJs source sets (auto-created by wasmJs target, use 'getting')
+        val wasmJsMain by getting {
+            dependsOn(webMain)
+            dependencies {
+                implementation("io.ktor:ktor-client-core:3.0.0")
+            }
+        }
+
+        val wasmJsTest by getting {
+            dependsOn(webTest)
         }
 
         val nativeMain by creating {
@@ -187,7 +243,7 @@ kotlin {
         val iosMain by creating {
             dependsOn(nativeMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:2.3.8")
+                implementation("io.ktor:ktor-client-darwin:3.0.0")
             }
         }
 
@@ -208,7 +264,7 @@ kotlin {
         val macosMain by creating {
             dependsOn(nativeMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:2.3.8")
+                implementation("io.ktor:ktor-client-darwin:3.0.0")
             }
         }
 
@@ -299,7 +355,7 @@ signing {
     }
 }
 
-// Fix Gradle 9.0 task dependency validation
+// Fix Gradle 9.0.0 task dependency validation
 // All signing tasks share the javadocJar, so they must run sequentially
 afterEvaluate {
     val signTasks = tasks.matching { it.name.startsWith("sign") && it.name.endsWith("Publication") }
