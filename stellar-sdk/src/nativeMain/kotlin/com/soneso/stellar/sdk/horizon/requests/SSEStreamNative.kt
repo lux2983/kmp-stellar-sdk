@@ -12,6 +12,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
@@ -19,7 +20,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import platform.posix.gettimeofday
 import platform.posix.timeval
-import kotlin.coroutines.coroutineContext
 
 /**
  * Native (iOS/macOS) implementation of SSE request handling.
@@ -66,11 +66,11 @@ internal actual suspend fun <T : Response> sseRequest(
             parseSSEStream(channel, onEvent, onFailure, statusCode)
         }
     } catch (e: Exception) {
-        if (coroutineContext.isActive) {
+        if (currentCoroutineContext().isActive) {
             onFailure(e, null)
         }
     } finally {
-        coroutineContext.ensureActive()
+        currentCoroutineContext().ensureActive()
         onClose()
     }
 }
@@ -90,7 +90,7 @@ private suspend fun parseSSEStream(
 
     try {
         while (!channel.isClosedForRead) {
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
 
             // Yield to allow other coroutines to run (important for event processing)
             yield()
@@ -98,7 +98,7 @@ private suspend fun parseSSEStream(
             val line = try {
                 channel.readUTF8Line() ?: break
             } catch (e: Exception) {
-                if (coroutineContext.isActive) {
+                if (currentCoroutineContext().isActive) {
                     onFailure(e, statusCode)
                 }
                 break
@@ -139,7 +139,7 @@ private suspend fun parseSSEStream(
             }
         }
     } catch (e: Exception) {
-        if (coroutineContext.isActive) {
+        if (currentCoroutineContext().isActive) {
             onFailure(e, statusCode)
         }
     }

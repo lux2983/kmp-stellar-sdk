@@ -6,6 +6,11 @@ actual class XdrReader actual constructor(input: ByteArray) {
     private var offset = 0
 
     actual fun readInt(): Int {
+        if (offset + 4 > data.size) {
+            throw IllegalStateException(
+                "XdrReader: Cannot read 4 bytes at offset $offset, only ${data.size - offset} bytes available"
+            )
+        }
         val value = ((data[offset].toInt() and 0xFF) shl 24) or
                     ((data[offset + 1].toInt() and 0xFF) shl 16) or
                     ((data[offset + 2].toInt() and 0xFF) shl 8) or
@@ -32,19 +37,37 @@ actual class XdrReader actual constructor(input: ByteArray) {
 
     actual fun readString(): String {
         val length = readInt()
+        val padding = (4 - (length % 4)) % 4
+        val totalLength = length + padding
+
+        if (offset + totalLength > data.size) {
+            throw IllegalStateException(
+                "XdrReader: Cannot read string of $length bytes (+ $padding padding) at offset $offset, " +
+                "only ${data.size - offset} bytes available"
+            )
+        }
+
         val bytes = data.sliceArray(offset until offset + length)
         offset += length
         // Skip padding
-        val padding = (4 - (length % 4)) % 4
         offset += padding
         return bytes.decodeToString()
     }
 
     actual fun readFixedOpaque(length: Int): ByteArray {
+        val padding = (4 - (length % 4)) % 4
+        val totalLength = length + padding
+
+        if (offset + totalLength > data.size) {
+            throw IllegalStateException(
+                "XdrReader: Cannot read $length bytes (+ $padding padding) at offset $offset, " +
+                "only ${data.size - offset} bytes available"
+            )
+        }
+
         val bytes = data.sliceArray(offset until offset + length)
         offset += length
         // Skip padding
-        val padding = (4 - (length % 4)) % 4
         offset += padding
         return bytes
     }

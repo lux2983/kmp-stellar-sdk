@@ -52,11 +52,12 @@ kotlin {
     // NEW: Add wasmJs target
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
-        browser {
+        // Node.js only - browser tests are redundant with JS target
+        // TestResourceUtil requires Node.js fs module
+        nodejs {
             testTask {
-                useKarma {
-                    useChromeHeadless()
-                    useConfigDirectory(project.projectDir)
+                useMocha {
+                    timeout = "600s"  // Increased for integration tests with multiple network calls and delays
                 }
             }
         }
@@ -93,11 +94,9 @@ kotlin {
 
     // Fix Gradle 9.0.0 task dependency validation for wasmJs binary compilation
     // Same pattern as JS: explicit dependencies for library() and executable() binaries
-    tasks.named("wasmJsBrowserProductionLibraryDistribution") {
+    // Node.js distribution only (browser tasks removed)
+    tasks.named("wasmJsNodeProductionLibraryDistribution") {
         dependsOn("wasmJsProductionExecutableCompileSync")
-    }
-    tasks.named("wasmJsBrowserProductionWebpack") {
-        dependsOn("wasmJsProductionLibraryCompileSync")
     }
 
     // iOS targets
@@ -113,11 +112,13 @@ kotlin {
         enabled = false
     }
 
-    // Skip wasmJs tests temporarily - same bundling issues as JS
+    // wasmJs tests enabled for Phase 3 testing
+    // Tests MUST be run individually with --tests "ClassName" due to bundling issues
+    // DO NOT run all tests at once - they will hang/fail
     tasks.matching {
         it.name.contains("wasmJsTest") || it.name.contains("TestWasmJs")
     }.configureEach {
-        enabled = false
+        enabled = true
     }
 
     // macOS targets (useful for development)

@@ -178,6 +178,10 @@ MainScope().launch {
   - Individual test class: `./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"`
   - Pattern matching: `./gradlew :stellar-sdk:jsNodeTest --tests "*Key*"`
   - **Note**: Running all Node.js tests together currently hangs (see JS Testing Notes below)
+- **Run wasmJs tests (Node.js only)**:
+  - Individual test class: `./gradlew :stellar-sdk:wasmJsNodeTest --tests "KeyPairTest"`
+  - Pattern matching: `./gradlew :stellar-sdk:wasmJsNodeTest --tests "*Key*"`
+  - **Note**: wasmJs tests run on Node.js only - browser tests are disabled (redundant with JS browser tests)
 - **Run macOS tests**: `./gradlew macosArm64Test` or `./gradlew macosX64Test`
 - **Run iOS Simulator tests**: `./gradlew iosSimulatorArm64Test` or `./gradlew iosX64Test`
 
@@ -216,6 +220,34 @@ MainScope().launch {
 - Root cause appears to be test bundling/compilation interaction in Kotlin/JS plugin
 
 **Recommendation**: Use test filtering (common pattern for large test suites) or run test classes individually in CI/CD. This is a Kotlin/JS tooling limitation, not an SDK issue - the web sample app proves browser compatibility works perfectly.
+
+#### wasmJs Testing Notes
+
+**Current Status**: wasmJs tests run exclusively on Node.js. Browser tests are intentionally disabled.
+
+**Rationale**:
+- **Node.js-only approach**: wasmJs tests use `TestResourceUtil` which requires Node.js `fs` module for reading WASM files
+- **No browser support needed**: JS target already provides comprehensive browser test coverage
+- **Demo app validation**: Browser compatibility is proven by the working web demo app
+- **Reduced complexity**: Single test environment eliminates browser-specific webpack/karma issues
+- **Faster builds**: No browser test setup overhead
+
+**Working Approach**:
+```bash
+# Node.js - Run specific test classes (recommended)
+./gradlew :stellar-sdk:wasmJsNodeTest --tests "KeyPairTest"
+./gradlew :stellar-sdk:wasmJsNodeTest --tests "ContractClientIntegrationTest"
+
+# Or use patterns
+./gradlew :stellar-sdk:wasmJsNodeTest --tests "*Key*"
+```
+
+**Important Notes**:
+- ✅ All SDK functionality validated on Node.js
+- ✅ Browser compatibility validated by demo app and JS browser tests
+- ✅ Integration tests work perfectly (network access, WASM file loading)
+- ❌ `wasmJsBrowserTest` task does not exist (intentionally removed)
+- **Test framework**: Kotlin/Wasm uses built-in test framework (not Mocha)
 
 #### Integration Tests
 

@@ -8,6 +8,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
@@ -15,7 +16,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import java.io.IOException
 import java.net.SocketException
-import kotlin.coroutines.coroutineContext
 
 /**
  * JVM implementation of SSE request handling.
@@ -64,11 +64,11 @@ internal actual suspend fun <T : Response> sseRequest(
     } catch (e: IOException) {
         onFailure(e, null)
     } catch (e: Exception) {
-        if (coroutineContext.isActive) {
+        if (currentCoroutineContext().isActive) {
             onFailure(e, null)
         }
     } finally {
-        coroutineContext.ensureActive()
+        currentCoroutineContext().ensureActive()
         onClose()
     }
 }
@@ -88,7 +88,7 @@ private suspend fun parseSSEStream(
 
     try {
         while (!channel.isClosedForRead) {
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
 
             // Yield to allow other coroutines to run (important for event processing)
             yield()
@@ -96,7 +96,7 @@ private suspend fun parseSSEStream(
             val line = try {
                 channel.readUTF8Line() ?: break
             } catch (e: Exception) {
-                if (coroutineContext.isActive) {
+                if (currentCoroutineContext().isActive) {
                     onFailure(e, statusCode)
                 }
                 break
@@ -137,7 +137,7 @@ private suspend fun parseSSEStream(
             }
         }
     } catch (e: Exception) {
-        if (coroutineContext.isActive) {
+        if (currentCoroutineContext().isActive) {
             onFailure(e, statusCode)
         }
     }

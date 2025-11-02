@@ -70,8 +70,9 @@ internal class Sep29Checker(
         // Parse the envelope to extract transaction
         val transaction = try {
             parseTransactionFromEnvelope(xdrBytes)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // If we can't parse the envelope, skip the check
+            // Note: Using Throwable to catch wasmJs RuntimeError and other platform-specific errors
             return
         }
 
@@ -187,7 +188,12 @@ internal class Sep29Checker(
         // Skip memo value based on type
         when (memoType) {
             0 -> {} // MEMO_NONE - nothing to skip
-            1 -> reader.skip(reader.readInt()) // MEMO_TEXT - skip string
+            1 -> {
+                // MEMO_TEXT - skip string with padding
+                val length = reader.readInt()
+                val padding = (4 - (length % 4)) % 4
+                reader.skip(length + padding)
+            }
             2 -> reader.skip(8) // MEMO_ID - skip uint64
             3 -> reader.skip(32) // MEMO_HASH - skip 32 bytes
             4 -> reader.skip(32) // MEMO_RETURN - skip 32 bytes
@@ -368,24 +374,42 @@ internal class Sep29Checker(
         private var offset = 0
 
         fun readInt(): Int {
-            val value = ((data[offset].toInt() and 0xFF) shl 24) or
-                       ((data[offset + 1].toInt() and 0xFF) shl 16) or
-                       ((data[offset + 2].toInt() and 0xFF) shl 8) or
-                       (data[offset + 3].toInt() and 0xFF)
+            // Bounds check BEFORE any array access
+            require(offset + 4 <= data.size) {
+                "XdrReader: Cannot read 4 bytes at offset $offset, only ${data.size - offset} bytes available"
+            }
+
+            // Use copyOfRange which does its own bounds checking
+            val bytes = data.copyOfRange(offset, offset + 4)
+            val value = ((bytes[0].toInt() and 0xFF) shl 24) or
+                       ((bytes[1].toInt() and 0xFF) shl 16) or
+                       ((bytes[2].toInt() and 0xFF) shl 8) or
+                       (bytes[3].toInt() and 0xFF)
             offset += 4
             return value
         }
 
         fun read(length: Int): ByteArray {
-            val result = data.copyOfRange(offset, offset + length)
-            offset += length
-            // XDR padding: align to 4-byte boundary
             val padding = (4 - (length % 4)) % 4
-            offset += padding
+            val totalLength = length + padding
+
+            // Bounds check BEFORE any array access
+            require(offset + totalLength <= data.size) {
+                "XdrReader: Cannot read $length bytes (+ $padding padding) at offset $offset, " +
+                "only ${data.size - offset} bytes available"
+            }
+
+            val result = data.copyOfRange(offset, offset + length)
+            offset += totalLength
             return result
         }
 
         fun skip(bytes: Int) {
+            // Bounds check BEFORE modifying offset
+            require(offset + bytes <= data.size) {
+                "XdrReader: Cannot skip $bytes bytes at offset $offset, " +
+                "only ${data.size - offset} bytes available"
+            }
             offset += bytes
         }
     }

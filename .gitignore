@@ -121,3 +121,16 @@ compatibility/rpc/data/
 
 # Vite build cache (demo web app)
 demo/webApp/.vite/
+
+# wasmJs working documents (not for repository)
+run_wasmjs_tests.sh
+WASMJS_CODE_PATTERNS.md
+WASMJS_COMPLETE_TEST_REPORT.md
+WASMJS_DOCUMENTATION_INDEX.md
+WASMJS_TEST_QUICK_REFERENCE.md
+wasmjs_support.md
+WASMJS_ALL_TESTS_TABLE.md
+WASMJS_PHASE2_COMPLETION_REPORT.md
+PHASE_2_5_COMPLETION_CHECKLIST.md
+SSE_IMPLEMENTATION_PATTERNS.md
+issue1.md
