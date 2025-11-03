@@ -234,11 +234,24 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
 
         val output = outputs[0]
 
-        // Handle Result type outputs
+        // Handle Result type outputs - enhanced to support both Ok and Error variants
         if (output is SCSpecTypeDefXdr.Result) {
-            // For Result types, we convert the ok value
-            // Note: Error handling for Result types would be done at a higher level
-            return scValToNative(scVal, output.value.okType)
+            val resultTypeDef = output.value
+
+            // Detect if scVal represents an error or ok value
+            // Soroban uses special SCVal variants for Result types
+            return when (scVal) {
+                // Error variant - parse error value
+                is SCValXdr.Error -> {
+                    // Convert error value using error type specification
+                    scValToNative(scVal, resultTypeDef.errorType)
+                }
+                // All other variants are "ok" values
+                else -> {
+                    // Convert ok value using ok type specification
+                    scValToNative(scVal, resultTypeDef.okType)
+                }
+            }
         }
 
         return scValToNative(scVal, output)
@@ -282,13 +295,15 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
      * - **UDT (struct)** → Map<String, Any?> or List<Any?> (depending on field names)
      * - **UDT (union)** → NativeUnionVal
      * - **UDT (enum)** → UInt
+     * - **Error** → SCErrorXdr
+     * - **ContractInstance** → SCContractInstanceXdr
      *
      * @param scVal The XDR value to convert
-     * @param typeDef The type specification
+     * @param typeDef The type specification (nullable for direct type inference)
      * @return The converted native Kotlin value
      * @throws ContractSpecException for invalid types or conversion failures
      */
-    fun scValToNative(scVal: SCValXdr, typeDef: SCSpecTypeDefXdr): Any? {
+    fun scValToNative(scVal: SCValXdr, typeDef: SCSpecTypeDefXdr?): Any? {
         // Handle UDT types first
         if (typeDef is SCSpecTypeDefXdr.Udt) {
             return scValUdtToNative(scVal, typeDef.value)
@@ -393,7 +408,7 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
                     }
                     else -> {
                         throw ContractSpecException.invalidType(
-                            "Type ${typeDef.discriminant} was not vec or tuple, but scVal is SCV_VEC"
+                            "Type ${typeDef?.discriminant} was not vec or tuple, but scVal is SCV_VEC"
                         )
                     }
                 }
@@ -417,15 +432,31 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
                     }
                     else -> {
                         throw ContractSpecException.invalidType(
-                            "Type ${typeDef.discriminant} was not map, but scVal is SCV_MAP"
+                            "Type ${typeDef?.discriminant} was not map, but scVal is SCV_MAP"
                         )
                     }
                 }
             }
 
+            SCValTypeXdr.SCV_ERROR -> {
+                require(scVal is SCValXdr.Error) {
+                    "Expected SCValXdr.Error for SCV_ERROR, got ${scVal::class.simpleName}"
+                }
+                // Return the SCErrorXdr directly
+                scVal.value
+            }
+
+            SCValTypeXdr.SCV_CONTRACT_INSTANCE -> {
+                require(scVal is SCValXdr.Instance) {
+                    "Expected SCValXdr.Instance for SCV_CONTRACT_INSTANCE, got ${scVal::class.simpleName}"
+                }
+                // Return the SCContractInstanceXdr directly
+                scVal.value
+            }
+
             else -> {
                 throw ContractSpecException.conversionFailed(
-                    "Failed to convert ${scVal.discriminant} to native type from type ${typeDef.discriminant}"
+                    "Failed to convert ${scVal.discriminant} to native type from type ${typeDef?.discriminant}"
                 )
             }
         }
