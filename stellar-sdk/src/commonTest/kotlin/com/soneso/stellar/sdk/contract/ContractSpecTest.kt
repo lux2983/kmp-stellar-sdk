@@ -1545,4 +1545,147 @@ class ContractSpecTest {
     private fun createUdtTypeDef(name: String): SCSpecTypeDefXdr {
         return SCSpecTypeDefXdr.Udt(SCSpecTypeUDTXdr(name))
     }
+
+    // ========== Missing Type Tests (Muxed Address, Error, Val, Result) ==========
+
+    @Test
+    fun testMuxedAddressConversion() {
+        val spec = ContractSpec(emptyList())
+        val typeDef = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_MUXED_ADDRESS)
+
+        // Test Case 1: G... address (regular account)
+        val regularAddress = "GBLGJA4TUN5XOGTV6WO2BWYUI2OZR5GYQ5PDPCRMQ5XEPJOYWB2X4CJO"
+        val result1 = spec.nativeToXdrSCVal(regularAddress, typeDef)
+
+        assertTrue(result1 is SCValXdr.Address)
+        val address1 = (result1 as SCValXdr.Address).value
+        assertTrue(address1 is SCAddressXdr.AccountId)
+
+        // Verify round-trip conversion
+        val convertedAddress1 = Address.fromSCVal(result1)
+        assertEquals(regularAddress, convertedAddress1.toString())
+
+        // Test Case 2: M... address (muxed account) - THE MAIN TEST
+        val muxedAddress = "MAQAA5L65LSYH7CQ3VTJ7F3HHLGCL3DSLAR2Y47263D56MNNGHSQSAAAAAAAAAAE2LP26"
+        val result2 = spec.nativeToXdrSCVal(muxedAddress, typeDef)
+
+        assertTrue(result2 is SCValXdr.Address)
+        val address2 = (result2 as SCValXdr.Address).value
+        assertTrue(address2 is SCAddressXdr.MuxedAccount, "Expected MuxedAccount address type, but got ${address2::class.simpleName}")
+
+        // Verify the muxed account structure
+        val muxedAccountXdr = (address2 as SCAddressXdr.MuxedAccount).value
+        assertNotNull(muxedAccountXdr.ed25519, "Muxed account should have ed25519 public key")
+        assertNotNull(muxedAccountXdr.id, "Muxed account should have ID")
+
+        // Verify round-trip conversion preserves the muxed address
+        val convertedAddress2 = Address.fromSCVal(result2)
+        assertEquals(muxedAddress, convertedAddress2.toString(), "Muxed address round-trip failed")
+        assertEquals(Address.AddressType.MUXED_ACCOUNT, convertedAddress2.addressType, "Address type should be MUXED_ACCOUNT")
+
+        // Test Case 3: C... address (contract)
+        val contractAddress = "CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE"
+        val result3 = spec.nativeToXdrSCVal(contractAddress, typeDef)
+
+        assertTrue(result3 is SCValXdr.Address)
+        val address3 = (result3 as SCValXdr.Address).value
+        assertTrue(address3 is SCAddressXdr.ContractId)
+
+        // Verify round-trip conversion
+        val convertedAddress3 = Address.fromSCVal(result3)
+        assertEquals(contractAddress, convertedAddress3.toString())
+    }
+
+    @Test
+    fun testErrorConversion() {
+        val spec = ContractSpec(emptyList())
+        val typeDef = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_ERROR)
+
+        // Test numeric error code
+        val result = spec.nativeToXdrSCVal(42, typeDef)
+        assertTrue(result is SCValXdr.Error)
+
+        // Test SCErrorXdr
+        val errorXdr = SCErrorXdr.ContractCode(Uint32Xdr(100u))
+        val result2 = spec.nativeToXdrSCVal(errorXdr, typeDef)
+        assertTrue(result2 is SCValXdr.Error)
+    }
+
+    @Test
+    fun testValConversion() {
+        val spec = ContractSpec(emptyList())
+        val typeDef = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_VAL)
+
+        // Test with SCValXdr (pass through)
+        val scVal = SCValXdr.U32(Uint32Xdr(42u))
+        val result = spec.nativeToXdrSCVal(scVal, typeDef)
+        assertEquals(scVal, result)
+
+        // Test with native value (auto-convert)
+        val result2 = spec.nativeToXdrSCVal("test", typeDef)
+        assertTrue(result2 is SCValXdr.Str)
+
+        val result3 = spec.nativeToXdrSCVal(true, typeDef)
+        assertTrue(result3 is SCValXdr.B)
+
+        val result4 = spec.nativeToXdrSCVal(42, typeDef)
+        assertTrue(result4 is SCValXdr.I32)
+    }
+
+    @Test
+    fun testResultConversion() {
+        val spec = ContractSpec(emptyList())
+
+        // Create Result type def with U32 ok type and Error error type
+        val okType = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_U32)
+        val errorType = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_ERROR)
+        val resultTypeDef = SCSpecTypeDefXdr.Result(
+            SCSpecTypeResultXdr(okType = okType, errorType = errorType)
+        )
+
+        // Test Kotlin Result success
+        val successResult = kotlin.Result.success(42u)
+        val scVal1 = spec.nativeToXdrSCVal(successResult, resultTypeDef)
+        assertTrue(scVal1 is SCValXdr.U32)
+        assertEquals(42u, (scVal1 as SCValXdr.U32).value.value)
+
+        // Test Kotlin Result failure
+        val failureResult = kotlin.Result.failure<UInt>(Exception("Test error"))
+        val scVal2 = spec.nativeToXdrSCVal(failureResult, resultTypeDef)
+        assertTrue(scVal2 is SCValXdr.Error)
+
+        // Test Map with "ok" key
+        val okMap = mapOf("ok" to 42u)
+        val scVal3 = spec.nativeToXdrSCVal(okMap, resultTypeDef)
+        assertTrue(scVal3 is SCValXdr.U32)
+        assertEquals(42u, (scVal3 as SCValXdr.U32).value.value)
+
+        // Test Map with "error" key
+        val errorMap = mapOf("error" to SCErrorXdr.ContractCode(Uint32Xdr(1u)))
+        val scVal4 = spec.nativeToXdrSCVal(errorMap, resultTypeDef)
+        assertTrue(scVal4 is SCValXdr.Error)
+    }
+
+    @Test
+    fun testResultConversionWithVoidOk() {
+        val spec = ContractSpec(emptyList())
+
+        // Create Result type def with VOID ok type
+        val okType = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_VOID)
+        val errorType = createTypeDef(SCSpecTypeXdr.SC_SPEC_TYPE_ERROR)
+        val resultTypeDef = SCSpecTypeDefXdr.Result(
+            SCSpecTypeResultXdr(okType = okType, errorType = errorType)
+        )
+
+        // Test success with null value
+        val successResult = kotlin.Result.success(null as Unit?)
+        val scVal = spec.nativeToXdrSCVal(successResult, resultTypeDef)
+        assertTrue(scVal is SCValXdr.Void)
+
+        // Test Map with ok: null
+        val okMap = mapOf("ok" to null)
+        val scVal2 = spec.nativeToXdrSCVal(okMap, resultTypeDef)
+        assertTrue(scVal2 is SCValXdr.Void)
+    }
+
 }

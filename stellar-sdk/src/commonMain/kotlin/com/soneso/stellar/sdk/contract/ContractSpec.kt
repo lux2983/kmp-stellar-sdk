@@ -651,6 +651,9 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
                 SCValXdr.Sym(SCSymbolXdr(value))
             }
             SCSpecTypeXdr.SC_SPEC_TYPE_ADDRESS -> handleAddressType(value)
+            SCSpecTypeXdr.SC_SPEC_TYPE_MUXED_ADDRESS -> handleAddressType(value)  // Uses existing handler
+            SCSpecTypeXdr.SC_SPEC_TYPE_ERROR -> handleErrorType(value!!)
+            SCSpecTypeXdr.SC_SPEC_TYPE_VAL -> handleValType(value!!)
             else -> throw ContractSpecException.invalidType("Unsupported value type: $typeDiscriminant")
         }
     }
@@ -770,6 +773,44 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
     }
 
     /**
+     * Handles SC_SPEC_TYPE_ERROR conversion.
+     * Converts error values to SCValXdr error representation.
+     */
+    private fun handleErrorType(value: Any): SCValXdr {
+        return when (value) {
+            is SCErrorXdr -> Scv.toError(value)
+            is Number -> {
+                // Accept numeric error codes and convert to SCErrorXdr.ContractCode
+                val errorCode = value.toInt().toUInt()
+                Scv.toError(SCErrorXdr.ContractCode(Uint32Xdr(errorCode)))
+            }
+            else -> throw ContractSpecException.invalidType(
+                "Expected SCErrorXdr or numeric error code for SC_SPEC_TYPE_ERROR, got ${value::class.simpleName}"
+            )
+        }
+    }
+
+    /**
+     * Handles SC_SPEC_TYPE_VAL conversion.
+     * SC_SPEC_TYPE_VAL accepts any SCValXdr without type constraints.
+     * This is used for generic/untyped parameters (rare in production contracts).
+     */
+    private fun handleValType(value: Any): SCValXdr {
+        return when (value) {
+            is SCValXdr -> value  // Already an SCVal, pass through
+            is String -> SCValXdr.Str(SCStringXdr(value))
+            is Boolean -> SCValXdr.B(value)
+            is Int -> SCValXdr.I32(Int32Xdr(value))
+            is Long -> SCValXdr.I64(Int64Xdr(value))
+            is UInt -> SCValXdr.U32(Uint32Xdr(value))
+            is ULong -> SCValXdr.U64(Uint64Xdr(value))
+            else -> throw ContractSpecException.invalidType(
+                "Cannot auto-convert ${value::class.simpleName} to SCVal for SC_SPEC_TYPE_VAL. Pass SCValXdr directly or use a basic type (String, Boolean, Int, Long, UInt, ULong)"
+            )
+        }
+    }
+
+    /**
      * Handle option type (nullable values)
      */
     private fun handleOptionType(value: Any?, typeDef: SCSpecTypeDefXdr.Option): SCValXdr {
@@ -781,10 +822,68 @@ class ContractSpec(private val entries: List<SCSpecEntryXdr>) {
     }
 
     /**
-     * Handle result type (success/error union)
+     * Handles SC_SPEC_TYPE_RESULT conversion.
+     * Converts Kotlin Result<T, E> or Ok/Error representations to SCValXdr.
      */
-    private fun handleResultType(value: Any?, typeDef: SCSpecTypeDefXdr.Result): SCValXdr {
-        throw ContractSpecException.conversionFailed("Result type conversion not yet implemented")
+    private fun handleResultType(value: Any, typeDef: SCSpecTypeDefXdr.Result): SCValXdr {
+        val resultTypeDef = typeDef.value
+
+        return when (value) {
+            // Handle Kotlin Result<T, E>
+            is kotlin.Result<*> -> {
+                value.fold(
+                    onSuccess = { okValue ->
+                        val okType = resultTypeDef.okType
+                        if (okValue == null || okType.discriminant == SCSpecTypeXdr.SC_SPEC_TYPE_VOID) {
+                            SCValXdr.Void(SCValTypeXdr.SCV_VOID)
+                        } else {
+                            nativeToXdrSCVal(okValue, okType)
+                        }
+                    },
+                    onFailure = { error ->
+                        val errorType = resultTypeDef.errorType
+                        when {
+                            errorType.discriminant == SCSpecTypeXdr.SC_SPEC_TYPE_ERROR -> {
+                                // Convert exception to error
+                                handleErrorType(1)  // Default contract error code for generic exceptions
+                            }
+                            else -> nativeToXdrSCVal(error, errorType)
+                        }
+                    }
+                )
+            }
+
+            // Handle Map with "ok" or "error" keys
+            is Map<*, *> -> {
+                when {
+                    value.containsKey("ok") -> {
+                        val okValue = value["ok"]
+                        val okType = resultTypeDef.okType
+                        if (okValue == null || okType.discriminant == SCSpecTypeXdr.SC_SPEC_TYPE_VOID) {
+                            SCValXdr.Void(SCValTypeXdr.SCV_VOID)
+                        } else {
+                            nativeToXdrSCVal(okValue, okType)
+                        }
+                    }
+                    value.containsKey("error") -> {
+                        val errorValue = value["error"]
+                            ?: throw ContractSpecException.invalidType("Result 'error' value cannot be null")
+                        val errorType = resultTypeDef.errorType
+                        nativeToXdrSCVal(errorValue, errorType)
+                    }
+                    else -> throw ContractSpecException.invalidType(
+                        "Result Map must contain either 'ok' or 'error' key"
+                    )
+                }
+            }
+
+            // Handle already-converted SCValXdr (any type is valid for Result)
+            is SCValXdr -> value
+
+            else -> throw ContractSpecException.invalidType(
+                "Expected kotlin.Result, Map with 'ok'/'error' keys, or SCValXdr for SC_SPEC_TYPE_RESULT, got ${value::class.simpleName}"
+            )
+        }
     }
 
     /**
