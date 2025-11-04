@@ -5,6 +5,7 @@ import com.soneso.demo.stellar.AccountFundingResult
 import com.soneso.demo.stellar.ContractDetailsResult
 import com.soneso.demo.stellar.ContractMetadata
 import com.soneso.demo.stellar.DeployContractResult
+import com.soneso.demo.stellar.InvokeTokenResult
 import com.soneso.demo.stellar.KeyPairGenerationResult
 import com.soneso.demo.stellar.SendPaymentResult
 import com.soneso.demo.stellar.TrustAssetResult
@@ -13,6 +14,8 @@ import com.soneso.demo.stellar.fetchAccountDetails
 import com.soneso.demo.stellar.fetchContractDetails
 import com.soneso.demo.stellar.fundTestnetAccount
 import com.soneso.demo.stellar.generateRandomKeyPair
+import com.soneso.demo.stellar.invokeTokenFunction
+import com.soneso.demo.stellar.loadTokenContract
 import com.soneso.demo.stellar.sendPayment
 import com.soneso.demo.stellar.trustAsset
 import com.soneso.stellar.sdk.KeyPair
@@ -196,6 +199,77 @@ class MacOSBridge {
             constructorArgs = constructorArgs,
             sourceAccountId = sourceAccountId,
             secretKey = secretKey
+        )
+    }
+
+    /**
+     * Load a Stellar token contract and validate its compliance with the SEP-41 token interface.
+     * Call this from Swift using async/await.
+     *
+     * Uses the centralized InvokeTokenContract business logic to maintain consistency
+     * across all platform UIs (Compose, SwiftUI, Web).
+     *
+     * This demonstrates:
+     * - Loading contract specifications from the network
+     * - Token interface validation (SEP-41 compliance)
+     * - Function signature parsing with protocol version compatibility
+     * - Fetching token metadata (name, symbol)
+     * - Current ledger information for expiration parameters
+     *
+     * @param contractId The Stellar contract ID to load (must start with 'C')
+     * @return InvokeTokenResult.ContractLoaded with contract details or InvokeTokenResult.Error
+     */
+    suspend fun loadTokenContract(contractId: String): InvokeTokenResult {
+        return com.soneso.demo.stellar.loadTokenContract(contractId)
+    }
+
+    /**
+     * Invoke a function on a loaded token contract.
+     * Call this from Swift using async/await.
+     *
+     * Uses the centralized InvokeTokenContract business logic to maintain consistency
+     * across all platform UIs (Compose, SwiftUI, Web).
+     *
+     * This demonstrates:
+     * - Hybrid signing approach (expected signers + dynamic discovery)
+     * - Multi-signature support for authorization
+     * - Read-only vs write function handling
+     * - Automatic type conversion for contract arguments
+     * - Dynamic signer discovery with needsNonInvokerSigningBy()
+     *
+     * @param contractLoaded The loaded contract result from loadTokenContract
+     * @param functionName The name of the function to invoke
+     * @param arguments Function arguments as Map (parameter name -> value as String)
+     * @param sourceAccountId The source account ID for write transactions (ignored for read-only)
+     * @param signerSeeds List of secret seeds for signing (S... format)
+     * @return InvokeTokenResult indicating success, additional signers needed, or error
+     */
+    suspend fun invokeTokenFunction(
+        contractLoaded: InvokeTokenResult.ContractLoaded,
+        functionName: String,
+        arguments: Map<String, Any?>,
+        sourceAccountId: String?,
+        signerSeeds: List<String>
+    ): InvokeTokenResult {
+        // Convert secret seeds to KeyPair objects
+        val signerKeyPairs = signerSeeds.mapNotNull { seed ->
+            if (seed.isBlank()) return@mapNotNull null
+            try {
+                KeyPair.fromSecretSeed(seed)
+            } catch (e: Exception) {
+                return InvokeTokenResult.Error(
+                    message = "Invalid secret seed: ${e.message}",
+                    exception = e
+                )
+            }
+        }
+
+        return com.soneso.demo.stellar.invokeTokenFunction(
+            client = contractLoaded.client,
+            functionName = functionName,
+            arguments = arguments,
+            sourceAccountId = sourceAccountId,
+            signerKeyPairs = signerKeyPairs
         )
     }
 }

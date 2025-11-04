@@ -36,6 +36,7 @@ import com.soneso.demo.stellar.fetchTransactionFromRpc
 import com.soneso.demo.ui.components.AnimatedButton
 import com.soneso.demo.ui.components.InfoCard
 import com.soneso.demo.ui.components.StellarTopBar
+import com.soneso.demo.ui.components.*
 import com.soneso.demo.ui.FormValidation
 import com.soneso.stellar.sdk.horizon.responses.TransactionResponse
 import com.soneso.stellar.sdk.horizon.responses.operations.*
@@ -54,7 +55,7 @@ class FetchTransactionScreen : Screen {
         val coroutineScope = rememberCoroutineScope()
 
         // State management
-        var transactionHash by remember { mutableStateOf("639cce30b6c166224010e31abf4ae60468d3480bfc5140eb2abf0eea3e4edf99") }
+        var transactionHash by remember { mutableStateOf("") }
         var useHorizon by remember { mutableStateOf(true) }
         var isLoading by remember { mutableStateOf(false) }
         var fetchResult by remember { mutableStateOf<FetchTransactionResult?>(null) }
@@ -135,101 +136,82 @@ class FetchTransactionScreen : Screen {
                 )
 
                 // API Selection & Input Card (Gold - Starlight)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFFBF0) // Starlight Gold
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(
-                                width = 1.dp,
-                                color = Color(0xFFD97706).copy(alpha = 0.3f),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                            .padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                GoldCard(modifier = Modifier.fillMaxWidth()) {
+                    // API Selection Switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // API Selection Switch
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = if (useHorizon) "Using Horizon API" else "Using Soroban RPC",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFA85A00) // Starlight Gold Dark
-                                )
-                                Text(
-                                    text = "Switch between Horizon and RPC",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFFA85A00).copy(alpha = 0.7f),
-                                    lineHeight = 22.sp
-                                )
-                            }
-                            Switch(
-                                checked = useHorizon,
-                                onCheckedChange = {
-                                    useHorizon = it
-                                    fetchResult = null
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color(0xFFD97706),
-                                    checkedTrackColor = Color(0xFFD97706).copy(alpha = 0.5f)
-                                )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (useHorizon) "Using Horizon API" else "Using Soroban RPC",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFA85A00) // Starlight Gold Dark
+                            )
+                            Text(
+                                text = "Switch between Horizon and RPC",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFFA85A00).copy(alpha = 0.7f),
+                                lineHeight = 22.sp
                             )
                         }
-
-                        HorizontalDivider(color = Color(0xFFD97706).copy(alpha = 0.2f))
-
-                        // Transaction Hash Input
-                        OutlinedTextField(
-                            value = transactionHash,
-                            onValueChange = {
-                                transactionHash = it.trim().lowercase()
-                                validationError = null
+                        Switch(
+                            checked = useHorizon,
+                            onCheckedChange = {
+                                useHorizon = it
                                 fetchResult = null
                             },
-                            label = {
-                                Text(
-                                    "Transaction Hash",
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            },
-                            placeholder = { Text("64-character hex string") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationError != null,
-                            supportingText = validationError?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = Color(0xFF991B1B),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { fetchTransaction() }
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFFD97706),
+                                checkedTrackColor = Color(0xFFD97706).copy(alpha = 0.5f)
                             )
                         )
                     }
+
+                    HorizontalDivider(color = Color(0xFFD97706).copy(alpha = 0.2f))
+
+                    // Transaction Hash Input
+                    OutlinedTextField(
+                        value = transactionHash,
+                        onValueChange = {
+                            transactionHash = it.trim().lowercase()
+                            validationError = null
+                            fetchResult = null
+                        },
+                        label = {
+                            Text(
+                                "Transaction Hash",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        placeholder = { Text("64-character hex string") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationError != null,
+                        supportingText = validationError?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = Color(0xFF991B1B),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { fetchTransaction() }
+                        )
+                    )
                 }
 
                 // Submit button
@@ -282,56 +264,23 @@ private fun HorizonTransactionCards(
     onCopy: (String, String) -> Unit
 ) {
     // Success header card (Teal or Red)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (transaction.successful) {
-                Color(0xFFF0FDFA) // Nebula Teal
-            } else {
-                Color(0xFFFEF2F2) // Nova Red
-            }
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = if (transaction.successful) {
-                        Color(0xFF0F766E).copy(alpha = 0.3f)
-                    } else {
-                        Color(0xFF991B1B).copy(alpha = 0.3f)
-                    },
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    if (transaction.successful) {
+        TealCard(modifier = Modifier.fillMaxWidth()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    imageVector = if (transaction.successful) Icons.Default.CheckCircle else Icons.Default.Error,
+                    imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
-                    tint = if (transaction.successful) {
-                        Color(0xFF0F766E) // Nebula Teal Dark
-                    } else {
-                        Color(0xFF991B1B) // Nova Red Dark
-                    }
+                    tint = Color(0xFF0F766E) // Nebula Teal Dark
                 )
                 Text(
-                    text = if (transaction.successful) "Success" else "Failed",
+                    text = "Success",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (transaction.successful) {
-                        Color(0xFF0F766E)
-                    } else {
-                        Color(0xFF991B1B)
-                    },
+                    color = Color(0xFF0F766E),
                     lineHeight = 22.sp
                 )
             }
@@ -339,95 +288,81 @@ private fun HorizonTransactionCards(
                 text = "Fetched from Horizon API",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = if (transaction.successful) {
-                    Color(0xFF0F766E).copy(alpha = 0.85f)
-                } else {
-                    Color(0xFF991B1B).copy(alpha = 0.85f)
-                },
+                color = Color(0xFF0F766E).copy(alpha = 0.85f),
+                lineHeight = 22.sp
+            )
+        }
+    } else {
+        com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = Color(0xFF991B1B) // Nova Red Dark
+                )
+                Text(
+                    text = "Failed",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF991B1B),
+                    lineHeight = 22.sp
+                )
+            }
+            Text(
+                text = "Fetched from Horizon API",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF991B1B).copy(alpha = 0.85f),
                 lineHeight = 22.sp
             )
         }
     }
 
     // Basic Information Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Basic Information",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3), // Stellar Blue Dark
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Basic Information",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3), // Stellar Blue Dark
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            CopyableDetailRow("Hash", transaction.hash, onCopy)
-            DetailRow("ID", transaction.id)
-            DetailRow("Successful", if (transaction.successful) "Yes" else "No")
-            DetailRow("Ledger", transaction.ledger.toString())
-            DetailRow("Created At", transaction.createdAt)
-            DetailRow("Paging Token", transaction.pagingToken)
-        }
+        CopyableDetailRow("Hash", transaction.hash, onCopy)
+        DetailRow("ID", transaction.id)
+        DetailRow("Successful", if (transaction.successful) "Yes" else "No")
+        DetailRow("Ledger", transaction.ledger.toString())
+        DetailRow("Created At", transaction.createdAt)
+        DetailRow("Paging Token", transaction.pagingToken)
     }
 
     // Account and Fees Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Account and Fees",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Account and Fees",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            CopyableDetailRow("Source Account", transaction.sourceAccount, onCopy)
-            transaction.accountMuxed?.let { muxed ->
-                CopyableDetailRow("Account Muxed", muxed, onCopy)
-            }
-            transaction.accountMuxedId?.let { muxedId ->
-                DetailRow("Account Muxed ID", muxedId)
-            }
-            DetailRow("Source Sequence", transaction.sourceAccountSequence.toString())
-            CopyableDetailRow("Fee Account", transaction.feeAccount, onCopy)
-            DetailRow("Fee Charged", "${transaction.feeCharged} stroops (${transaction.feeCharged / 10_000_000.0} XLM)")
-            DetailRow("Max Fee", "${transaction.maxFee} stroops (${transaction.maxFee / 10_000_000.0} XLM)")
+        CopyableDetailRow("Source Account", transaction.sourceAccount, onCopy)
+        transaction.accountMuxed?.let { muxed ->
+            CopyableDetailRow("Account Muxed", muxed, onCopy)
         }
+        transaction.accountMuxedId?.let { muxedId ->
+            DetailRow("Account Muxed ID", muxedId)
+        }
+        DetailRow("Source Sequence", transaction.sourceAccountSequence.toString())
+        CopyableDetailRow("Fee Account", transaction.feeAccount, onCopy)
+        DetailRow("Fee Charged", "${transaction.feeCharged} stroops (${transaction.feeCharged / 10_000_000.0} XLM)")
+        DetailRow("Max Fee", "${transaction.maxFee} stroops (${transaction.maxFee / 10_000_000.0} XLM)")
     }
 
     // Operations Card (expandable)
@@ -436,128 +371,71 @@ private fun HorizonTransactionCards(
     }
 
     // Memo Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Memo",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Memo",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            DetailRow("Memo Type", transaction.memoType)
-            transaction.memoValue?.let { memo ->
-                CopyableDetailRow("Memo Value", memo, onCopy)
-            }
-            transaction.memoBytes?.let { bytes ->
-                CopyableDetailRow("Memo Bytes", bytes, onCopy)
-            }
+        DetailRow("Memo Type", transaction.memoType)
+        transaction.memoValue?.let { memo ->
+            CopyableDetailRow("Memo Value", memo, onCopy)
+        }
+        transaction.memoBytes?.let { bytes ->
+            CopyableDetailRow("Memo Bytes", bytes, onCopy)
         }
     }
 
     // Signatures Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Signatures (${transaction.signatures.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Signatures (${transaction.signatures.size})",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            if (transaction.signatures.isEmpty()) {
-                Text(
-                    text = "No signatures",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            } else {
-                transaction.signatures.forEachIndexed { index, signature ->
-                    CopyableDetailRow("Signature ${index + 1}", signature, onCopy)
-                }
+        if (transaction.signatures.isEmpty()) {
+            Text(
+                text = "No signatures",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
+        } else {
+            transaction.signatures.forEachIndexed { index, signature ->
+                CopyableDetailRow("Signature ${index + 1}", signature, onCopy)
             }
         }
     }
 
     // XDR Data Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "XDR Data",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "XDR Data",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            transaction.envelopeXdr?.let { xdr ->
-                CopyableDetailRow("Envelope XDR", xdr, onCopy)
-            }
-            transaction.resultXdr?.let { xdr ->
-                CopyableDetailRow("Result XDR", xdr, onCopy)
-            }
-            transaction.resultMetaXdr?.let { xdr ->
-                CopyableDetailRow("Result Meta XDR", xdr, onCopy)
-            }
-            transaction.feeMetaXdr?.let { xdr ->
-                CopyableDetailRow("Fee Meta XDR", xdr, onCopy)
-            }
+        transaction.envelopeXdr?.let { xdr ->
+            CopyableDetailRow("Envelope XDR", xdr, onCopy)
+        }
+        transaction.resultXdr?.let { xdr ->
+            CopyableDetailRow("Result XDR", xdr, onCopy)
+        }
+        transaction.resultMetaXdr?.let { xdr ->
+            CopyableDetailRow("Result Meta XDR", xdr, onCopy)
+        }
+        transaction.feeMetaXdr?.let { xdr ->
+            CopyableDetailRow("Fee Meta XDR", xdr, onCopy)
         }
     }
 }
@@ -570,131 +448,112 @@ private fun OperationsCard(
     // Track which operations are expanded
     var expandedOperations by remember { mutableStateOf(setOf<Int>()) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Operations (${operations.size})",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3), // Stellar Blue Dark
+            lineHeight = 22.sp
+        )
+        Text(
+            text = "Click on an operation to view details",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF0639A3).copy(alpha = 0.7f),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+
+        operations.forEachIndexed { index, operation ->
+            val isExpanded = expandedOperations.contains(index)
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        expandedOperations = if (isExpanded) {
+                            expandedOperations - index
+                        } else {
+                            expandedOperations + index
+                        }
+                    },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Operations (${operations.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3), // Stellar Blue Dark
-                lineHeight = 22.sp
-            )
-            Text(
-                text = "Click on an operation to view details",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF0639A3).copy(alpha = 0.7f),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
-
-            operations.forEachIndexed { index, operation ->
-                val isExpanded = expandedOperations.contains(index)
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            expandedOperations = if (isExpanded) {
-                                expandedOperations - index
-                            } else {
-                                expandedOperations + index
-                            }
-                        },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Operation header (always visible)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Operation header (always visible)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Operation ${index + 1}: ${operation.type.replace("_", " ").uppercase()}",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand"
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Operation ${index + 1}: ${operation.type.replace("_", " ").uppercase()}",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
                             )
                         }
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (isExpanded) "Collapse" else "Expand"
+                        )
+                    }
 
-                        // Operation ID row (always visible, full ID with copy button)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
+                    // Operation ID row (always visible, full ID with copy button)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
+                            Text(
+                                text = "Operation ID",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            )
+                            SelectionContainer {
                                 Text(
-                                    text = "Operation ID",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                                SelectionContainer {
-                                    Text(
-                                        text = operation.id,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontFamily = FontFamily.Monospace,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            IconButton(
-                                onClick = { onCopy(operation.id, "Operation ID") },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copy operation ID",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                    text = operation.id,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontFamily = FontFamily.Monospace,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
-
-                        // Expandable operation details
-                        AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically()
+                        IconButton(
+                            onClick = { onCopy(operation.id, "Operation ID") },
+                            modifier = Modifier.size(32.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(top = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                HorizontalDivider()
-                                OperationDetails(operation, onCopy)
-                            }
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy operation ID",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    // Expandable operation details
+                    AnimatedVisibility(
+                        visible = isExpanded,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            HorizontalDivider()
+                            OperationDetails(operation, onCopy)
                         }
                     }
                 }
@@ -1059,46 +918,46 @@ private fun RpcTransactionCards(
 ) {
     // Success header card (Teal or Red)
     val isSuccess = transaction.status == GetTransactionStatus.SUCCESS
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSuccess) {
-                Color(0xFFF0FDFA) // Nebula Teal
-            } else {
-                Color(0xFFFEF2F2) // Nova Red
-            }
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = if (isSuccess) {
-                        Color(0xFF0F766E).copy(alpha = 0.3f)
-                    } else {
-                        Color(0xFF991B1B).copy(alpha = 0.3f)
-                    },
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+
+    if (isSuccess) {
+        TealCard(modifier = Modifier.fillMaxWidth()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                    imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
-                    tint = if (isSuccess) {
-                        Color(0xFF0F766E)
-                    } else {
-                        Color(0xFF991B1B)
-                    }
+                    tint = Color(0xFF0F766E)
+                )
+                Text(
+                    text = "Success",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F766E),
+                    lineHeight = 22.sp
+                )
+            }
+            Text(
+                text = "Fetched from Soroban RPC",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF0F766E).copy(alpha = 0.85f),
+                lineHeight = 22.sp
+            )
+        }
+    } else {
+        com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Error,
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    tint = Color(0xFF991B1B)
                 )
                 Text(
                     text = when (transaction.status) {
@@ -1108,11 +967,7 @@ private fun RpcTransactionCards(
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSuccess) {
-                        Color(0xFF0F766E)
-                    } else {
-                        Color(0xFF991B1B)
-                    },
+                    color = Color(0xFF991B1B),
                     lineHeight = 22.sp
                 )
             }
@@ -1120,61 +975,38 @@ private fun RpcTransactionCards(
                 text = "Fetched from Soroban RPC",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = if (isSuccess) {
-                    Color(0xFF0F766E).copy(alpha = 0.85f)
-                } else {
-                    Color(0xFF991B1B).copy(alpha = 0.85f)
-                },
+                color = Color(0xFF991B1B).copy(alpha = 0.85f),
                 lineHeight = 22.sp
             )
         }
     }
 
     // Transaction Information Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Transaction Information",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Transaction Information",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            DetailRow("Status", transaction.status.toString())
-            transaction.txHash?.let { hash ->
-                CopyableDetailRow("Transaction Hash", hash, onCopy)
-            }
-            transaction.ledger?.let { ledger ->
-                DetailRow("Ledger", ledger.toString())
-            }
-            transaction.createdAt?.let { timestamp ->
-                DetailRow("Created At", timestamp.toString())
-            }
-            transaction.applicationOrder?.let { order ->
-                DetailRow("Application Order", order.toString())
-            }
-            transaction.feeBump?.let { isFeeBump ->
-                DetailRow("Fee Bump", if (isFeeBump) "Yes" else "No")
-            }
+        DetailRow("Status", transaction.status.toString())
+        transaction.txHash?.let { hash ->
+            CopyableDetailRow("Transaction Hash", hash, onCopy)
+        }
+        transaction.ledger?.let { ledger ->
+            DetailRow("Ledger", ledger.toString())
+        }
+        transaction.createdAt?.let { timestamp ->
+            DetailRow("Created At", timestamp.toString())
+        }
+        transaction.applicationOrder?.let { order ->
+            DetailRow("Application Order", order.toString())
+        }
+        transaction.feeBump?.let { isFeeBump ->
+            DetailRow("Fee Bump", if (isFeeBump) "Yes" else "No")
         }
     }
 
@@ -1184,27 +1016,35 @@ private fun RpcTransactionCards(
     }
 
     // Ledger Window Card (Blue - Nebula)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Ledger Window",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+
+        transaction.latestLedger?.let { latest ->
+            DetailRow("Latest Ledger", latest.toString())
+        }
+        transaction.latestLedgerCloseTime?.let { time ->
+            DetailRow("Latest Ledger Close", time.toString())
+        }
+        transaction.oldestLedger?.let { oldest ->
+            DetailRow("Oldest Ledger", oldest.toString())
+        }
+        transaction.oldestLedgerCloseTime?.let { time ->
+            DetailRow("Oldest Ledger Close", time.toString())
+        }
+    }
+
+    // XDR Data Card (Blue - Nebula)
+    if (transaction.envelopeXdr != null || transaction.resultXdr != null || transaction.resultMetaXdr != null) {
+        BlueCard(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "Ledger Window",
+                text = "XDR Data",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF0639A3),
@@ -1212,60 +1052,14 @@ private fun RpcTransactionCards(
             )
             HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
 
-            transaction.latestLedger?.let { latest ->
-                DetailRow("Latest Ledger", latest.toString())
+            transaction.envelopeXdr?.let { xdr ->
+                CopyableDetailRow("Envelope XDR", xdr, onCopy)
             }
-            transaction.latestLedgerCloseTime?.let { time ->
-                DetailRow("Latest Ledger Close", time.toString())
+            transaction.resultXdr?.let { xdr ->
+                CopyableDetailRow("Result XDR", xdr, onCopy)
             }
-            transaction.oldestLedger?.let { oldest ->
-                DetailRow("Oldest Ledger", oldest.toString())
-            }
-            transaction.oldestLedgerCloseTime?.let { time ->
-                DetailRow("Oldest Ledger Close", time.toString())
-            }
-        }
-    }
-
-    // XDR Data Card (Blue - Nebula)
-    if (transaction.envelopeXdr != null || transaction.resultXdr != null || transaction.resultMetaXdr != null) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFE8F1FF)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "XDR Data",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0639A3),
-                    lineHeight = 22.sp
-                )
-                HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
-
-                transaction.envelopeXdr?.let { xdr ->
-                    CopyableDetailRow("Envelope XDR", xdr, onCopy)
-                }
-                transaction.resultXdr?.let { xdr ->
-                    CopyableDetailRow("Result XDR", xdr, onCopy)
-                }
-                transaction.resultMetaXdr?.let { xdr ->
-                    CopyableDetailRow("Result Meta XDR", xdr, onCopy)
-                }
+            transaction.resultMetaXdr?.let { xdr ->
+                CopyableDetailRow("Result Meta XDR", xdr, onCopy)
             }
         }
     }
@@ -1451,99 +1245,80 @@ private fun EventsCard(
     // Track which events are expanded
     var expandedEvents by remember { mutableStateOf(setOf<Int>()) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Contract Events (${allEvents.size})",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0639A3), // Stellar Blue Dark
+            lineHeight = 22.sp
+        )
+        Text(
+            text = "Click on an event to view details",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF0639A3).copy(alpha = 0.7f),
+            lineHeight = 22.sp
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+
+        allEvents.forEachIndexed { index, eventItem ->
+            val isExpanded = expandedEvents.contains(index)
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        expandedEvents = if (isExpanded) {
+                            expandedEvents - index
+                        } else {
+                            expandedEvents + index
+                        }
+                    },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Contract Events (${allEvents.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0639A3), // Stellar Blue Dark
-                lineHeight = 22.sp
-            )
-            Text(
-                text = "Click on an event to view details",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF0639A3).copy(alpha = 0.7f),
-                lineHeight = 22.sp
-            )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
-
-            allEvents.forEachIndexed { index, eventItem ->
-                val isExpanded = expandedEvents.contains(index)
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            expandedEvents = if (isExpanded) {
-                                expandedEvents - index
-                            } else {
-                                expandedEvents + index
-                            }
-                        },
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Event header (always visible)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Event header (always visible)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = eventItem.getTitle(),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = eventItem.getSubtitle(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                            }
-                            Icon(
-                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = if (isExpanded) "Collapse" else "Expand"
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = eventItem.getTitle(),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = eventItem.getSubtitle(),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         }
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (isExpanded) "Collapse" else "Expand"
+                        )
+                    }
 
-                        // Expandable event details
-                        AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically()
+                    // Expandable event details
+                    AnimatedVisibility(
+                        visible = isExpanded,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(top = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                HorizontalDivider()
-                                EventDetails(eventItem, ledger, onCopy)
-                            }
+                            HorizontalDivider()
+                            EventDetails(eventItem, ledger, onCopy)
                         }
                     }
                 }
@@ -1968,75 +1743,56 @@ private fun DetailRow(
 @Composable
 private fun ErrorCard(error: FetchTransactionResult.Error) {
     // Error card (Red - Nova)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFEF2F2) // Nova Red
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF991B1B).copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Error,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = Color(0xFF991B1B)
-                )
-                Text(
-                    text = "Error",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF991B1B),
-                    lineHeight = 22.sp
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Error,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = Color(0xFF991B1B)
+            )
             Text(
-                text = error.message,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF991B1B).copy(alpha = 0.85f),
+                text = "Error",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF991B1B),
                 lineHeight = 22.sp
             )
-            error.exception?.let { exception ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+        }
+        Text(
+            text = error.message,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF991B1B).copy(alpha = 0.85f),
+            lineHeight = 22.sp
+        )
+        error.exception?.let { exception ->
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Text(
+                        text = "Technical Details",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF991B1B)
+                    )
+                    SelectionContainer {
                         Text(
-                            text = "Technical Details",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF991B1B)
+                            text = exception.message ?: "Unknown error",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = Color(0xFF991B1B).copy(alpha = 0.7f)
                         )
-                        SelectionContainer {
-                            Text(
-                                text = exception.message ?: "Unknown error",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFF991B1B).copy(alpha = 0.7f)
-                            )
-                        }
                     }
                 }
             }

@@ -761,3 +761,4 @@ Before ANY git operation that modifies history or working directory:
 1. Ask user for explicit permission
 2. Explain what will happen
 3. Wait for confirmation
+- the stellar token interface is defined here https://developers.stellar.org/docs/tokens/token-interface

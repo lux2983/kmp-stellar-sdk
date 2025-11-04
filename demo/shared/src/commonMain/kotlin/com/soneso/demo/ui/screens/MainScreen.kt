@@ -13,7 +13,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
@@ -118,6 +118,12 @@ class MainScreen : Screen {
                 description = "Dynamic authorization handling: same-invoker vs different-invoker scenarios",
                 icon = Icons.Default.VerifiedUser,
                 screen = InvokeAuthContractScreen()
+            ),
+            DemoTopic(
+                title = "Invoke Token Contract",
+                description = "Interact with Stellar token contracts using dynamic function selection",
+                icon = Icons.Default.AttachMoney,
+                screen = InvokeTokenContractScreen()
             )
         )
 
@@ -146,9 +152,10 @@ class MainScreen : Screen {
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(demoTopics) { topic ->
+                    itemsIndexed(demoTopics) { index, topic ->
                         DemoTopicCard(
                             topic = topic,
+                            colorIndex = index,
                             onClick = { navigator.push(topic.screen) }
                         )
                     }
@@ -161,6 +168,7 @@ class MainScreen : Screen {
 @Composable
 fun DemoTopicCard(
     topic: DemoTopic,
+    colorIndex: Int,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }

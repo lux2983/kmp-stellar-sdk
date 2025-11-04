@@ -431,9 +431,9 @@ class FundAccountScreen : Screen {
                                     SelectionContainer {
                                         Text(
                                             text = "${result.accountId} has been successfully funded on the Stellar testnet.",
-                                            style = MaterialTheme.typography.bodyLarge,
+                                            style = MaterialTheme.typography.bodySmall,
                                             color = Color(0xFF0F766E).copy(alpha = 0.9f),
-                                            lineHeight = 24.sp
+                                            lineHeight = 20.sp
                                         )
                                     }
                                     Card(

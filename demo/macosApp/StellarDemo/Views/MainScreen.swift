@@ -103,6 +103,14 @@ struct MainScreen: View {
                         icon: "checkmark.shield.fill",
                         destination: InvokeAuthContractScreen(toastManager: toastManager)
                     )
+
+                    // Invoke Token Contract topic
+                    DemoTopicCard(
+                        title: "Invoke Token Contract",
+                        description: "Interact with SEP-41 compliant token contracts with hybrid signing approach",
+                        icon: "bitcoinsign.circle.fill",
+                        destination: InvokeTokenContractScreen(toastManager: toastManager)
+                    )
                 }
             }
             .padding(16)

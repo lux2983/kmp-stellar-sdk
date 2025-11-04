@@ -29,6 +29,7 @@ import com.soneso.demo.stellar.generateRandomKeyPair
 import com.soneso.demo.ui.components.StellarTopBar
 import com.soneso.demo.ui.components.AnimatedButton
 import com.soneso.demo.ui.components.InfoCard
+import com.soneso.demo.ui.components.*
 import com.soneso.stellar.sdk.KeyPair
 import kotlinx.coroutines.launch
 
@@ -133,7 +134,7 @@ class KeyGenerationScreen : Screen {
 
                     // Display generated keypair
                     keypair?.let { kp ->
-                        // Public Key Card
+                        // Public Key Card - Blue
                         KeyDisplayCard(
                             title = "Public Key (Account ID)",
                             value = kp.getAccountId(),
@@ -150,7 +151,7 @@ class KeyGenerationScreen : Screen {
                             }
                         )
 
-                        // Secret Seed Card
+                        // Secret Seed Card - Gold
                         SecretKeyDisplayCard(
                             title = "Secret Seed",
                             keypair = kp,
@@ -183,65 +184,52 @@ private fun KeyDisplayCard(
     description: String,
     onCopy: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFF0A4FD6).copy(alpha = 0.2f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // NebulaBlue
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFF0639A3) // StellarBlueDark
-                )
-
-                IconButton(
-                    onClick = onCopy,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy to clipboard",
-                        tint = Color(0xFF0A4FD6), // StellarBlue
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            SelectionContainer {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    fontFamily = FontFamily.Monospace,
-                    color = Color(0xFF0639A3).copy(alpha = 0.9f),
-                    modifier = Modifier.fillMaxWidth(),
-                    lineHeight = 24.sp
-                )
-            }
-
             Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF0639A3).copy(alpha = 0.7f),
-                lineHeight = 20.sp
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = Color(0xFF0639A3) // StellarBlueDark
+            )
+
+            IconButton(
+                onClick = onCopy,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Copy to clipboard",
+                    tint = Color(0xFF0A4FD6), // StellarBlue
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        SelectionContainer {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                fontFamily = FontFamily.Monospace,
+                color = Color(0xFF0639A3).copy(alpha = 0.9f),
+                modifier = Modifier.fillMaxWidth(),
+                lineHeight = 24.sp
             )
         }
+
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF0639A3).copy(alpha = 0.7f),
+            lineHeight = 20.sp
+        )
     }
 }
 
@@ -254,84 +242,71 @@ private fun SecretKeyDisplayCard(
     onToggleVisibility: () -> Unit,
     onCopy: () -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFD97706).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFFFBF0) // Warm light gold background
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    GoldCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFFA85A00) // StarlightGoldDark
-                )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = Color(0xFFA85A00) // StarlightGoldDark
+            )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    IconButton(
-                        onClick = onToggleVisibility,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (isVisible) "Hide secret" else "Show secret",
-                            tint = Color(0xFFD97706), // StarlightGold
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(
+                    onClick = onToggleVisibility,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        contentDescription = if (isVisible) "Hide secret" else "Show secret",
+                        tint = Color(0xFFD97706), // StarlightGold
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
 
-                    IconButton(
-                        onClick = onCopy,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy to clipboard",
-                            tint = Color(0xFFD97706), // StarlightGold
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                IconButton(
+                    onClick = onCopy,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy to clipboard",
+                        tint = Color(0xFFD97706), // StarlightGold
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
+        }
 
-            SelectionContainer {
-                Text(
-                    text = if (isVisible) {
-                        keypair.getSecretSeed()?.concatToString() ?: ""
-                    } else {
-                        "•".repeat(56)
-                    },
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    fontFamily = FontFamily.Monospace,
-                    color = Color(0xFFA85A00).copy(alpha = 0.9f),
-                    modifier = Modifier.fillMaxWidth(),
-                    lineHeight = 24.sp
-                )
-            }
-
+        SelectionContainer {
             Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall.copy(
+                text = if (isVisible) {
+                    keypair.getSecretSeed()?.concatToString() ?: ""
+                } else {
+                    "•".repeat(56)
+                },
+                style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Medium
                 ),
-                color = Color(0xFFA85A00).copy(alpha = 0.7f),
-                lineHeight = 20.sp
+                fontFamily = FontFamily.Monospace,
+                color = Color(0xFFA85A00).copy(alpha = 0.9f),
+                modifier = Modifier.fillMaxWidth(),
+                lineHeight = 24.sp
             )
         }
+
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.Medium
+            ),
+            color = Color(0xFFA85A00).copy(alpha = 0.7f),
+            lineHeight = 20.sp
+        )
     }
 }

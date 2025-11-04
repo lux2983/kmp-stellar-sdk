@@ -39,6 +39,7 @@ import com.soneso.demo.ui.FormValidation
 import com.soneso.demo.ui.components.AnimatedButton
 import com.soneso.demo.ui.components.InfoCard
 import com.soneso.demo.ui.components.StellarTopBar
+import com.soneso.demo.ui.components.*
 import com.soneso.stellar.sdk.ChangeTrustOperation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -172,197 +173,184 @@ class TrustAssetScreen : Screen {
                 )
 
                 // Input Fields Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFD97706).copy(alpha = 0.3f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFFBF0) // Warm light gold background
+                GoldCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Asset Configuration",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color(0xFFA85A00) // StarlightGoldDark
                     )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "Asset Configuration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = Color(0xFFA85A00) // StarlightGoldDark
-                        )
 
-                        // Account ID Input
-                        OutlinedTextField(
-                            value = accountId,
-                            onValueChange = {
-                                accountId = it.trim()
-                                validationErrors = validationErrors - "accountId"
-                                trustResult = null
-                            },
-                            label = { Text("Account ID") },
-                            placeholder = { Text("G...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("accountId"),
-                            supportingText = validationErrors["accountId"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                    // Account ID Input
+                    OutlinedTextField(
+                        value = accountId,
+                        onValueChange = {
+                            accountId = it.trim()
+                            validationErrors = validationErrors - "accountId"
+                            trustResult = null
+                        },
+                        label = { Text("Account ID") },
+                        placeholder = { Text("G...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("accountId"),
+                        supportingText = validationErrors["accountId"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
 
-                        // Asset Code Input
-                        OutlinedTextField(
-                            value = assetCode,
-                            onValueChange = {
-                                // Auto-uppercase for asset codes
-                                assetCode = it.uppercase().trim()
-                                validationErrors = validationErrors - "assetCode"
-                                trustResult = null
-                            },
-                            label = { Text("Asset Code") },
-                            placeholder = { Text("USD, EUR, USDC, etc.") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("assetCode"),
-                            supportingText = validationErrors["assetCode"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                    // Asset Code Input
+                    OutlinedTextField(
+                        value = assetCode,
+                        onValueChange = {
+                            // Auto-uppercase for asset codes
+                            assetCode = it.uppercase().trim()
+                            validationErrors = validationErrors - "assetCode"
+                            trustResult = null
+                        },
+                        label = { Text("Asset Code") },
+                        placeholder = { Text("USD, EUR, USDC, etc.") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("assetCode"),
+                        supportingText = validationErrors["assetCode"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
 
-                        // Asset Issuer Input
-                        OutlinedTextField(
-                            value = assetIssuer,
-                            onValueChange = {
-                                assetIssuer = it.trim()
-                                validationErrors = validationErrors - "assetIssuer"
-                                trustResult = null
-                            },
-                            label = { Text("Asset Issuer") },
-                            placeholder = { Text("G...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("assetIssuer"),
-                            supportingText = validationErrors["assetIssuer"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                    // Asset Issuer Input
+                    OutlinedTextField(
+                        value = assetIssuer,
+                        onValueChange = {
+                            assetIssuer = it.trim()
+                            validationErrors = validationErrors - "assetIssuer"
+                            trustResult = null
+                        },
+                        label = { Text("Asset Issuer") },
+                        placeholder = { Text("G...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("assetIssuer"),
+                        supportingText = validationErrors["assetIssuer"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
 
-                        // Trust Limit Input (Optional)
-                        OutlinedTextField(
-                            value = trustLimit,
-                            onValueChange = {
-                                trustLimit = it.trim()
-                                validationErrors = validationErrors - "trustLimit"
-                                trustResult = null
-                            },
-                            label = { Text("Trust Limit (Optional)") },
-                            placeholder = { Text("Leave empty for maximum") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("trustLimit"),
-                            supportingText = validationErrors["trustLimit"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                    // Trust Limit Input (Optional)
+                    OutlinedTextField(
+                        value = trustLimit,
+                        onValueChange = {
+                            trustLimit = it.trim()
+                            validationErrors = validationErrors - "trustLimit"
+                            trustResult = null
+                        },
+                        label = { Text("Trust Limit (Optional)") },
+                        placeholder = { Text("Leave empty for maximum") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("trustLimit"),
+                        supportingText = validationErrors["trustLimit"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
 
-                        // Secret Seed Input
-                        OutlinedTextField(
-                            value = secretSeed,
-                            onValueChange = {
-                                secretSeed = it.trim()
-                                validationErrors = validationErrors - "secretSeed"
-                                trustResult = null
-                            },
-                            label = { Text("Secret Seed") },
-                            placeholder = { Text("S...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            visualTransformation = PasswordVisualTransformation(),
-                            isError = validationErrors.containsKey("secretSeed"),
-                            supportingText = validationErrors["secretSeed"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { submitTrustAsset() }
-                            ),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                    }
+                    // Secret Seed Input
+                    OutlinedTextField(
+                        value = secretSeed,
+                        onValueChange = {
+                            secretSeed = it.trim()
+                            validationErrors = validationErrors - "secretSeed"
+                            trustResult = null
+                        },
+                        label = { Text("Secret Seed") },
+                        placeholder = { Text("S...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = validationErrors.containsKey("secretSeed"),
+                        supportingText = validationErrors["secretSeed"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { submitTrustAsset() }
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                 }
 
                 // Submit button using AnimatedButton component
@@ -414,160 +402,121 @@ class TrustAssetScreen : Screen {
 @Composable
 private fun TrustAssetSuccessCard(success: TrustAssetResult.Success, snackbarHostState: SnackbarHostState, scope: CoroutineScope) {
     // Success header card with teal celestial styling
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFF0D9488).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF0FDFA) // NebulaTealContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    TealCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color(0xFF0F766E), // NebulaTealDark
-                    modifier = Modifier.size(28.dp)
-                )
-                Text(
-                    text = "Success",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFF0F766E) // NebulaTealDark
-                )
-            }
-            SelectionContainer {
-                Text(
-                    text = if (success.limit == "0" || success.limit.toDoubleOrNull() == 0.0) {
-                        "Trustline successfully removed"
-                    } else {
-                        "Trustline established successfully"
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color(0xFF0F766E).copy(alpha = 0.9f),
-                    lineHeight = 24.sp
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF0F766E), // NebulaTealDark
+                modifier = Modifier.size(28.dp)
+            )
+            Text(
+                text = "Success",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = Color(0xFF0F766E) // NebulaTealDark
+            )
+        }
+        SelectionContainer {
+            Text(
+                text = if (success.limit == "0" || success.limit.toDoubleOrNull() == 0.0) {
+                    "Trustline successfully removed"
+                } else {
+                    "Trustline established successfully"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF0F766E).copy(alpha = 0.9f),
+                lineHeight = 20.sp
+            )
         }
     }
 
     // Transaction Hash Card with blue styling
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFF0A4FD6).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // NebulaBlue
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Transaction Hash",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFF0639A3) // StellarBlueDark
-                )
-
-                val copyInteractionSource = remember { MutableInteractionSource() }
-                val isCopyHovered by copyInteractionSource.collectIsHoveredAsState()
-                val copyButtonScale by animateFloatAsState(
-                    targetValue = if (isCopyHovered) 1.1f else 1f,
-                    animationSpec = tween(durationMillis = 150),
-                    label = "copy_button_scale"
-                )
-
-                IconButton(
-                    onClick = {
-                        scope.launch {
-                            val clipboard = getClipboard()
-                            val copied = clipboard.copyToClipboard(success.transactionHash)
-                            snackbarHostState.showSnackbar(
-                                if (copied) "Transaction hash copied to clipboard"
-                                else "Failed to copy to clipboard"
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .scale(copyButtonScale)
-                        .hoverable(interactionSource = copyInteractionSource)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copy transaction hash",
-                        tint = Color(0xFF0A4FD6), // StellarBlue
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            SelectionContainer {
-                Text(
-                    text = success.transactionHash,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    fontFamily = FontFamily.Monospace,
-                    color = Color(0xFF0639A3).copy(alpha = 0.9f),
-                    lineHeight = 22.sp
-                )
-            }
-        }
-    }
-
-    // Transaction Details Card with blue styling
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFF0A4FD6).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // NebulaBlue
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Transaction Details",
+                text = "Transaction Hash",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
                 color = Color(0xFF0639A3) // StellarBlueDark
             )
 
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+            val copyInteractionSource = remember { MutableInteractionSource() }
+            val isCopyHovered by copyInteractionSource.collectIsHoveredAsState()
+            val copyButtonScale by animateFloatAsState(
+                targetValue = if (isCopyHovered) 1.1f else 1f,
+                animationSpec = tween(durationMillis = 150),
+                label = "copy_button_scale"
+            )
 
-            TrustAssetDetailRow("Asset Code", success.assetCode)
-            TrustAssetDetailRow("Asset Issuer", success.assetIssuer, monospace = true)
-            TrustAssetDetailRow(
-                "Trust Limit",
-                if (success.limit == ChangeTrustOperation.MAX_LIMIT) {
-                    "Maximum (${success.limit})"
-                } else {
-                    success.limit
-                }
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        val clipboard = getClipboard()
+                        val copied = clipboard.copyToClipboard(success.transactionHash)
+                        snackbarHostState.showSnackbar(
+                            if (copied) "Transaction hash copied to clipboard"
+                            else "Failed to copy to clipboard"
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .scale(copyButtonScale)
+                    .hoverable(interactionSource = copyInteractionSource)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Copy transaction hash",
+                    tint = Color(0xFF0A4FD6), // StellarBlue
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        SelectionContainer {
+            Text(
+                text = success.transactionHash,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                fontFamily = FontFamily.Monospace,
+                color = Color(0xFF0639A3).copy(alpha = 0.9f),
+                lineHeight = 22.sp
             )
         }
+    }
+
+    // Transaction Details Card with blue styling
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Transaction Details",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color(0xFF0639A3) // StellarBlueDark
+        )
+
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+
+        TrustAssetDetailRow("Asset Code", success.assetCode)
+        TrustAssetDetailRow("Asset Issuer", success.assetIssuer, monospace = true)
+        TrustAssetDetailRow(
+            "Trust Limit",
+            if (success.limit == ChangeTrustOperation.MAX_LIMIT) {
+                "Maximum (${success.limit})"
+            } else {
+                success.limit
+            }
+        )
     }
 }
 
@@ -604,62 +553,49 @@ private fun TrustAssetDetailRow(
 @Composable
 private fun TrustAssetErrorCard(error: TrustAssetResult.Error) {
     // Error card with red celestial styling
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFDC2626).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFEF2F2) // NovaRedContainer
+    com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Failed to Establish Trustline",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color(0xFF991B1B) // NovaRedDark
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        SelectionContainer {
             Text(
-                text = "Failed to Establish Trustline",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color(0xFF991B1B) // NovaRedDark
+                text = error.message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF991B1B).copy(alpha = 0.9f),
+                lineHeight = 24.sp
             )
-            SelectionContainer {
-                Text(
-                    text = error.message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color(0xFF991B1B).copy(alpha = 0.9f),
-                    lineHeight = 24.sp
+        }
+        error.exception?.let { exception ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
                 )
-            }
-            error.exception?.let { exception ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Text(
+                        text = "Technical Details:",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = Color(0xFF991B1B)
+                    )
+                    SelectionContainer {
                         Text(
-                            text = "Technical Details:",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = Color(0xFF991B1B)
+                            text = exception.message ?: "Unknown error",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = Color(0xFF991B1B).copy(alpha = 0.85f),
+                            lineHeight = 18.sp
                         )
-                        SelectionContainer {
-                            Text(
-                                text = exception.message ?: "Unknown error",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFF991B1B).copy(alpha = 0.85f),
-                                lineHeight = 18.sp
-                            )
-                        }
                     }
                 }
             }

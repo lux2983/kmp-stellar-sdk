@@ -32,6 +32,7 @@ import com.soneso.demo.ui.FormValidation
 import com.soneso.demo.ui.components.AnimatedButton
 import com.soneso.demo.ui.components.InfoCardMediumTitle
 import com.soneso.demo.ui.components.StellarTopBar
+import com.soneso.demo.ui.components.*
 import kotlinx.coroutines.launch
 
 class InvokeHelloWorldContractScreen : Screen {
@@ -135,182 +136,164 @@ class InvokeHelloWorldContractScreen : Screen {
                 )
 
                 // Input fields card - Gold (consolidated)
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            width = 1.dp,
-                            color = Color(0xFFD97706).copy(alpha = 0.3f),
-                            shape = MaterialTheme.shapes.medium
+                GoldCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Contract Configuration",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 22.sp
                         ),
-                    shape = MaterialTheme.shapes.medium,
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFFBF0) // Warm Gold
+                        color = Color(0xFFA85A00) // Starlight Gold Dark
                     )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "Contract Configuration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                lineHeight = 22.sp
-                            ),
-                            color = Color(0xFFA85A00) // Starlight Gold Dark
-                        )
 
-                        OutlinedTextField(
-                            value = contractId,
-                            onValueChange = {
-                                contractId = it.trim()
-                                validationErrors = validationErrors - "contractId"
-                                invocationResult = null
-                            },
-                            label = { Text("Contract ID") },
-                            placeholder = { Text("C...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("contractId"),
-                            supportingText = validationErrors["contractId"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = Color(0xFF991B1B)
-                                    )
-                                }
-                            } ?: {
+                    OutlinedTextField(
+                        value = contractId,
+                        onValueChange = {
+                            contractId = it.trim()
+                            validationErrors = validationErrors - "contractId"
+                            invocationResult = null
+                        },
+                        label = { Text("Contract ID") },
+                        placeholder = { Text("C...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("contractId"),
+                        supportingText = validationErrors["contractId"]?.let { error ->
+                            {
                                 Text(
-                                    text = "Deploy hello world contract first using 'Deploy a Smart Contract'",
-                                    color = Color(0xFFA85A00).copy(alpha = 0.7f)
+                                    text = error,
+                                    color = Color(0xFF991B1B)
                                 )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
+                            }
+                        } ?: {
+                            Text(
+                                text = "Deploy hello world contract first using 'Deploy a Smart Contract'",
+                                color = Color(0xFFA85A00).copy(alpha = 0.7f)
                             )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
                         )
+                    )
 
-                        OutlinedTextField(
-                            value = toParameter,
-                            onValueChange = {
-                                toParameter = it
-                                validationErrors = validationErrors - "toParameter"
-                                invocationResult = null
-                            },
-                            label = { Text("Name (to parameter)") },
-                            placeholder = { Text("Alice") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("toParameter"),
-                            supportingText = validationErrors["toParameter"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = Color(0xFF991B1B)
-                                    )
-                                }
-                            } ?: {
+                    OutlinedTextField(
+                        value = toParameter,
+                        onValueChange = {
+                            toParameter = it
+                            validationErrors = validationErrors - "toParameter"
+                            invocationResult = null
+                        },
+                        label = { Text("Name (to parameter)") },
+                        placeholder = { Text("Alice") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("toParameter"),
+                        supportingText = validationErrors["toParameter"]?.let { error ->
+                            {
                                 Text(
-                                    text = "The name to greet in the hello function",
-                                    color = Color(0xFFA85A00).copy(alpha = 0.7f)
+                                    text = error,
+                                    color = Color(0xFF991B1B)
                                 )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
+                            }
+                        } ?: {
+                            Text(
+                                text = "The name to greet in the hello function",
+                                color = Color(0xFFA85A00).copy(alpha = 0.7f)
                             )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
                         )
+                    )
 
-                        HorizontalDivider(color = Color(0xFFD97706).copy(alpha = 0.2f))
+                    HorizontalDivider(color = Color(0xFFD97706).copy(alpha = 0.2f))
 
-                        Text(
-                            text = "Submitter Account",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = Color(0xFFA85A00)
-                        )
+                    Text(
+                        text = "Submitter Account",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color(0xFFA85A00)
+                    )
 
-                        OutlinedTextField(
-                            value = submitterAccountId,
-                            onValueChange = {
-                                submitterAccountId = it.trim()
-                                validationErrors = validationErrors - "submitterAccount"
-                                invocationResult = null
-                            },
-                            label = { Text("Submitter Account ID") },
-                            placeholder = { Text("G...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("submitterAccount"),
-                            supportingText = validationErrors["submitterAccount"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = Color(0xFF991B1B)
-                                    )
-                                }
-                            } ?: {
+                    OutlinedTextField(
+                        value = submitterAccountId,
+                        onValueChange = {
+                            submitterAccountId = it.trim()
+                            validationErrors = validationErrors - "submitterAccount"
+                            invocationResult = null
+                        },
+                        label = { Text("Submitter Account ID") },
+                        placeholder = { Text("G...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("submitterAccount"),
+                        supportingText = validationErrors["submitterAccount"]?.let { error ->
+                            {
                                 Text(
-                                    text = "Account that will sign and submit the transaction",
-                                    color = Color(0xFFA85A00).copy(alpha = 0.7f)
+                                    text = error,
+                                    color = Color(0xFF991B1B)
                                 )
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
+                            }
+                        } ?: {
+                            Text(
+                                text = "Account that will sign and submit the transaction",
+                                color = Color(0xFFA85A00).copy(alpha = 0.7f)
                             )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
                         )
+                    )
 
-                        OutlinedTextField(
-                            value = secretKey,
-                            onValueChange = {
-                                secretKey = it.trim()
-                                validationErrors = validationErrors - "secretKey"
-                                invocationResult = null
-                            },
-                            label = { Text("Secret Key") },
-                            placeholder = { Text("S...") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("secretKey"),
-                            supportingText = validationErrors["secretKey"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = Color(0xFF991B1B)
-                                    )
-                                }
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706),
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { invokeContract() }
-                            )
+                    OutlinedTextField(
+                        value = secretKey,
+                        onValueChange = {
+                            secretKey = it.trim()
+                            validationErrors = validationErrors - "secretKey"
+                            invocationResult = null
+                        },
+                        label = { Text("Secret Key") },
+                        placeholder = { Text("S...") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("secretKey"),
+                        supportingText = validationErrors["secretKey"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = Color(0xFF991B1B)
+                                )
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706),
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { invokeContract() }
                         )
-                    }
+                    )
                 }
 
                 // Invoke button with AnimatedButton
@@ -350,7 +333,69 @@ class InvokeHelloWorldContractScreen : Screen {
                             SuccessCard(result)
                         }
                         is InvokeHelloWorldResult.Error -> {
-                            ErrorCard(result)
+                            com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Error,
+                                        contentDescription = null,
+                                        tint = Color(0xFF991B1B), // Nova Red Dark
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Text(
+                                        text = "Error",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            lineHeight = 22.sp
+                                        ),
+                                        color = Color(0xFF991B1B)
+                                    )
+                                }
+
+                                Text(
+                                    text = result.message,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        lineHeight = 22.sp
+                                    ),
+                                    color = Color(0xFF991B1B).copy(alpha = 0.9f)
+                                )
+
+                                // Technical details in white nested card
+                                result.exception?.let { exception ->
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = Color.White
+                                        )
+                                    ) {
+                                        SelectionContainer {
+                                            Column(
+                                                modifier = Modifier.padding(16.dp),
+                                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Technical Details",
+                                                    style = MaterialTheme.typography.labelMedium.copy(
+                                                        fontWeight = FontWeight.Bold
+                                                    ),
+                                                    color = Color(0xFF991B1B).copy(alpha = 0.7f)
+                                                )
+                                                Text(
+                                                    text = exception.message ?: "Unknown error",
+                                                    style = MaterialTheme.typography.bodySmall.copy(
+                                                        fontFamily = FontFamily.Monospace,
+                                                        lineHeight = 20.sp
+                                                    ),
+                                                    color = Color(0xFF991B1B).copy(alpha = 0.8f)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
 
                             Spacer(modifier = Modifier.height(12.dp))
 
@@ -375,16 +420,8 @@ class InvokeHelloWorldContractScreen : Screen {
 @Composable
 private fun SuccessCard(result: InvokeHelloWorldResult.Success) {
     // Teal success header
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF0FDFA) // Nebula Teal Container
-        )
-    ) {
+    TealCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -406,137 +443,45 @@ private fun SuccessCard(result: InvokeHelloWorldResult.Success) {
     }
 
     // Blue greeting response card
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Greeting Response",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF0639A3) // Stellar Blue Dark
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Greeting Response",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 22.sp
-                ),
-                color = Color(0xFF0639A3) // Stellar Blue Dark
-            )
 
-            SelectionContainer {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
-                ) {
-                    Text(
-                        text = result.greeting,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            lineHeight = 28.sp
-                        ),
-                        color = Color(0xFF0639A3),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-
-            HorizontalDivider(color = Color(0xFF0639A3).copy(alpha = 0.2f))
-
-            Text(
-                text = "The contract function was successfully invoked using ContractClient.invoke() with automatic type conversion from Map arguments to Soroban XDR types.",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 22.sp
-                ),
-                color = Color(0xFF0639A3).copy(alpha = 0.8f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorCard(error: InvokeHelloWorldResult.Error) {
-    // Red error header card
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFEF2F2) // Nova Red Container
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+        SelectionContainer {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
             ) {
-                Icon(
-                    imageVector = Icons.Default.Error,
-                    contentDescription = null,
-                    tint = Color(0xFF991B1B), // Nova Red Dark
-                    modifier = Modifier.size(28.dp)
-                )
                 Text(
-                    text = "Error",
+                    text = result.greeting,
                     style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 22.sp
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 28.sp
                     ),
-                    color = Color(0xFF991B1B)
+                    color = Color(0xFF0639A3),
+                    modifier = Modifier.padding(16.dp)
                 )
-            }
-
-            Text(
-                text = error.message,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    lineHeight = 22.sp
-                ),
-                color = Color(0xFF991B1B).copy(alpha = 0.9f)
-            )
-
-            // Technical details in white nested card
-            error.exception?.let { exception ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
-                ) {
-                    SelectionContainer {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Technical Details",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = Color(0xFF991B1B).copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = exception.message ?: "Unknown error",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontFamily = FontFamily.Monospace,
-                                    lineHeight = 20.sp
-                                ),
-                                color = Color(0xFF991B1B).copy(alpha = 0.8f)
-                            )
-                        }
-                    }
-                }
             }
         }
+
+        HorizontalDivider(color = Color(0xFF0639A3).copy(alpha = 0.2f))
+
+        Text(
+            text = "The contract function was successfully invoked using ContractClient.invoke() with automatic type conversion from Map arguments to Soroban XDR types.",
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF0639A3).copy(alpha = 0.8f)
+        )
     }
 }
 }

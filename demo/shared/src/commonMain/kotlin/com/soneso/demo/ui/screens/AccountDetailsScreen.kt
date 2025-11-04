@@ -44,6 +44,7 @@ import com.soneso.demo.stellar.AccountDetailsResult
 import com.soneso.demo.stellar.fetchAccountDetails
 import com.soneso.demo.ui.FormValidation
 import com.soneso.demo.ui.components.AnimatedButton
+import com.soneso.demo.ui.components.BlueCard
 import com.soneso.demo.ui.components.InfoCard
 import com.soneso.demo.ui.components.StellarTopBar
 import com.soneso.demo.ui.theme.LightExtendedColors
@@ -323,29 +324,16 @@ private fun DetailsSectionCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFF0A4FD6).copy(alpha = 0.2f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // NebulaBlue
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color(0xFF0639A3) // StellarBlueDark
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color(0xFF0639A3) // StellarBlueDark
-            )
-            HorizontalDivider(color = Color(0xFF0639A3).copy(alpha = 0.2f))
-            content()
-        }
+        HorizontalDivider(color = Color(0xFF0639A3).copy(alpha = 0.2f))
+        content()
     }
 }
 
@@ -713,60 +701,47 @@ private fun DataEntryItem(key: String, base64Value: String) {
 @Composable
 private fun ErrorCard(error: AccountDetailsResult.Error) {
     // Error card with celestial styling
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFDC2626).copy(alpha = 0.3f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFEF2F2) // NovaRedContainer
+    com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Error",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color(0xFF991B1B) // NovaRedDark
         )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Error",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color(0xFF991B1B) // NovaRedDark
-            )
-            Text(
-                text = error.message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF991B1B).copy(alpha = 0.9f),
-                lineHeight = 24.sp
-            )
-            error.exception?.let { exception ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    )
+        Text(
+            text = error.message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color(0xFF991B1B).copy(alpha = 0.9f),
+            lineHeight = 24.sp
+        )
+        error.exception?.let { exception ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Text(
+                        text = "Technical Details:",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = Color(0xFF991B1B)
+                    )
+                    SelectionContainer {
                         Text(
-                            text = "Technical Details:",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = Color(0xFF991B1B)
+                            text = exception.message ?: "Unknown error",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                            color = Color(0xFF991B1B).copy(alpha = 0.85f),
+                            lineHeight = 18.sp
                         )
-                        SelectionContainer {
-                            Text(
-                                text = exception.message ?: "Unknown error",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFF991B1B).copy(alpha = 0.85f),
-                                lineHeight = 18.sp
-                            )
-                        }
                     }
                 }
             }

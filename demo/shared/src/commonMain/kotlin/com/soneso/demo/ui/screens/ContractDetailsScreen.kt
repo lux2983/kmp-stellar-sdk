@@ -39,6 +39,7 @@ import com.soneso.demo.stellar.fetchContractDetails
 import com.soneso.demo.ui.components.AnimatedButton
 import com.soneso.demo.ui.components.InfoCardMediumTitle
 import com.soneso.demo.ui.components.StellarTopBar
+import com.soneso.demo.ui.components.*
 import com.soneso.demo.util.StellarValidation
 import com.soneso.stellar.sdk.contract.SorobanContractInfo
 import com.soneso.stellar.sdk.xdr.*
@@ -52,7 +53,7 @@ class ContractDetailsScreen : Screen {
         val coroutineScope = rememberCoroutineScope()
 
         // State management
-        var contractId by remember { mutableStateOf("CBNCMQU5VCEVFASCPT4CCQX2LGYJK6YZ7LOIZLRXDEVJYQB7K6UTQNWW") }
+        var contractId by remember { mutableStateOf("") }
         var isLoading by remember { mutableStateOf(false) }
         var detailsResult by remember { mutableStateOf<ContractDetailsResult?>(null) }
         var validationError by remember { mutableStateOf<String?>(null) }
@@ -105,64 +106,52 @@ class ContractDetailsScreen : Screen {
                 InfoCardMediumTitle(
                     modifier = Modifier.fillMaxWidth(),
                     title = "Soroban RPC: Fetch and Parse Smart Contract Details",
-                    description = "Enter a contract ID to fetch its WASM bytecode from the network and parse the contract specification including metadata and function definitions. The field is pre-filled with a testnet contract ID."
+                    description = "Enter a contract ID to fetch its WASM bytecode from the network and parse the contract specification including metadata and function definitions."
                 )
 
                 // Contract ID Input Field - Gold
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFFBF0) // Starlight Gold background
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "Contract Configuration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                lineHeight = 22.sp
-                            ),
-                            color = Color(0xFFA85A00) // Starlight Gold Dark
-                        )
+                GoldCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Contract Configuration",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 22.sp
+                        ),
+                        color = Color(0xFFA85A00) // Starlight Gold Dark
+                    )
 
-                        OutlinedTextField(
-                            value = contractId,
-                            onValueChange = {
-                                contractId = it.trim()
-                                validationError = null
-                                detailsResult = null
-                            },
-                            label = { Text("Contract ID") },
-                            placeholder = { Text("C...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationError != null,
-                            supportingText = validationError?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = Color(0xFF991B1B) // Nova Red
-                                    )
-                                }
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFD97706), // Starlight Gold
-                                focusedLabelColor = Color(0xFFD97706),
-                                cursorColor = Color(0xFFD97706)
-                            ),
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { fetchDetails() }
-                            )
+                    OutlinedTextField(
+                        value = contractId,
+                        onValueChange = {
+                            contractId = it.trim()
+                            validationError = null
+                            detailsResult = null
+                        },
+                        label = { Text("Contract ID") },
+                        placeholder = { Text("C...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationError != null,
+                        supportingText = validationError?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = Color(0xFF991B1B) // Nova Red
+                                )
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFD97706), // Starlight Gold
+                            focusedLabelColor = Color(0xFFD97706),
+                            cursorColor = Color(0xFFD97706)
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { fetchDetails() }
                         )
-                    }
+                    )
                 }
 
                 // Submit button
@@ -273,18 +262,8 @@ private fun getSpecTypeInfo(specType: SCSpecTypeDefXdr): String {
 @Composable
 private fun ContractInfoCards(contractInfo: SorobanContractInfo) {
     // Success header card - Teal
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF0FDFA) // Nebula Teal Container
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
+    TealCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -326,64 +305,45 @@ private fun ContractInfoCards(contractInfo: SorobanContractInfo) {
 
 @Composable
 private fun ContractMetadataCard(contractInfo: SorobanContractInfo) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Contract Metadata",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF0639A3) // Stellar Blue Dark
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+
+        // Environment Interface Version
+        DetailRow(
+            label = "Environment Interface Version",
+            value = contractInfo.envInterfaceVersion.toString()
+        )
+
+        // Meta entries
+        if (contractInfo.metaEntries.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Contract Metadata",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 22.sp
+                text = "Meta Entries (${contractInfo.metaEntries.size})",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold
                 ),
-                color = Color(0xFF0639A3) // Stellar Blue Dark
+                color = Color(0xFF0639A3).copy(alpha = 0.7f)
             )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
-
-            // Environment Interface Version
-            DetailRow(
-                label = "Environment Interface Version",
-                value = contractInfo.envInterfaceVersion.toString()
-            )
-
-            // Meta entries
-            if (contractInfo.metaEntries.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Meta Entries (${contractInfo.metaEntries.size})",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color(0xFF0639A3).copy(alpha = 0.7f)
-                )
-                SelectionContainer {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        contractInfo.metaEntries.forEach { (key, value) ->
-                            DetailRow(label = key, value = value, monospace = true)
-                        }
+            SelectionContainer {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    contractInfo.metaEntries.forEach { (key, value) ->
+                        DetailRow(label = key, value = value, monospace = true)
                     }
                 }
-            } else {
-                DetailRow(
-                    label = "Meta Entries",
-                    value = "None"
-                )
             }
+        } else {
+            DetailRow(
+                label = "Meta Entries",
+                value = "None"
+            )
         }
     }
 }
@@ -405,112 +365,93 @@ private fun ContractSpecEntriesCard(specEntries: List<SCSpecEntryXdr>) {
     // Track which entries are expanded
     var expandedEntries by remember { mutableStateOf(setOf<Int>()) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE8F1FF) // Nebula Blue
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF0A4FD6).copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    BlueCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Contract Spec Entries (${specEntries.size})",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF0639A3) // Stellar Blue Dark
+        )
+        Text(
+            text = "Click on an entry to view details",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF0639A3).copy(alpha = 0.7f)
+        )
+        HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+
+        if (sortedEntries.isEmpty()) {
             Text(
-                text = "Contract Spec Entries (${specEntries.size})",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 22.sp
-                ),
-                color = Color(0xFF0639A3) // Stellar Blue Dark
-            )
-            Text(
-                text = "Click on an entry to view details",
+                text = "No spec entries found",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     lineHeight = 22.sp
                 ),
-                color = Color(0xFF0639A3).copy(alpha = 0.7f)
+                color = Color(0xFF0639A3).copy(alpha = 0.7f),
+                modifier = Modifier.padding(vertical = 8.dp)
             )
-            HorizontalDivider(color = Color(0xFF0A4FD6).copy(alpha = 0.2f))
+        } else {
+            sortedEntries.forEachIndexed { index, entry ->
+                val isExpanded = expandedEntries.contains(index)
 
-            if (sortedEntries.isEmpty()) {
-                Text(
-                    text = "No spec entries found",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = 22.sp
-                    ),
-                    color = Color(0xFF0639A3).copy(alpha = 0.7f),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            } else {
-                sortedEntries.forEachIndexed { index, entry ->
-                    val isExpanded = expandedEntries.contains(index)
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                expandedEntries = if (isExpanded) {
-                                    expandedEntries - index
-                                } else {
-                                    expandedEntries + index
-                                }
-                            },
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            expandedEntries = if (isExpanded) {
+                                expandedEntries - index
+                            } else {
+                                expandedEntries + index
+                            }
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        // Entry header (always visible)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Entry header (always visible)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = getEntryTitle(entry),
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = getEntrySummary(entry),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                    )
-                                }
-                                Icon(
-                                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                    contentDescription = if (isExpanded) "Collapse" else "Expand"
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = getEntryTitle(entry),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = getEntrySummary(entry),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                 )
                             }
+                            Icon(
+                                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = if (isExpanded) "Collapse" else "Expand"
+                            )
+                        }
 
-                            // Expandable entry details
-                            AnimatedVisibility(
-                                visible = isExpanded,
-                                enter = fadeIn() + expandVertically(),
-                                exit = fadeOut() + shrinkVertically()
+                        // Expandable entry details
+                        AnimatedVisibility(
+                            visible = isExpanded,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically()
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(top = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(top = 8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    HorizontalDivider()
-                                    SpecEntryDetails(entry)
-                                }
+                                HorizontalDivider()
+                                SpecEntryDetails(entry)
                             }
                         }
                     }
@@ -1059,84 +1000,65 @@ private fun DetailRow(
 @Composable
 private fun ErrorCard(error: ContractDetailsResult.Error) {
     // Error header card - Red
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFEF2F2) // Nova Red Container
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF991B1B).copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Error,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = Color(0xFF991B1B) // Nova Red Dark
-                )
-                Text(
-                    text = "Error",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 22.sp
-                    ),
-                    color = Color(0xFF991B1B)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Error,
+                contentDescription = null,
+                modifier = Modifier.size(28.dp),
+                tint = Color(0xFF991B1B) // Nova Red Dark
+            )
             Text(
-                text = error.message,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
+                text = "Error",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
                     lineHeight = 22.sp
                 ),
-                color = Color(0xFF991B1B).copy(alpha = 0.9f)
+                color = Color(0xFF991B1B)
             )
+        }
+        Text(
+            text = error.message,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF991B1B).copy(alpha = 0.9f)
+        )
 
-            // Technical details in nested white card
-            error.exception?.let { exception ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                ) {
-                    SelectionContainer {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "Technical Details",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = Color(0xFF991B1B).copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = exception.message ?: "Unknown error",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    lineHeight = 20.sp
-                                ),
-                                fontFamily = FontFamily.Monospace,
-                                color = Color(0xFF991B1B)
-                            )
-                        }
+        // Technical details in nested white card
+        error.exception?.let { exception ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                SelectionContainer {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Technical Details",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = Color(0xFF991B1B).copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = exception.message ?: "Unknown error",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                lineHeight = 20.sp
+                            ),
+                            fontFamily = FontFamily.Monospace,
+                            color = Color(0xFF991B1B)
+                        )
                     }
                 }
             }

@@ -30,9 +30,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.soneso.demo.platform.getClipboard
 import com.soneso.demo.stellar.*
 import com.soneso.demo.ui.FormValidation
-import com.soneso.demo.ui.components.AnimatedButton
-import com.soneso.demo.ui.components.InfoCardMediumTitle
-import com.soneso.demo.ui.components.StellarTopBar
+import com.soneso.demo.ui.components.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -184,251 +182,239 @@ class DeployContractScreen : Screen {
                 )
 
                 // Consolidated Input Card (Gold)
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFFBF0)
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, Color(0xFFFFEDD5))
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                GoldCard(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Deployment Configuration",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 22.sp
+                        ),
+                        color = Color(0xFFD97706)
+                    )
+
+                    HorizontalDivider(color = Color(0xFFFFEDD5))
+
+                    // Step 1: Contract Selection
+                    Text(
+                        text = "1. Select Contract",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = Color(0xFF2D3548)
+                    )
+
+                    var expanded by remember { mutableStateOf(false) }
+
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = {
+                            expanded = !expanded
+                        }
                     ) {
-                        Text(
-                            text = "Deployment Configuration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                lineHeight = 22.sp
-                            ),
-                            color = Color(0xFFD97706)
+                        OutlinedTextField(
+                            value = selectedContract?.name ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Demo Contract") },
+                            trailingIcon = {
+                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor()
                         )
 
-                        HorizontalDivider(color = Color(0xFFFFEDD5))
-
-                        // Step 1: Contract Selection
-                        Text(
-                            text = "1. Select Contract",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = Color(0xFF2D3548)
-                        )
-
-                        var expanded by remember { mutableStateOf(false) }
-
-                        ExposedDropdownMenuBox(
+                        ExposedDropdownMenu(
                             expanded = expanded,
-                            onExpandedChange = {
-                                expanded = !expanded
-                            }
+                            onDismissRequest = { expanded = false }
                         ) {
-                            OutlinedTextField(
-                                value = selectedContract?.name ?: "",
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("Demo Contract") },
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor()
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                AVAILABLE_CONTRACTS.forEach { contract ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Column {
-                                                Text(
-                                                    text = contract.name,
-                                                    style = MaterialTheme.typography.bodyLarge
-                                                )
-                                                Text(
-                                                    text = contract.description,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            selectedContract = contract
-                                            // Reset constructor args when changing contract
-                                            constructorArgValues = if (contract.hasConstructor) {
-                                                contract.constructorParams.associate { it.name to "" }
-                                            } else {
-                                                emptyMap()
-                                            }
-                                            expanded = false
+                            AVAILABLE_CONTRACTS.forEach { contract ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = contract.name,
+                                                style = MaterialTheme.typography.bodyLarge
+                                            )
+                                            Text(
+                                                text = contract.description,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
                                         }
-                                    )
-                                }
+                                    },
+                                    onClick = {
+                                        selectedContract = contract
+                                        // Reset constructor args when changing contract
+                                        constructorArgValues = if (contract.hasConstructor) {
+                                            contract.constructorParams.associate { it.name to "" }
+                                        } else {
+                                            emptyMap()
+                                        }
+                                        expanded = false
+                                    }
+                                )
                             }
                         }
+                    }
 
-                        // Display selected contract description
-                        selectedContract?.let { contract ->
-                            Surface(
-                                color = Color.White.copy(alpha = 0.6f),
-                                shape = RoundedCornerShape(8.dp)
+                    // Display selected contract description
+                    selectedContract?.let { contract ->
+                        Surface(
+                            color = Color.White.copy(alpha = 0.6f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = contract.description,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            lineHeight = 20.sp
-                                        ),
-                                        color = Color(0xFF2D3548)
-                                    )
-                                    if (contract.hasConstructor) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = "Constructor required: ${contract.constructorParams.size} parameter(s)",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFF6B7280),
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = Color(0xFFFFEDD5))
-
-                        // Step 2: Source Account
-                        Text(
-                            text = "2. Source Account",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ),
-                            color = Color(0xFF2D3548)
-                        )
-
-                        OutlinedTextField(
-                            value = sourceAccountId,
-                            onValueChange = {
-                                sourceAccountId = it.trim()
-                                validationErrors = validationErrors - "sourceAccount"
-                                deploymentResult = null
-                            },
-                            label = { Text("Source Account ID") },
-                            placeholder = { Text("G...") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("sourceAccount"),
-                            supportingText = validationErrors["sourceAccount"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Next
-                            )
-                        )
-
-                        OutlinedTextField(
-                            value = secretKey,
-                            onValueChange = {
-                                secretKey = it.trim()
-                                validationErrors = validationErrors - "secretKey"
-                                deploymentResult = null
-                            },
-                            label = { Text("Secret Key") },
-                            placeholder = { Text("S...") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = validationErrors.containsKey("secretKey"),
-                            supportingText = validationErrors["secretKey"]?.let { error ->
-                                {
-                                    Text(
-                                        text = error,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = if (selectedContract?.hasConstructor == true) ImeAction.Next else ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    if (selectedContract?.hasConstructor != true) {
-                                        deployContract()
-                                    }
-                                }
-                            )
-                        )
-
-                        // Step 3: Constructor Parameters (if applicable)
-                        selectedContract?.let { contract ->
-                            if (contract.hasConstructor) {
-                                HorizontalDivider(color = Color(0xFFFFEDD5))
-
                                 Text(
-                                    text = "3. Constructor Parameters",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontWeight = FontWeight.SemiBold
+                                    text = contract.description,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        lineHeight = 20.sp
                                     ),
                                     color = Color(0xFF2D3548)
                                 )
-
-                                contract.constructorParams.forEachIndexed { index, param ->
-                                    val currentValue = constructorArgValues[param.name] ?: ""
-                                    val isLast = index == contract.constructorParams.lastIndex
-
-                                    OutlinedTextField(
-                                        value = currentValue,
-                                        onValueChange = { newValue ->
-                                            constructorArgValues = constructorArgValues + (param.name to newValue)
-                                            validationErrors = validationErrors - "constructor_${param.name}"
-                                            deploymentResult = null
-                                        },
-                                        label = { Text(param.name) },
-                                        placeholder = { Text(param.placeholder) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        isError = validationErrors.containsKey("constructor_${param.name}"),
-                                        supportingText = {
-                                            val error = validationErrors["constructor_${param.name}"]
-                                            if (error != null) {
-                                                Text(
-                                                    text = error,
-                                                    color = MaterialTheme.colorScheme.error
-                                                )
-                                            } else {
-                                                Text(
-                                                    text = param.description,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                        },
-                                        keyboardOptions = KeyboardOptions(
-                                            keyboardType = when (param.type) {
-                                                ConstructorParamType.U32 -> KeyboardType.Number
-                                                else -> KeyboardType.Text
-                                            },
-                                            imeAction = if (isLast) ImeAction.Done else ImeAction.Next
-                                        ),
-                                        keyboardActions = KeyboardActions(
-                                            onDone = {
-                                                if (isLast) {
-                                                    deployContract()
-                                                }
-                                            }
-                                        )
+                                if (contract.hasConstructor) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Constructor required: ${contract.constructorParams.size} parameter(s)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF6B7280),
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = Color(0xFFFFEDD5))
+
+                    // Step 2: Source Account
+                    Text(
+                        text = "2. Source Account",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = Color(0xFF2D3548)
+                    )
+
+                    OutlinedTextField(
+                        value = sourceAccountId,
+                        onValueChange = {
+                            sourceAccountId = it.trim()
+                            validationErrors = validationErrors - "sourceAccount"
+                            deploymentResult = null
+                        },
+                        label = { Text("Source Account ID") },
+                        placeholder = { Text("G...") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("sourceAccount"),
+                        supportingText = validationErrors["sourceAccount"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = secretKey,
+                        onValueChange = {
+                            secretKey = it.trim()
+                            validationErrors = validationErrors - "secretKey"
+                            deploymentResult = null
+                        },
+                        label = { Text("Secret Key") },
+                        placeholder = { Text("S...") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = validationErrors.containsKey("secretKey"),
+                        supportingText = validationErrors["secretKey"]?.let { error ->
+                            {
+                                Text(
+                                    text = error,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = if (selectedContract?.hasConstructor == true) ImeAction.Next else ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (selectedContract?.hasConstructor != true) {
+                                    deployContract()
+                                }
+                            }
+                        )
+                    )
+
+                    // Step 3: Constructor Parameters (if applicable)
+                    selectedContract?.let { contract ->
+                        if (contract.hasConstructor) {
+                            HorizontalDivider(color = Color(0xFFFFEDD5))
+
+                            Text(
+                                text = "3. Constructor Parameters",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ),
+                                color = Color(0xFF2D3548)
+                            )
+
+                            contract.constructorParams.forEachIndexed { index, param ->
+                                val currentValue = constructorArgValues[param.name] ?: ""
+                                val isLast = index == contract.constructorParams.lastIndex
+
+                                OutlinedTextField(
+                                    value = currentValue,
+                                    onValueChange = { newValue ->
+                                        constructorArgValues = constructorArgValues + (param.name to newValue)
+                                        validationErrors = validationErrors - "constructor_${param.name}"
+                                        deploymentResult = null
+                                    },
+                                    label = { Text(param.name) },
+                                    placeholder = { Text(param.placeholder) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    isError = validationErrors.containsKey("constructor_${param.name}"),
+                                    supportingText = {
+                                        val error = validationErrors["constructor_${param.name}"]
+                                        if (error != null) {
+                                            Text(
+                                                text = error,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        } else {
+                                            Text(
+                                                text = param.description,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = when (param.type) {
+                                            ConstructorParamType.U32 -> KeyboardType.Number
+                                            else -> KeyboardType.Text
+                                        },
+                                        imeAction = if (isLast) ImeAction.Done else ImeAction.Next
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = {
+                                            if (isLast) {
+                                                deployContract()
+                                            }
+                                        }
+                                    )
+                                )
                             }
                         }
                     }
@@ -493,152 +479,128 @@ class DeployContractScreen : Screen {
 
 @Composable
 private fun SuccessCard(result: DeployContractResult.Success, snackbarHostState: SnackbarHostState, scope: CoroutineScope) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF0FDFA)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFCCFBF1))
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    com.soneso.demo.ui.components.TealCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color(0xFF0F766E),
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = "Deployment Successful",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 22.sp
-                    ),
-                    color = Color(0xFF0F766E)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF0F766E),
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Deployment Successful",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 22.sp
+                ),
+                color = Color(0xFF0F766E)
+            )
+        }
 
-            HorizontalDivider(color = Color(0xFFCCFBF1))
+        HorizontalDivider(color = Color(0xFFCCFBF1))
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Contract ID",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = Color(0xFF0F766E)
-                )
-                SelectionContainer {
-                    Surface(
-                        color = Color.White.copy(alpha = 0.6f),
-                        shape = RoundedCornerShape(8.dp)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Contract ID",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = Color(0xFF0F766E)
+            )
+            SelectionContainer {
+                Surface(
+                    color = Color.White.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(12.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(12.dp)
+                        Text(
+                            text = result.contractId,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 13.sp,
+                                lineHeight = 20.sp
+                            ),
+                            color = Color(0xFF1A1F2E),
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    val success = getClipboard().copyToClipboard(result.contractId)
+                                    snackbarHostState.showSnackbar(
+                                        if (success) "Contract ID copied to clipboard"
+                                        else "Failed to copy to clipboard"
+                                    )
+                                }
+                            },
+                            modifier = Modifier.size(32.dp)
                         ) {
-                            Text(
-                                text = result.contractId,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontFamily = FontFamily.Monospace,
-                                    fontSize = 13.sp,
-                                    lineHeight = 20.sp
-                                ),
-                                color = Color(0xFF1A1F2E),
-                                modifier = Modifier.weight(1f)
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy contract ID",
+                                tint = Color(0xFF0F766E),
+                                modifier = Modifier.size(18.dp)
                             )
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        val success = getClipboard().copyToClipboard(result.contractId)
-                                        snackbarHostState.showSnackbar(
-                                            if (success) "Contract ID copied to clipboard"
-                                            else "Failed to copy to clipboard"
-                                        )
-                                    }
-                                },
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copy contract ID",
-                                    tint = Color(0xFF0F766E),
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
                         }
                     }
                 }
             }
-
-            Text(
-                text = "You can now use this contract ID to interact with your deployed contract via the SDK's ContractClient.forContract() method.",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    lineHeight = 18.sp
-                ),
-                color = Color(0xFF2D3548)
-            )
         }
+
+        Text(
+            text = "You can now use this contract ID to interact with your deployed contract via the SDK's ContractClient.forContract() method.",
+            style = MaterialTheme.typography.bodySmall.copy(
+                lineHeight = 18.sp
+            ),
+            color = Color(0xFF2D3548)
+        )
     }
 }
 
 @Composable
 private fun ErrorCard(error: DeployContractResult.Error) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFEF2F2)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFFEE2E2))
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Deployment Failed",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 22.sp
-                ),
-                color = Color(0xFF991B1B)
-            )
+    com.soneso.demo.ui.components.ErrorCard(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Deployment Failed",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF991B1B)
+        )
 
-            HorizontalDivider(color = Color(0xFFFEE2E2))
+        HorizontalDivider(color = Color(0xFFFEE2E2))
 
-            Text(
-                text = error.message,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    lineHeight = 22.sp
-                ),
-                color = Color(0xFF2D3548)
-            )
-            error.exception?.let { exception ->
-                Surface(
-                    color = Color.White.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Technical details: ${exception.message}",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontFamily = FontFamily.Monospace,
-                            lineHeight = 18.sp
-                        ),
-                        color = Color(0xFF6B7280),
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
+        Text(
+            text = error.message,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                lineHeight = 22.sp
+            ),
+            color = Color(0xFF2D3548)
+        )
+        error.exception?.let { exception ->
+            Surface(
+                color = Color.White.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "Technical details: ${exception.message}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = FontFamily.Monospace,
+                        lineHeight = 18.sp
+                    ),
+                    color = Color(0xFF6B7280),
+                    modifier = Modifier.padding(12.dp)
+                )
             }
         }
     }
