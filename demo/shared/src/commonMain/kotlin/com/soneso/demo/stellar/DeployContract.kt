@@ -87,7 +87,7 @@ val AVAILABLE_CONTRACTS = listOf(
     ContractMetadata(
         id = "token",
         name = "Token Contract",
-        description = "Full-featured Stellar Asset Contract (SAC) compatible token with mint, transfer, and balance functions",
+        description = "SEP-41 compliant token contract with mint, transfer, and balance functions",
         wasmFilename = "soroban_token_contract.wasm",
         hasConstructor = true,
         constructorParams = listOf(

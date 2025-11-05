@@ -4,7 +4,6 @@ import shared
 // MARK: - Fund Account Screen (matches Compose FundAccountScreen)
 
 struct FundAccountScreen: View {
-    @Environment(\.dismiss) var dismiss
     @ObservedObject var toastManager: ToastManager
     @State private var accountId = ""
     @State private var generatedKeypair: KeyPair?
@@ -14,7 +13,7 @@ struct FundAccountScreen: View {
     @State private var fundingResult: AccountFundingResult?
     @State private var validationError: String?
 
-    private let bridge = MacOSBridge()
+    @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
         ScrollView {
@@ -28,86 +27,36 @@ struct FundAccountScreen: View {
             .padding(16)
         }
         .background(Material3Colors.surface)
-        .navigationTitle("Fund Testnet Account")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    dismiss()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(Material3Colors.primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        .navigationToolbar(title: "Fund Testnet Account")
     }
 
     // MARK: - View Components
 
     private var infoCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Friendbot: fund a testnet network account")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "Friendbot: fund a testnet network account", color: .secondary) {
             Text("The friendbot is a horizon API endpoint that will fund an account with 10,000 lumens on the testnet network.")
                 .font(.system(size: 13))
                 .foregroundStyle(Material3Colors.onSecondaryContainer)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     private var inputField: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Public Key Field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Public Key")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                HStack(spacing: 8) {
-                    TextField("G...", text: $accountId)
-                        .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(12)
-                        .background(Color.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(validationError != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                        )
-                        .onChange(of: accountId) { _ in
-                            validationError = nil
-                            fundingResult = nil
-                        }
-
-                    if !accountId.isEmpty {
-                        Button(action: {
-                            copyToClipboard(accountId)
-                            toastManager.show("Public key copied to clipboard")
-                        }) {
-                            Image(systemName: "doc.on.doc")
-                                .font(.system(size: 16))
-                                .foregroundStyle(Material3Colors.primary)
-                                .frame(width: 44, height: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .help("Copy to clipboard")
-                    }
+            // Public Key Field with StellarTextField
+            StellarTextField(
+                label: "Public Key",
+                placeholder: "G...",
+                text: $accountId,
+                error: validationError,
+                showCopyButton: !accountId.isEmpty,
+                onCopy: {
+                    ClipboardHelper.copy(accountId)
+                    toastManager.show("Public key copied to clipboard")
                 }
-
-                if let error = validationError {
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Material3Colors.onErrorContainer)
-                }
+            )
+            .onChange(of: accountId) { _ in
+                validationError = nil
+                fundingResult = nil
             }
 
             // Secret Seed Field (only shown when a keypair was generated)
@@ -117,28 +66,18 @@ struct FundAccountScreen: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(Material3Colors.onTertiaryContainer)
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: 0) {
                         if secretSeedVisible {
                             TextField("", text: .constant(keypair.getSecretSeedAsString() ?? ""))
                                 .textFieldStyle(.plain)
                                 .font(.system(.body, design: .monospaced))
                                 .padding(12)
-                                .background(Material3Colors.tertiaryContainer)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Material3Colors.onTertiaryContainer.opacity(0.3), lineWidth: 1)
-                                )
                                 .disabled(true)
                         } else {
                             TextField("", text: .constant(String(repeating: "•", count: 56)))
                                 .textFieldStyle(.plain)
                                 .font(.system(.body, design: .monospaced))
                                 .padding(12)
-                                .background(Material3Colors.tertiaryContainer)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Material3Colors.onTertiaryContainer.opacity(0.3), lineWidth: 1)
-                                )
                                 .disabled(true)
                         }
 
@@ -147,7 +86,7 @@ struct FundAccountScreen: View {
                             secretSeedVisible.toggle()
                         }) {
                             Image(systemName: secretSeedVisible ? "eye.slash.fill" : "eye.fill")
-                                .font(.system(size: 16))
+                                .font(.system(size: 14))
                                 .foregroundStyle(Material3Colors.onTertiaryContainer)
                                 .frame(width: 44, height: 44)
                         }
@@ -157,22 +96,27 @@ struct FundAccountScreen: View {
                         // Copy button
                         Button(action: {
                             if let secretSeed = keypair.getSecretSeedAsString() {
-                                copyToClipboard(secretSeed)
+                                ClipboardHelper.copy(secretSeed)
                                 toastManager.show("Secret seed copied to clipboard")
                             }
                         }) {
                             Image(systemName: "doc.on.doc")
-                                .font(.system(size: 16))
+                                .font(.system(size: 14))
                                 .foregroundStyle(Material3Colors.onTertiaryContainer)
                                 .frame(width: 44, height: 44)
                         }
                         .buttonStyle(.plain)
                         .help("Copy to clipboard")
                     }
+                    .background(Material3Colors.tertiaryContainer)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Material3Colors.onTertiaryContainer.opacity(0.3), lineWidth: 1)
+                    )
                 }
 
                 // Security warning
-                VStack(alignment: .leading, spacing: 8) {
+                TransparentInfoCard(backgroundColor: Material3Colors.errorContainer.opacity(0.3)) {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 16))
@@ -185,70 +129,33 @@ struct FundAccountScreen: View {
                     Text("Keep your secret seed safe! Never share it with anyone. Anyone with access to your secret seed can control your account.")
                         .font(.system(size: 13))
                         .foregroundStyle(Material3Colors.onErrorContainer)
+                        .padding(.top, 4)
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Material3Colors.errorContainer.opacity(0.3))
-                .cornerRadius(8)
             }
         }
     }
 
     private var actionButtons: some View {
         HStack(spacing: 8) {
-            generateButton
-            fundButton
-        }
-    }
+            LoadingButton(
+                action: generateAndFill,
+                isLoading: isGenerating,
+                isEnabled: !isGenerating && !isFunding,
+                icon: "arrow.clockwise",
+                text: "Generate & Fill",
+                loadingText: "Generating...",
+                style: .outlined
+            )
 
-    private var generateButton: some View {
-        Button(action: generateAndFill) {
-            HStack(spacing: 4) {
-                if isGenerating {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Generating...")
-                        .font(.system(size: 13))
-                } else {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 16))
-                    Text("Generate & Fill")
-                        .font(.system(size: 13))
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .foregroundColor(Material3Colors.primary)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Material3Colors.primary, lineWidth: 1)
+            LoadingButton(
+                action: fundAccount,
+                isLoading: isFunding,
+                isEnabled: !isGenerating && !isFunding && !accountId.isEmpty,
+                icon: "dollarsign.circle",
+                text: "Get lumens",
+                loadingText: "Funding..."
             )
         }
-        .disabled(isGenerating || isFunding)
-        .buttonStyle(.plain)
-    }
-
-    private var fundButton: some View {
-        Button(action: fundAccount) {
-            HStack(spacing: 8) {
-                if isFunding {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.white)
-                    Text("Funding...")
-                } else {
-                    Image(systemName: "dollarsign.circle")
-                    Text("Get lumens")
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background((isFunding || accountId.isEmpty) ? Material3Colors.primary.opacity(0.6) : Material3Colors.primary)
-            .foregroundColor(.white)
-            .cornerRadius(12)
-        }
-        .disabled(isGenerating || isFunding || accountId.isEmpty)
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -264,11 +171,7 @@ struct FundAccountScreen: View {
     }
 
     private func successCard(_ success: AccountFundingResult.Success) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Success")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSuccessContainer)
-
+        InfoCard(title: "Success", color: .success) {
             Text("Successfully funded \(shortenAccountId(success.accountId)) on testnet")
                 .font(.system(size: 14))
                 .foregroundStyle(Material3Colors.onSuccessContainer)
@@ -276,19 +179,12 @@ struct FundAccountScreen: View {
             Text(success.message)
                 .font(.system(size: 13))
                 .foregroundStyle(Material3Colors.onSuccessContainer)
+                .padding(.top, 4)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.successContainer)
-        .cornerRadius(12)
     }
 
     private func errorCard(_ error: AccountFundingResult.Error) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Error")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onErrorContainer)
-
+        InfoCard(title: "Error", color: .error) {
             Text(error.message)
                 .font(.system(size: 14))
                 .foregroundStyle(Material3Colors.onErrorContainer)
@@ -297,20 +193,13 @@ struct FundAccountScreen: View {
                 Text("Technical details: \(exception.message ?? "Unknown error")")
                     .font(.system(size: 13, design: .monospaced))
                     .foregroundStyle(Material3Colors.onErrorContainer)
+                    .padding(.top, 4)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.errorContainer)
-        .cornerRadius(12)
     }
 
     private var troubleshootingCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Troubleshooting")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "Troubleshooting", color: .secondary) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("• Check that the account ID is valid (starts with 'G' and is 56 characters)")
                     .font(.system(size: 13))
@@ -328,12 +217,7 @@ struct FundAccountScreen: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Material3Colors.onSecondaryContainer)
             }
-            .padding(.leading, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     @ViewBuilder
@@ -351,25 +235,12 @@ struct FundAccountScreen: View {
 
     // MARK: - Actions
 
-    private func validateAccountId(_ id: String) -> String? {
-        if id.isEmpty {
-            return "Account ID is required"
-        }
-        if !id.hasPrefix("G") {
-            return "Account ID must start with 'G'"
-        }
-        if id.count != 56 {
-            return "Account ID must be 56 characters long"
-        }
-        return nil
-    }
-
     private func generateAndFill() {
         isGenerating = true
 
         Task {
             do {
-                let keypair = try await bridge.generateKeypair()
+                let keypair = try await bridgeWrapper.bridge.generateKeypair()
                 await MainActor.run {
                     generatedKeypair = keypair
                     accountId = keypair.getAccountId()
@@ -389,8 +260,8 @@ struct FundAccountScreen: View {
     }
 
     private func fundAccount() {
-        // Validate before funding
-        if let error = validateAccountId(accountId) {
+        // Validate before funding using FormValidation utility
+        if let error = FormValidation.validateAccountIdField(accountId) {
             validationError = error
             toastManager.show(error)
             return
@@ -401,7 +272,7 @@ struct FundAccountScreen: View {
 
         Task {
             do {
-                let result = try await bridge.fundAccount(accountId: accountId)
+                let result = try await bridgeWrapper.bridge.fundAccount(accountId: accountId)
                 await MainActor.run {
                     fundingResult = result
                     isFunding = false
@@ -423,12 +294,6 @@ struct FundAccountScreen: View {
             return "\(id.prefix(4))...\(id.suffix(4))"
         }
         return id
-    }
-
-    private func copyToClipboard(_ text: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
     }
 }
 

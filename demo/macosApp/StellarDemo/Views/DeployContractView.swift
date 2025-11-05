@@ -4,7 +4,6 @@ import shared
 // MARK: - Deploy Contract Screen (matches Compose DeployContractScreen)
 
 struct DeployContractView: View {
-    @Environment(\.dismiss) var dismiss
     @ObservedObject var toastManager: ToastManager
     @State private var selectedContract: ContractMetadata?
     @State private var sourceAccountId = ""
@@ -15,7 +14,7 @@ struct DeployContractView: View {
     @State private var deploymentResult: DeployContractResult?
     @State private var validationErrors: [String: String] = [:]
 
-    private let bridge = MacOSBridge()
+    @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
     // Access the AVAILABLE_CONTRACTS list from the shared module
     private var availableContracts: [ContractMetadata] {
         DeployContractKt.AVAILABLE_CONTRACTS.compactMap { $0 as? ContractMetadata }
@@ -40,275 +39,148 @@ struct DeployContractView: View {
             .padding(16)
         }
         .background(Material3Colors.surface)
-        .navigationTitle("Deploy a Smart Contract")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    dismiss()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(Material3Colors.primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        .navigationToolbar(title: "Deploy a Smart Contract")
     }
 
     // MARK: - View Components
 
     private var infoCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("ContractClient.deploy(): One-step contract deployment")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "ContractClient.deploy(): One-step contract deployment", color: .secondary) {
             Text("This demo showcases the SDK's high-level deployment API that handles WASM upload, contract deployment, and constructor invocation in a single call.")
                 .font(.system(size: 13))
                 .foregroundStyle(Material3Colors.onSecondaryContainer)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     private var contractSelectionCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("1. Select Contract")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(Material3Colors.onSurface)
-
-            // Contract picker
-            Menu {
-                ForEach(availableContracts.indices, id: \.self) { index in
-                    let contract = availableContracts[index]
-                    Button(action: {
-                        selectContract(contract)
-                    }) {
-                        VStack(alignment: .leading) {
-                            Text(contract.name)
-                            Text(contract.description_)
-                                .font(.caption)
+        InfoCard(title: "1. Select Contract", color: .default) {
+            VStack(spacing: 12) {
+                // Contract picker
+                Menu {
+                    ForEach(availableContracts.indices, id: \.self) { index in
+                        let contract = availableContracts[index]
+                        Button(action: {
+                            selectContract(contract)
+                        }) {
+                            VStack(alignment: .leading) {
+                                Text(contract.name)
+                                Text(contract.description_)
+                                    .font(.caption)
+                            }
                         }
                     }
-                }
-            } label: {
-                HStack {
-                    Text(selectedContract?.name ?? "Select a contract")
-                        .foregroundStyle(selectedContract == nil ? Material3Colors.onSurfaceVariant : Material3Colors.onSurface)
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .foregroundStyle(Material3Colors.onSurfaceVariant)
-                }
-                .padding(12)
-                .background(Color.white)
-                .cornerRadius(4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-
-            // Selected contract description
-            if let contract = selectedContract {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(contract.description_)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Material3Colors.onSurface)
-
-                    if contract.hasConstructor {
-                        Spacer().frame(height: 4)
-                        Text("Constructor required: \(contract.constructorParams.count) parameter(s)")
-                            .font(.system(size: 13, weight: .medium))
+                } label: {
+                    HStack {
+                        Text(selectedContract?.name ?? "Select a contract")
+                            .foregroundStyle(selectedContract == nil ? Material3Colors.onSurfaceVariant : Material3Colors.onSurface)
+                        Spacer()
+                        Image(systemName: "chevron.down")
                             .foregroundStyle(Material3Colors.onSurfaceVariant)
                     }
+                    .padding(12)
+                    .background(Material3Colors.surface)
+                    .cornerRadius(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
+                    )
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(Material3Colors.primaryContainer.opacity(0.3))
-                .cornerRadius(8)
+                .buttonStyle(.plain)
+
+                // Selected contract description
+                if let contract = selectedContract {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(contract.description_)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Material3Colors.onSurface)
+
+                        if contract.hasConstructor {
+                            Spacer().frame(height: 4)
+                            Text("Constructor required: \(contract.constructorParams.count) parameter(s)")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Material3Colors.onSurfaceVariant)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Material3Colors.primaryContainer.opacity(0.3))
+                    .cornerRadius(8)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.surface)
-        .cornerRadius(12)
     }
 
     private var sourceAccountCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("2. Source Account")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(Material3Colors.onSurface)
-
-            // Source Account ID
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Source Account ID")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                TextField("G...", text: $sourceAccountId)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(12)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(validationErrors["sourceAccount"] != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                    )
-                    .onChange(of: sourceAccountId) { _ in
-                        validationErrors.removeValue(forKey: "sourceAccount")
-                        deploymentResult = nil
-                    }
-
-                if let error = validationErrors["sourceAccount"] {
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Material3Colors.onErrorContainer)
-                }
-            }
-
-            // Secret Key
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("Secret Key")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                    Spacer()
-
-                    Button(action: { showSecret.toggle() }) {
-                        Image(systemName: showSecret ? "eye.slash.fill" : "eye.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Material3Colors.onSurfaceVariant)
-                    }
-                    .buttonStyle(.plain)
-                    .help(showSecret ? "Hide secret" : "Show secret")
+        InfoCard(title: "2. Source Account", color: .default) {
+            VStack(spacing: 12) {
+                StellarTextField(
+                    label: "Source Account ID",
+                    placeholder: "G...",
+                    text: $sourceAccountId,
+                    error: validationErrors["sourceAccount"]
+                )
+                .onChange(of: sourceAccountId) { _ in
+                    validationErrors.removeValue(forKey: "sourceAccount")
+                    deploymentResult = nil
                 }
 
-                if showSecret {
-                    TextField("S...", text: $secretKey)
-                        .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(12)
-                        .background(Color.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(validationErrors["secretKey"] != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                        )
-                        .onChange(of: secretKey) { _ in
-                            validationErrors.removeValue(forKey: "secretKey")
-                            deploymentResult = nil
-                        }
-                } else {
-                    SecureField("S...", text: $secretKey)
-                        .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(12)
-                        .background(Color.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(validationErrors["secretKey"] != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                        )
-                        .onChange(of: secretKey) { _ in
-                            validationErrors.removeValue(forKey: "secretKey")
-                            deploymentResult = nil
-                        }
-                }
-
-                if let error = validationErrors["secretKey"] {
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Material3Colors.onErrorContainer)
+                StellarTextField(
+                    label: "Secret Key",
+                    placeholder: "S...",
+                    text: $secretKey,
+                    error: validationErrors["secretKey"],
+                    isSecure: true,
+                    showVisibilityToggle: true,
+                    isVisible: $showSecret
+                )
+                .onChange(of: secretKey) { _ in
+                    validationErrors.removeValue(forKey: "secretKey")
+                    deploymentResult = nil
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.surface)
-        .cornerRadius(12)
     }
 
     private func constructorParamsCard(for contract: ContractMetadata) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("3. Constructor Parameters")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(Material3Colors.onSurface)
-
-            ForEach(0..<contract.constructorParams.count, id: \.self) { index in
-                if let param = contract.constructorParams[index] as? ConstructorParam {
-                    constructorParamField(param: param)
+        InfoCard(title: "3. Constructor Parameters", color: .default) {
+            VStack(spacing: 12) {
+                ForEach(0..<contract.constructorParams.count, id: \.self) { index in
+                    if let param = contract.constructorParams[index] as? ConstructorParam {
+                        constructorParamField(param: param)
+                    }
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.surface)
-        .cornerRadius(12)
     }
 
     private func constructorParamField(param: ConstructorParam) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(param.name)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-            TextField(param.placeholder, text: Binding(
-                get: { constructorArgValues[param.name] ?? "" },
-                set: { newValue in
-                    constructorArgValues[param.name] = newValue
-                    validationErrors.removeValue(forKey: "constructor_\(param.name)")
-                    deploymentResult = nil
-                }
-            ))
-            .textFieldStyle(.plain)
-            .font(.system(.body, design: .monospaced))
-            .padding(12)
-            .background(Color.white)
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(validationErrors["constructor_\(param.name)"] != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
+            StellarTextField(
+                label: param.name,
+                placeholder: param.placeholder,
+                text: Binding(
+                    get: { constructorArgValues[param.name] ?? "" },
+                    set: { newValue in
+                        constructorArgValues[param.name] = newValue
+                        validationErrors.removeValue(forKey: "constructor_\(param.name)")
+                        deploymentResult = nil
+                    }
+                ),
+                error: validationErrors["constructor_\(param.name)"],
+                helpText: validationErrors["constructor_\(param.name)"] == nil ? param.description_ : nil
             )
-
-            if let error = validationErrors["constructor_\(param.name)"] {
-                Text(error)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Material3Colors.onErrorContainer)
-            } else {
-                Text(param.description_)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-            }
         }
     }
 
     private var deployButton: some View {
-        Button(action: deployContract) {
-            HStack(spacing: 8) {
-                if isDeploying {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.white)
-                    Text("Deploying...")
-                } else {
-                    Image(systemName: "arrow.up.doc.fill")
-                    Text("Deploy Contract")
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(isFormValid && !isDeploying ? Material3Colors.primary : Material3Colors.primary.opacity(0.6))
-            .foregroundColor(.white)
-            .cornerRadius(12)
-        }
-        .disabled(!isFormValid || isDeploying)
-        .buttonStyle(.plain)
+        LoadingButton(
+            action: deployContract,
+            isLoading: isDeploying,
+            isEnabled: isFormValid && !isDeploying,
+            icon: "arrow.up.doc.fill",
+            text: "Deploy Contract",
+            loadingText: "Deploying..."
+        )
     }
 
     @ViewBuilder
@@ -329,50 +201,39 @@ struct DeployContractView: View {
     private func successCard(_ success: DeployContractResult.Success) -> some View {
         VStack(spacing: 16) {
             // Success header card
-            VStack(alignment: .leading, spacing: 8) {
+            InfoCard(color: .success) {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 24))
                         .foregroundStyle(Material3Colors.onSuccessContainer)
 
-                    Text("Deployment Successful")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(Material3Colors.onSuccessContainer)
-                }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Deployment Successful")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Material3Colors.onSuccessContainer)
 
-                Text("Your smart contract has been deployed to the testnet")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Material3Colors.onSuccessContainer)
+                        Text("Your smart contract has been deployed to the testnet")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Material3Colors.onSuccessContainer)
+                    }
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Material3Colors.successContainer)
-            .cornerRadius(12)
+
             // Contract Details Card
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Contract Details")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
+            InfoCard(title: "Contract Details", color: .surfaceVariant) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Divider()
 
-                Divider()
+                    DeployContractCopyableRow(label: "Contract ID", value: success.contractId)
 
-                DeployContractCopyableRow(label: "Contract ID", value: success.contractId)
-
-                if let wasmId = success.wasmId {
-                    DeployContractCopyableRow(label: "WASM ID", value: wasmId)
+                    if let wasmId = success.wasmId {
+                        DeployContractCopyableRow(label: "WASM ID", value: wasmId)
+                    }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Material3Colors.surfaceVariant)
-            .cornerRadius(12)
 
             // What's Next? Card
-            VStack(alignment: .leading, spacing: 8) {
-                Text("What's Next?")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+            InfoCard(title: "What's Next?", color: .secondary) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("• You can now use this contract ID to interact with your deployed contract")
                         .font(.system(size: 13))
@@ -392,41 +253,27 @@ struct DeployContractView: View {
                 }
                 .padding(.leading, 8)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Material3Colors.secondaryContainer)
-            .cornerRadius(12)
         }
     }
 
     private func errorCard(_ error: DeployContractResult.Error) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Deployment Failed")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onErrorContainer)
-
-            Text(error.message)
-                .font(.system(size: 14))
-                .foregroundStyle(Material3Colors.onErrorContainer)
-
-            if let exception = error.exception {
-                Text("Technical details: \(exception.message ?? "Unknown error")")
-                    .font(.system(size: 13, design: .monospaced))
+        InfoCard(title: "Deployment Failed", color: .error) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(error.message)
+                    .font(.system(size: 14))
                     .foregroundStyle(Material3Colors.onErrorContainer)
+
+                if let exception = error.exception {
+                    Text("Technical details: \(exception.message ?? "Unknown error")")
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(Material3Colors.onErrorContainer)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.errorContainer)
-        .cornerRadius(12)
     }
 
     private var troubleshootingCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Troubleshooting")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "Troubleshooting", color: .secondary) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("• Verify the source account has sufficient XLM balance (at least 100 XLM recommended)")
                     .font(.system(size: 13))
@@ -450,10 +297,6 @@ struct DeployContractView: View {
             }
             .padding(.leading, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     @ViewBuilder
@@ -552,7 +395,7 @@ struct DeployContractView: View {
                 }
 
                 // Call the shared business logic
-                let result = try await bridge.deployContract(
+                let result = try await bridgeWrapper.bridge.deployContract(
                     contractMetadata: contract,
                     constructorArgs: constructorArgs,
                     sourceAccountId: sourceAccountId,
@@ -578,22 +421,12 @@ struct DeployContractView: View {
     private func validateInputs() -> [String: String] {
         var errors: [String: String] = [:]
 
-        // Validate source account
-        if sourceAccountId.isEmpty {
-            errors["sourceAccount"] = "Source account ID is required"
-        } else if !sourceAccountId.hasPrefix("G") {
-            errors["sourceAccount"] = "Account ID must start with 'G'"
-        } else if sourceAccountId.count != 56 {
-            errors["sourceAccount"] = "Account ID must be 56 characters"
+        if let error = FormValidation.validateAccountIdField(sourceAccountId) {
+            errors["sourceAccount"] = error
         }
 
-        // Validate secret key
-        if secretKey.isEmpty {
-            errors["secretKey"] = "Secret key is required"
-        } else if !secretKey.hasPrefix("S") {
-            errors["secretKey"] = "Secret key must start with 'S'"
-        } else if secretKey.count != 56 {
-            errors["secretKey"] = "Secret key must be 56 characters"
+        if let error = FormValidation.validateSecretSeedField(secretKey) {
+            errors["secretKey"] = error
         }
 
         // Validate constructor arguments
@@ -608,8 +441,8 @@ struct DeployContractView: View {
                         // Type-specific validation
                         switch param.type {
                         case .address:
-                            if !value.hasPrefix("G") || value.count != 56 {
-                                errors["constructor_\(param.name)"] = "Must be a valid address (G...)"
+                            if let error = FormValidation.validateAccountIdField(value) {
+                                errors["constructor_\(param.name)"] = error
                             }
                         case .u32:
                             if Int32(value) == nil {
@@ -628,11 +461,6 @@ struct DeployContractView: View {
         return errors
     }
 
-    private func copyToClipboard(_ text: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
-    }
 }
 
 // MARK: - Deploy Contract Copyable Row
@@ -658,8 +486,7 @@ struct DeployContractCopyableRow: View {
                 Spacer()
 
                 Button(action: {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(value, forType: .string)
+                    ClipboardHelper.copy(value)
                 }) {
                     Image(systemName: "doc.on.doc")
                         .font(.system(size: 10))

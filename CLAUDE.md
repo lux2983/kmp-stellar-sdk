@@ -34,7 +34,7 @@ The SDK is in **alpha development** with comprehensive functionality implemented
 - **Platforms**: Android, iOS, macOS, Desktop (JVM), Web
 - **Architecture**: Compose Multiplatform with 95% code sharing
 - **UI**: Modern celestial-themed design with color-coded cards (purple/gold/teal/blue/red)
-- **Features**: 10 comprehensive demos (key generation, funding, account details, trustlines, payments, fetch transaction, contract details, deploy contract, invoke hello world, invoke auth)
+- **Features**: 11 comprehensive demos (key generation, funding, account details, trustlines, payments, fetch transaction, contract details, deploy contract, invoke hello world, invoke auth, invoke token contract)
 - **Location**: `demo/` directory with platform-specific apps
 
 ## Architecture Notes
@@ -242,7 +242,7 @@ The SDK includes comprehensive integration tests that validate against a live St
 The `demo` directory demonstrates **comprehensive SDK usage** with a Compose Multiplatform architecture:
 
 - **Shared module** (`demo/shared`): Compose Multiplatform UI + business logic
-  - 7 feature screens (key generation, funding, account details, trust asset, payments, contracts, deploy contract)
+  - 11 feature screens (key generation, funding, account details, trust asset, payments, fetch transaction, contract details, deploy contract, invoke hello world, invoke auth, invoke token contract)
   - Platform-specific code only for clipboard access
   - Demonstrates real SDK usage patterns
 
@@ -316,10 +316,10 @@ The `demo` directory demonstrates **comprehensive SDK usage** with a Compose Mul
   - `macosTest`: macOS-specific tests
 
 - **demo**: Comprehensive KMP demo application
-  - `shared`: Compose Multiplatform UI + business logic (7 feature screens)
+  - `shared`: Compose Multiplatform UI + business logic (11 feature screens)
   - `androidApp`: Android entry point (Jetpack Compose)
   - `iosApp`: iOS entry point (SwiftUI wrapper for Compose)
-  - `macosApp`: macOS native SwiftUI app (17 Swift files, not Compose)
+  - `macosApp`: macOS native SwiftUI app (native SwiftUI, not Compose)
   - `desktopApp`: Desktop JVM app (Compose)
   - `webApp`: Web app (Kotlin/JS with Compose)
 

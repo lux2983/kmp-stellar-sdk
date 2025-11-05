@@ -9,18 +9,12 @@ struct MainScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // App Title
-                VStack(spacing: 8) {
-                    Text("Stellar SDK Demo")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundStyle(Material3Colors.onSurface)
-
-                    Text("Explore the Stellar SDK features")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Material3Colors.onSurfaceVariant)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 16)
+                // App Subtitle
+                Text("Explore the Stellar SDK features")
+                    .font(.system(size: 16))
+                    .foregroundStyle(Material3Colors.onSurfaceVariant)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 16)
 
                 // Demo topics list
                 LazyVStack(spacing: 12) {
@@ -117,7 +111,7 @@ struct MainScreen: View {
         }
         .background(Material3Colors.surface)
         .frame(minWidth: 700, minHeight: 600)
-        .navigationTitle("Stellar SDK Demo")
+        .navigationToolbar(title: "Stellar SDK Demo", showBackButton: false)
         .toast(toastManager)
     }
 }

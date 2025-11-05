@@ -217,7 +217,7 @@ fun main() {
 
 ## Features
 
-All 10 features work identically in the browser:
+All 11 features work identically in the browser:
 
 ### 1. Key Generation
 - Generate random Stellar keypairs using browser's crypto API
@@ -277,6 +277,14 @@ All 10 features work identically in the browser:
 - Same-invoker vs different-invoker scenarios
 - Conditional signing with `needsNonInvokerSigningBy()`
 - Uses: `ContractClient.buildInvoke()`, `signAuthEntries()`, `funcResToNative()`
+
+### 11. Invoke Token Contract
+- **View**: `InvokeTokenContractScreen.kt`
+- SEP-41 token contract interaction
+- Advanced multi-signature workflows with `buildInvoke()`
+- Function selection from contract spec
+- Automatic type conversion for token operations
+- Uses: `ContractClient.buildInvoke()`, token interface support
 
 ## Technology Stack
 

@@ -51,8 +51,8 @@ The demo app is a **Kotlin Multiplatform** application showcasing the Stellar SD
 
 ```
 demo/shared (Compose Multiplatform)
-├── UI Screens (10 screens, 1 per feature + main menu)
-├── Stellar Integration (10 feature modules using SDK)
+├── UI Screens (11 screens, 1 per feature + main menu)
+├── Stellar Integration (11 feature modules using SDK)
 └── Platform APIs (clipboard only)
 
 Platform Apps (minimal entry points)
@@ -65,7 +65,7 @@ Platform Apps (minimal entry points)
 
 ## Current Features
 
-The demo includes **10 comprehensive features**:
+The demo includes **11 comprehensive features**:
 
 ### 1. Key Generation
 - **Location**: `shared/src/commonMain/kotlin/com/soneso/demo/`
@@ -127,6 +127,12 @@ The demo includes **10 comprehensive features**:
 - **UI**: `ui/screens/InvokeAuthContractScreen.kt`
 - **Logic**: `stellar/InvokeAuthContract.kt`
 - **Demonstrates**: Dynamic authorization handling with `needsNonInvokerSigningBy()`, conditional `signAuthEntries()`, unified pattern for same-invoker and different-invoker scenarios, production-ready authorization pattern
+
+### 11. Invoke Token Contract
+- **Location**: `shared/src/commonMain/kotlin/com/soneso/demo/`
+- **UI**: `ui/screens/InvokeTokenContractScreen.kt`
+- **Logic**: `stellar/InvokeTokenContract.kt`
+- **Demonstrates**: SEP-41 compliant token contract interaction, `ContractClient.buildInvoke()` for advanced multi-signature workflows, function selection from contract spec, automatic type conversion for token operations (mint, transfer, balance)
 
 ## Adding New Demo Features
 
@@ -295,7 +301,8 @@ shared/src/commonMain/kotlin/com/soneso/demo/
 │   │   ├── ContractDetailsScreen.kt
 │   │   ├── DeployContractScreen.kt
 │   │   ├── InvokeHelloWorldContractScreen.kt
-│   │   └── InvokeAuthContractScreen.kt
+│   │   ├── InvokeAuthContractScreen.kt
+│   │   └── InvokeTokenContractScreen.kt
 │   └── theme/
 │       └── Theme.kt                # Material 3 theme
 ├── stellar/                        # SDK integration modules
@@ -308,7 +315,8 @@ shared/src/commonMain/kotlin/com/soneso/demo/
 │   ├── ContractDetails.kt
 │   ├── DeployContract.kt
 │   ├── InvokeHelloWorldContract.kt
-│   └── InvokeAuthContract.kt
+│   ├── InvokeAuthContract.kt
+│   └── InvokeTokenContract.kt
 └── platform/
     └── Clipboard.kt                # Expect/actual for clipboard
 ```

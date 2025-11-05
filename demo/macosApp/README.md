@@ -178,7 +178,7 @@ In Xcode:
 
 ## Features
 
-All 10 demo features are fully implemented in SwiftUI:
+All 11 demo features are fully implemented in SwiftUI:
 
 ### 1. Key Generation
 - **View**: `KeyGenerationView.swift`
@@ -256,6 +256,14 @@ All 10 demo features are fully implemented in SwiftUI:
 - Same-invoker vs different-invoker scenarios
 - Conditional signing with `needsNonInvokerSigningBy()`
 - Uses: `ContractClient.buildInvoke()`, `signAuthEntries()`, `funcResToNative()`
+
+### 11. Invoke Token Contract
+- **View**: `InvokeTokenContractView.swift`
+- SEP-41 token contract interaction
+- Advanced multi-signature workflows with `buildInvoke()`
+- Function selection from contract spec
+- Automatic type conversion for token operations
+- Uses: `ContractClient.buildInvoke()`, token interface support
 
 ## Design System
 

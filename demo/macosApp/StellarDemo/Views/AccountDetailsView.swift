@@ -2,14 +2,13 @@ import SwiftUI
 import shared
 
 struct AccountDetailsScreen: View {
-    @Environment(\.dismiss) var dismiss
     @ObservedObject var toastManager: ToastManager
     @State private var accountId = ""
     @State private var isFetching = false
     @State private var detailsResult: AccountDetailsResult?
     @State private var validationError: String?
 
-    private let bridge = MacOSBridge()
+    @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
         ScrollView {
@@ -23,92 +22,43 @@ struct AccountDetailsScreen: View {
             .padding(16)
         }
         .background(Material3Colors.surface)
-        .navigationTitle("Fetch Account Details")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    dismiss()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(Material3Colors.primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        .navigationToolbar(title: "Fetch Account Details")
     }
 
     // MARK: - View Components
 
     private var infoCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Horizon API: fetch account details")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "Horizon API: fetch account details", color: .secondary) {
             Text("Enter a Stellar account ID to retrieve comprehensive account information including balances, signers, thresholds, and more.")
                 .font(.system(size: 13))
                 .foregroundStyle(Material3Colors.onSecondaryContainer)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     private var inputField: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Account ID")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-            TextField("G...", text: $accountId)
-                .textFieldStyle(.plain)
-                .font(.system(.body, design: .monospaced))
-                .padding(12)
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(validationError != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                )
-                .onChange(of: accountId) { _ in
-                    validationError = nil
-                    detailsResult = nil
-                }
-
-            if let error = validationError {
-                Text(error)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Material3Colors.onErrorContainer)
-            }
+        StellarTextField(
+            label: "Account ID",
+            placeholder: "G...",
+            text: $accountId,
+            error: validationError,
+            useMonospacedFont: true,
+            backgroundColor: .white
+        )
+        .onChange(of: accountId) { _ in
+            validationError = nil
+            detailsResult = nil
         }
     }
 
     private var fetchButton: some View {
-        Button(action: fetchDetails) {
-            HStack(spacing: 8) {
-                if isFetching {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.white)
-                    Text("Fetching...")
-                } else {
-                    Image(systemName: "magnifyingglass")
-                    Text("Fetch Details")
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background((isFetching || accountId.isEmpty) ? Material3Colors.primary.opacity(0.6) : Material3Colors.primary)
-            .foregroundColor(.white)
-            .cornerRadius(12)
-        }
-        .disabled(isFetching || accountId.isEmpty)
-        .buttonStyle(.plain)
+        LoadingButton(
+            action: fetchDetails,
+            isLoading: isFetching,
+            isEnabled: !isFetching && !accountId.isEmpty,
+            icon: "magnifyingglass",
+            text: "Fetch Details",
+            loadingText: "Fetching..."
+        )
     }
 
     @ViewBuilder
@@ -127,11 +77,7 @@ struct AccountDetailsScreen: View {
     }
 
     private func errorCard(_ error: AccountDetailsResult.Error) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Error")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onErrorContainer)
-
+        InfoCard(title: "Error", color: .error) {
             Text(error.message)
                 .font(.system(size: 14))
                 .foregroundStyle(Material3Colors.onErrorContainer)
@@ -140,20 +86,13 @@ struct AccountDetailsScreen: View {
                 Text("Technical details: \(exception.message ?? "Unknown error")")
                     .font(.system(size: 13, design: .monospaced))
                     .foregroundStyle(Material3Colors.onErrorContainer)
+                    .padding(.top, 4)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.errorContainer)
-        .cornerRadius(12)
     }
 
     private var troubleshootingCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Troubleshooting")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "Troubleshooting", color: .secondary) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("• Verify the account ID is valid (starts with 'G' and is 56 characters)")
                     .font(.system(size: 13))
@@ -171,12 +110,7 @@ struct AccountDetailsScreen: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Material3Colors.onSecondaryContainer)
             }
-            .padding(.leading, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     @ViewBuilder
@@ -198,22 +132,9 @@ struct AccountDetailsScreen: View {
 
     // MARK: - Actions
 
-    private func validateAccountId(_ id: String) -> String? {
-        if id.isEmpty {
-            return "Account ID is required"
-        }
-        if !id.hasPrefix("G") {
-            return "Account ID must start with 'G'"
-        }
-        if id.count != 56 {
-            return "Account ID must be 56 characters long"
-        }
-        return nil
-    }
-
     private func fetchDetails() {
         // Validate before fetching
-        if let error = validateAccountId(accountId) {
+        if let error = FormValidation.validateAccountIdField(accountId) {
             validationError = error
             toastManager.show(error)
             return
@@ -224,7 +145,7 @@ struct AccountDetailsScreen: View {
 
         Task {
             do {
-                let result = try await bridge.fetchAccountDetails(accountId: accountId)
+                let result = try await bridgeWrapper.bridge.fetchAccountDetails(accountId: accountId)
                 await MainActor.run {
                     detailsResult = result
                     isFetching = false

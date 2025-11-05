@@ -20,11 +20,14 @@ import shared
 
 @main
 struct StellarDemoApp: App {
+    @StateObject private var bridgeWrapper = MacOSBridgeWrapper()
+
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 MainScreen()
             }
+            .environmentObject(bridgeWrapper)
             .accentColor(Material3Colors.primary)
         }
         .windowStyle(.hiddenTitleBar)

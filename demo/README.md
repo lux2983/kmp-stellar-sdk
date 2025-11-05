@@ -42,7 +42,7 @@ The demo app uses a **Compose Multiplatform** architecture with maximum code sha
 
 ## Features
 
-The demo app includes 10 comprehensive feature demonstrations:
+The demo app includes 11 comprehensive feature demonstrations:
 
 ### 1. Key Generation
 - Generate random Stellar Ed25519 keypairs
@@ -118,6 +118,12 @@ The demo app includes 10 comprehensive feature demonstrations:
 - Production-ready pattern for conditional authorization
 - Educational UI showing which authorization scenario was detected
 - Demonstrates: `ContractClient.forContract()`, `buildInvoke()`, `needsNonInvokerSigningBy()`, `signAuthEntries()`
+
+### 11. Invoke Token Contract
+- **Location**: `shared/src/commonMain/kotlin/com/soneso/demo/`
+- **UI**: `ui/screens/InvokeTokenContractScreen.kt`
+- **Logic**: `stellar/InvokeTokenContract.kt`
+- **Demonstrates**: SEP-41 token contract interaction, `buildInvoke()` for multi-signature workflows, function selection, automatic type conversion for token operations (mint, transfer, balance)
 
 ## Project Structure
 

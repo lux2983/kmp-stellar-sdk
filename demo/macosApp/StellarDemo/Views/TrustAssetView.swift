@@ -2,7 +2,6 @@ import SwiftUI
 import shared
 
 struct TrustAssetScreen: View {
-    @Environment(\.dismiss) var dismiss
     @ObservedObject var toastManager: ToastManager
     @State private var accountId = ""
     @State private var assetCode = "SRT"
@@ -14,7 +13,7 @@ struct TrustAssetScreen: View {
     @State private var trustResult: TrustAssetResult?
     @State private var validationError: String?
 
-    private let bridge = MacOSBridge()
+    @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
         ScrollView {
@@ -28,34 +27,14 @@ struct TrustAssetScreen: View {
             .padding(16)
         }
         .background(Material3Colors.surface)
-        .navigationTitle("Trust Asset")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    dismiss()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(Material3Colors.primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        .navigationToolbar(title: "Trust Asset")
     }
 
     // MARK: - View Components
 
     private var infoCard: some View {
         VStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Establish a Trustline")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+            InfoCard(title: "Establish a Trustline", color: .secondary) {
                 Text("A trustline is required before an account can hold non-native assets (assets other than XLM). This creates a ChangeTrust operation that allows your account to hold up to a specified limit of the asset.")
                     .font(.system(size: 13))
                     .foregroundStyle(Material3Colors.onSecondaryContainer)
@@ -67,17 +46,8 @@ struct TrustAssetScreen: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Material3Colors.onSecondaryContainer)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Material3Colors.secondaryContainer)
-            .cornerRadius(12)
 
-            // Example Asset Card
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Example Testnet Asset")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Material3Colors.onPrimaryContainer)
-
+            InfoCard(title: "Example Testnet Asset", color: .primary) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("The asset code and issuer fields are pre-filled with SRT, a testnet asset provided by Stellar as part of the testnet anchor.")
                         .font(.system(size: 13))
@@ -89,190 +59,96 @@ struct TrustAssetScreen: View {
                 }
                 .padding(.leading, 8)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Material3Colors.primaryContainer)
-            .cornerRadius(12)
+
+            InfoCard(title: "Trust Limit", color: .tertiary) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("The trust limit determines the maximum amount of the asset your account can hold.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Material3Colors.onTertiaryContainer)
+
+                    Text("Leave empty for maximum (~922 trillion)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Material3Colors.onTertiaryContainer)
+
+                    Text("Enter 0 to remove an existing trustline (requires zero balance)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Material3Colors.onTertiaryContainer)
+                }
+                .padding(.leading, 8)
+            }
         }
     }
 
     private var inputFields: some View {
         VStack(spacing: 12) {
-            // Account ID field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Account ID")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                TextField("G...", text: $accountId)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(12)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                    )
-                    .onChange(of: accountId) { _ in
-                        validationError = nil
-                        trustResult = nil
-                    }
+            StellarTextField(
+                label: "Account ID",
+                placeholder: "G...",
+                text: $accountId,
+                error: validationError
+            )
+            .onChange(of: accountId) { _ in
+                validationError = nil
+                trustResult = nil
             }
 
-            // Asset Code field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Asset Code")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                TextField("USD, EUR, etc.", text: $assetCode)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(12)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                    )
-                    .onChange(of: assetCode) { _ in
-                        validationError = nil
-                        trustResult = nil
-                    }
-
-                Text("1-12 uppercase alphanumeric characters")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant.opacity(0.7))
+            StellarTextField(
+                label: "Asset Code",
+                placeholder: "USD, EUR, etc.",
+                text: $assetCode,
+                helpText: "1-12 uppercase alphanumeric characters"
+            )
+            .onChange(of: assetCode) { _ in
+                validationError = nil
+                trustResult = nil
             }
 
-            // Asset Issuer field
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Asset Issuer")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                TextField("G...", text: $assetIssuer)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(12)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                    )
-                    .onChange(of: assetIssuer) { _ in
-                        validationError = nil
-                        trustResult = nil
-                    }
+            StellarTextField(
+                label: "Asset Issuer",
+                placeholder: "G...",
+                text: $assetIssuer
+            )
+            .onChange(of: assetIssuer) { _ in
+                validationError = nil
+                trustResult = nil
             }
 
-            // Trust Limit field (optional)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Trust Limit (Optional)")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                TextField("Leave empty for maximum", text: $trustLimit)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(12)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                    )
-                    .onChange(of: trustLimit) { _ in
-                        validationError = nil
-                        trustResult = nil
-                    }
-
-                Text("Maximum amount of the asset to hold (defaults to ~922 trillion)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant.opacity(0.7))
+            StellarTextField(
+                label: "Trust Limit (Optional)",
+                placeholder: "Leave empty for maximum",
+                text: $trustLimit,
+                helpText: "Maximum amount to hold (empty = max, 0 = remove trustline)"
+            )
+            .onChange(of: trustLimit) { _ in
+                validationError = nil
+                trustResult = nil
             }
 
-            // Secret Seed field (secure)
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("Secret Seed")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                    Spacer()
-
-                    Button(action: { showSecret.toggle() }) {
-                        Image(systemName: showSecret ? "eye.slash.fill" : "eye.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Material3Colors.onSurfaceVariant)
-                    }
-                    .buttonStyle(.plain)
-                    .help(showSecret ? "Hide secret" : "Show secret")
-                }
-
-                if showSecret {
-                    TextField("S...", text: $secretSeed)
-                        .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(12)
-                        .background(Material3Colors.tertiaryContainer)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Material3Colors.onTertiaryContainer.opacity(0.3), lineWidth: 1)
-                        )
-                        .onChange(of: secretSeed) { _ in
-                            validationError = nil
-                            trustResult = nil
-                        }
-                } else {
-                    SecureField("S...", text: $secretSeed)
-                        .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(12)
-                        .background(Material3Colors.tertiaryContainer)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Material3Colors.onTertiaryContainer.opacity(0.3), lineWidth: 1)
-                        )
-                        .onChange(of: secretSeed) { _ in
-                            validationError = nil
-                            trustResult = nil
-                        }
-                }
-
-                Text("Required for signing the transaction")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant.opacity(0.7))
-            }
-
-            if let error = validationError {
-                Text(error)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Material3Colors.onErrorContainer)
-                    .padding(.top, 4)
+            StellarTextField(
+                label: "Secret Seed",
+                placeholder: "S...",
+                text: $secretSeed,
+                helpText: "Required for signing the transaction",
+                isSecure: true,
+                showVisibilityToggle: true,
+                isVisible: $showSecret
+            )
+            .onChange(of: secretSeed) { _ in
+                validationError = nil
+                trustResult = nil
             }
         }
     }
 
     private var submitButton: some View {
-        Button(action: submitTrustline) {
-            HStack(spacing: 8) {
-                if isSubmitting {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.white)
-                    Text("Submitting...")
-                } else {
-                    Image(systemName: "link.badge.plus")
-                    Text("Establish Trustline")
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(isFormValid ? Material3Colors.primary : Material3Colors.primary.opacity(0.6))
-            .foregroundColor(.white)
-            .cornerRadius(12)
-        }
-        .disabled(!isFormValid || isSubmitting)
-        .buttonStyle(.plain)
+        LoadingButton(
+            action: submitTrustline,
+            isLoading: isSubmitting,
+            isEnabled: isFormValid,
+            icon: "link.badge.plus",
+            text: "Establish Trustline",
+            loadingText: "Submitting..."
+        )
     }
 
     @ViewBuilder
@@ -291,11 +167,7 @@ struct TrustAssetScreen: View {
     }
 
     private func errorCard(_ error: TrustAssetResult.Error) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Error")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Material3Colors.onErrorContainer)
-
+        InfoCard(title: "Error", color: .error) {
             Text(error.message)
                 .font(.system(size: 14))
                 .foregroundStyle(Material3Colors.onErrorContainer)
@@ -306,18 +178,10 @@ struct TrustAssetScreen: View {
                     .foregroundStyle(Material3Colors.onErrorContainer)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.errorContainer)
-        .cornerRadius(12)
     }
 
     private var troubleshootingCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Troubleshooting")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Material3Colors.onSecondaryContainer)
-
+        InfoCard(title: "Troubleshooting", color: .secondary) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("• Ensure the account exists and has been funded (use Friendbot for testnet)")
                     .font(.system(size: 13))
@@ -338,13 +202,13 @@ struct TrustAssetScreen: View {
                 Text("• Asset code must be 1-12 uppercase alphanumeric characters")
                     .font(.system(size: 13))
                     .foregroundStyle(Material3Colors.onSecondaryContainer)
+
+                Text("• To remove a trustline, enter 0 as the limit (requires zero balance)")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Material3Colors.onSecondaryContainer)
             }
             .padding(.leading, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Material3Colors.secondaryContainer)
-        .cornerRadius(12)
     }
 
     @ViewBuilder
@@ -373,20 +237,50 @@ struct TrustAssetScreen: View {
     // MARK: - Actions
 
     private func submitTrustline() {
+        if let error = FormValidation.validateAccountIdField(accountId) {
+            toastManager.show(error)
+            return
+        }
+
+        if let error = FormValidation.validateAssetCodeField(assetCode) {
+            toastManager.show(error)
+            return
+        }
+
+        if let error = FormValidation.validateAccountIdField(assetIssuer) {
+            toastManager.show(error)
+            return
+        }
+
+        if !trustLimit.isEmpty {
+            if Double(trustLimit) == nil {
+                toastManager.show("Trust limit must be a valid decimal number")
+                return
+            }
+            if let limitValue = Double(trustLimit), limitValue < 0 {
+                toastManager.show("Trust limit must be 0 or greater (0 removes the trustline)")
+                return
+            }
+        }
+
+        if let error = FormValidation.validateSecretSeedField(secretSeed) {
+            toastManager.show(error)
+            return
+        }
+
         isSubmitting = true
         trustResult = nil
         validationError = nil
 
         Task {
             do {
-                // Use maximum limit if not specified (922337203685.4775807)
                 let limit = trustLimit.isEmpty ? "922337203685.4775807" : trustLimit
-                let result = try await bridge.trustAsset(
+                let result = try await bridgeWrapper.bridge.trustAsset(
                     accountId: accountId,
                     assetCode: assetCode,
                     assetIssuer: assetIssuer,
                     secretSeed: secretSeed,
-                    limit: limit,
+                    limit: limit
                 )
                 await MainActor.run {
                     trustResult = result
@@ -411,7 +305,3 @@ struct TrustAssetScreen: View {
         return id
     }
 }
-
-
-// MARK: - Send a Payment Screen (matches Compose SendPaymentScreen)
-

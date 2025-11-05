@@ -256,7 +256,7 @@ For deployment examples, authorization patterns, and advanced usage, see the [Ge
 
 ## Demo Application
 
-The [demo app](demo/README.md) showcases SDK usage across all platforms with 10 comprehensive features:
+The [demo app](demo/README.md) showcases SDK usage across all platforms with 11 comprehensive features:
 
 1. **Key Generation** - Generate and manage Ed25519 keypairs
 2. **Fund Testnet Account** - Get free test XLM from Friendbot
@@ -268,6 +268,7 @@ The [demo app](demo/README.md) showcases SDK usage across all platforms with 10 
 8. **Deploy Smart Contract** - Deploy Soroban WASM contracts to testnet
 9. **Invoke Hello World Contract** - Simple contract invocation with automatic result parsing
 10. **Invoke Auth Contract** - Dynamic authorization handling for same-invoker and different-invoker scenarios
+11. **Invoke Token Contract** - SEP-41 token contract interaction with multi-signature workflows
 
 Run the demo:
 

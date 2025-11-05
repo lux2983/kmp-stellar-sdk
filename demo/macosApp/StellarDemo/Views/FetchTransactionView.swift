@@ -47,23 +47,12 @@ struct FetchTransactionScreen: View {
             .padding(16)
         }
         .background(Material3Colors.surface)
-        .navigationTitle("Fetch Transaction Details")
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button(action: {
-                    dismiss()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 14))
-                    }
-                    .foregroundColor(Material3Colors.primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
+        .navigationToolbar(
+            title: "Fetch Transaction Details",
+            showBackButton: true,
+            onBack: { dismiss() }
+        )
+        .navigationBarBackButtonHidden(true)
     }
 
     // MARK: - View Components
@@ -187,27 +176,16 @@ struct FetchTransactionScreen: View {
         .cornerRadius(12)
     }
 
+
     private var fetchButton: some View {
-        Button(action: fetchTransaction) {
-            HStack(spacing: 8) {
-                if isFetching {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(.white)
-                    Text("Fetching...")
-                } else {
-                    Image(systemName: "magnifyingglass")
-                    Text("Fetch Transaction")
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background((isFetching || transactionHash.isEmpty) ? Material3Colors.primary.opacity(0.6) : Material3Colors.primary)
-            .foregroundColor(.white)
-            .cornerRadius(12)
-        }
-        .disabled(isFetching || transactionHash.isEmpty)
-        .buttonStyle(.plain)
+        LoadingButton(
+            action: fetchTransaction,
+            isLoading: isFetching,
+            isEnabled: !isFetching && !transactionHash.isEmpty,
+            icon: "magnifyingglass",
+            text: "Fetch Transaction",
+            loadingText: "Fetching..."
+        )
     }
 
     @ViewBuilder

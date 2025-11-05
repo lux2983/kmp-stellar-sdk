@@ -16,7 +16,7 @@ This guide explores the demo applications included with the Stellar KMP SDK, sho
 
 The `demo` directory contains comprehensive Kotlin Multiplatform applications demonstrating:
 
-- **Complete SDK feature coverage** across 10 comprehensive use cases
+- **Complete SDK feature coverage** across 11 comprehensive use cases
 - **Compose Multiplatform UI** with 95% code sharing
 - **Real Stellar network integration** with testnet
 - **Production-ready patterns** for async operations and error handling
@@ -150,7 +150,7 @@ demo/shared (Compose + Business Logic)
 
 ## Demo Features
 
-The demo app showcases 10 comprehensive SDK features:
+The demo app showcases 11 comprehensive SDK features:
 
 ### 1. Key Generation
 - Generate random Ed25519 keypairs
@@ -222,6 +222,14 @@ The demo app showcases 10 comprehensive SDK features:
 - Conditional authorization signing
 - Production-ready authorization patterns
 - **SDK Features**: `ContractClient.buildInvoke()`, `needsNonInvokerSigningBy()`, `signAuthEntries()`, `funcResToNative()`
+
+### 11. Invoke Token Contract
+- SEP-41 compliant token contract interaction
+- Map-based argument conversion for token operations
+- Advanced multi-signature workflows with `buildInvoke()`
+- Function selection from contract spec
+- Automatic type conversion for mint, transfer, balance operations
+- **SDK Features**: `ContractClient.buildInvoke()`, token interface support
 
 ## Code Examples
 

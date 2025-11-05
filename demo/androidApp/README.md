@@ -225,6 +225,14 @@ All features are implemented in the shared module. The Android app provides:
 - Conditional signing with needsNonInvokerSigningBy()
 - Production-ready authorization patterns
 
+### 11. Invoke Token Contract
+- **View**: `InvokeTokenContractScreen.kt`
+- SEP-41 token contract interaction
+- Advanced multi-signature workflows with `buildInvoke()`
+- Function selection from contract spec
+- Automatic type conversion for token operations
+- Uses: `ContractClient.buildInvoke()`, token interface support
+
 ## Technology Stack
 
 ### UI Layer

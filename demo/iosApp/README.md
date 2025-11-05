@@ -192,7 +192,7 @@ targets:
 
 ## Features
 
-All 10 features are implemented in the shared Kotlin module:
+All 11 features are implemented in the shared Kotlin module:
 
 ### 1. Key Generation
 - Generate Ed25519 keypairs with iOS's SecureRandom (via libsodium)
@@ -244,6 +244,14 @@ All 10 features are implemented in the shared Kotlin module:
 - Dynamic authorization handling
 - Same-invoker vs different-invoker scenarios
 - Conditional signing
+
+### 11. Invoke Token Contract
+- **View**: `InvokeTokenContractScreen.kt`
+- SEP-41 token contract interaction
+- Advanced multi-signature workflows with `buildInvoke()`
+- Function selection from contract spec
+- Automatic type conversion for token operations
+- Uses: `ContractClient.buildInvoke()`, token interface support
 
 ## Technology Stack
 
