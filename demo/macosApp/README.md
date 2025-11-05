@@ -1,6 +1,6 @@
 # Stellar SDK Demo - macOS Native App
 
-Native macOS application demonstrating the Stellar SDK with **SwiftUI** and complete integration with all 10 demo features.
+Native macOS application demonstrating the Stellar SDK with **SwiftUI** and complete integration with all 11 demo features.
 
 ## Overview
 
@@ -26,11 +26,11 @@ The app demonstrates how to integrate the Kotlin Multiplatform Stellar SDK into 
 └──────────────────────────────────────────────┘
                     ▼
 ┌──────────────────────────────────────────────┐
-│    demo:macosApp (17 Swift files)            │
+│    demo:macosApp (29 Swift files)            │
 │  • Native SwiftUI UI (Material 3 design)     │
-│  • 7 Views (one per screen)                  │
-│  • 6 Components (reusable UI)                │
-│  • 3 Utilities (helpers)                     │
+│  • 12 Views (one per feature screen)         │
+│  • 10 Components (reusable UI)               │
+│  • 6 Utilities (helpers)                     │
 └──────────────────────────────────────────────┘
 ```
 
@@ -55,10 +55,10 @@ The app demonstrates how to integrate the Kotlin Multiplatform Stellar SDK into 
 The macOS app was recently refactored from a single file to a well-structured project:
 
 **Before**: 1 monolithic Swift file
-**After**: 17 organized Swift files:
-- **7 Views**: Dedicated view for each demo feature
-- **6 Components**: Reusable UI components
-- **3 Utilities**: Helper classes
+**After**: 29 organized Swift files:
+- **12 Views**: Dedicated view for each feature screen
+- **10 Components**: Reusable UI components
+- **6 Utilities**: Helper classes
 - **1 App**: Main entry point
 
 ## Project Structure
@@ -67,26 +67,37 @@ The macOS app was recently refactored from a single file to a well-structured pr
 macosApp/
 ├── StellarDemo/
 │   ├── StellarDemoApp.swift       # App entry point
-│   ├── Views/                     # 10 SwiftUI views
-│   │   ├── MainScreen.swift       # Main menu
+│   ├── Views/                     # 12 SwiftUI views
+│   │   ├── MainScreen.swift
 │   │   ├── KeyGenerationView.swift
 │   │   ├── FundAccountView.swift
 │   │   ├── AccountDetailsView.swift
 │   │   ├── TrustAssetView.swift
 │   │   ├── SendPaymentView.swift
 │   │   ├── FetchTransactionView.swift
-│   │   └── ContractDetailsView.swift
-│   ├── Components/                # 6 reusable components
-│   │   ├── DemoTopicCard.swift    # Card for main menu
+│   │   ├── ContractDetailsView.swift
+│   │   ├── DeployContractView.swift
+│   │   ├── InvokeHelloWorldContractScreen.swift
+│   │   ├── InvokeAuthContractScreen.swift
+│   │   └── InvokeTokenContractScreen.swift
+│   ├── Components/                # 10 reusable components
+│   │   ├── DemoTopicCard.swift
+│   │   ├── InfoCard.swift
+│   │   ├── LoadingButton.swift
+│   │   ├── NavigationToolbar.swift
+│   │   ├── StellarTextField.swift
 │   │   ├── KeyPairComponents.swift
 │   │   ├── AccountComponents.swift
 │   │   ├── TrustAssetComponents.swift
 │   │   ├── PaymentComponents.swift
 │   │   └── ContractComponents.swift
-│   └── Utilities/                 # 3 utility classes
-│       ├── Material3Colors.swift  # Material 3 color scheme
-│       ├── ToastManager.swift     # Toast notifications
-│       └── KeyPairExtension.swift # KeyPair helpers
+│   └── Utilities/                 # 6 utility classes
+│       ├── Material3Colors.swift
+│       ├── MacOSBridgeWrapper.swift
+│       ├── ToastManager.swift
+│       ├── KeyPairExtension.swift
+│       ├── FormValidation.swift
+│       └── ClipboardHelper.swift
 ├── project.yml                    # xcodegen configuration
 ├── build.gradle.kts               # Gradle helper tasks
 ├── StellarDemo.xcodeproj/         # Generated (gitignored)
@@ -108,7 +119,7 @@ macosApp/
   ```
 
 ### SDK Requirements
-- **Deployment Target**: macOS 13.0 or higher
+- **Deployment Target**: macOS 13.0 or higher (demo app requirement; SDK itself supports macOS 11.0+)
 - **Swift**: 5.9+
 - **Kotlin**: 2.0+ (for building the framework)
 
@@ -388,7 +399,7 @@ To change networks, modify the SDK initialization in the Kotlin framework.
 
 1. **Build**: ⌘B
 2. **Run**: ⌘R
-3. **Test all features**: Navigate through all 10 demo screens
+3. **Test all features**: Navigate through all 11 demo feature screens
 
 ### Manual Testing Checklist
 

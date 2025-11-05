@@ -57,7 +57,7 @@ kotlin {
     sourceSets {
         val jsMain by getting {
             dependencies {
-                implementation("com.soneso.stellar:stellar-sdk:0.1.0-SNAPSHOT")
+                implementation("com.soneso.stellar:stellar-sdk:0.2.1")
 
                 // Optional: UI frameworks
                 implementation("org.jetbrains.kotlinx:kotlinx-html:0.9.1")

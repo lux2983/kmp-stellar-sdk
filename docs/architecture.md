@@ -53,6 +53,11 @@ kmp-stellar-sdk/
 
 ### Source Set Hierarchy
 
+**Source Set Organization** (if diagram doesn't render, see text below):
+- `commonMain` (shared logic) branches to: `jvmMain` (JVM/Android), `jsMain` (Browser/Node.js), and `nativeMain` (native shared)
+- `nativeMain` further branches to: `iosMain` (iOS specific) and `macosMain` (macOS specific)
+- Test hierarchy mirrors main hierarchy: `commonTest` → `jvmTest`, `jsTest`, `iosTest`, `macosTest`
+
 ```mermaid
 graph TD
     commonMain[commonMain<br/>Shared Logic]
@@ -119,6 +124,10 @@ actual object Ed25519 {
 | iOS/macOS | libsodium (native) | Ed25519 (crypto_sign) | Audited, Constant-time, Memory-safe |
 
 ### Cryptographic Operations Flow
+
+**KeyPair Generation and Signing Flow** (if diagram doesn't render, see text below):
+1. **Generation**: App calls `KeyPair.random()` → KeyPair calls `Ed25519.generatePrivateKey()` → Ed25519 uses platform-specific RNG to get 32 random bytes → Ed25519 derives public key → Returns KeyPair instance to App
+2. **Signing**: App calls `KeyPair.sign(data)` → KeyPair calls `Ed25519.sign(data, privateKey)` → Ed25519 uses platform crypto library → Returns 64-byte signature to App
 
 ```mermaid
 sequenceDiagram
@@ -201,6 +210,11 @@ randombytes_buf(privateKey.refTo(0), 32)
 | Invalid crypto params | Comprehensive input validation |
 
 ### Security Boundaries
+
+**Trust Zones** (if diagram doesn't render, see text below):
+- **Untrusted**: Network I/O, User Input
+- **SDK Boundary**: Input Validation, Crypto Operations, State Management (validates all untrusted input before processing)
+- **Trusted**: Key Storage, Platform Crypto Libraries (only accessed through validated SDK operations)
 
 ```mermaid
 graph LR
@@ -325,6 +339,12 @@ XDR serialization:
 
 ### Dependency Graph
 
+**Module Dependencies** (if diagram doesn't render, see text below):
+- Application depends on: Contract, SDK
+- Contract depends on: SDK, RPC
+- SDK depends on: XDR, Crypto
+- Horizon and RPC both depend on: SDK
+
 ```mermaid
 graph TD
     App[Application]
@@ -349,6 +369,15 @@ graph TD
 
 ### Transaction Flow
 
+**Transaction Submission Flow** (if diagram doesn't render, see text below):
+1. User → SDK: Build Transaction
+2. SDK: Serialize to XDR, Sign transaction
+3. SDK → Horizon: Submit XDR
+4. Horizon → Network: Broadcast transaction
+5. Network → Horizon: Transaction result
+6. Horizon → SDK: Response
+7. SDK → User: Transaction result
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -367,6 +396,18 @@ sequenceDiagram
 ```
 
 ### Smart Contract Interaction Flow
+
+**Contract Invocation Flow** (if diagram doesn't render, see text below):
+1. App → ContractClient: invoke(method, params)
+2. ContractClient creates AssembledTransaction
+3. AssembledTransaction → SorobanRPC: simulate (to estimate resources)
+4. SorobanRPC → AssembledTransaction: returns resources
+5. AssembledTransaction: signs transaction
+6. AssembledTransaction → SorobanRPC: submit transaction
+7. SorobanRPC → Network: broadcast
+8. Network → SorobanRPC: result
+9. AssembledTransaction: polls for status
+10. AssembledTransaction → App: final result
 
 ```mermaid
 sequenceDiagram

@@ -11,6 +11,8 @@ This is a **JVM desktop app** that runs on macOS, Windows, and Linux with 100% s
 - **Trustlines**: Establish trust to hold issued assets
 - **Transaction Details**: View transaction operations and events
 - **Smart Contracts**: Fetch and parse Soroban contract details
+- **Contract Deployment**: Upload and deploy WASM contracts to testnet
+- **Contract Invocation**: Invoke hello world, auth, and token contracts with full authorization
 
 The app demonstrates the full power of Compose Multiplatform, sharing the exact same UI code as Android, iOS, and Web.
 
@@ -26,9 +28,9 @@ The app demonstrates the full power of Compose Multiplatform, sharing the exact 
 └──────────────────────────────────────────────┘
                     ▼
 ┌──────────────────────────────────────────────┐
-│     demo:desktopApp (15 lines Kotlin)        │
+│     demo:desktopApp (~50 lines Kotlin)       │
 │  • Main.kt entry point                       │
-│  • Window setup                              │
+│  • Window setup and platform configuration   │
 │  • Calls shared App() composable             │
 └──────────────────────────────────────────────┘
 ```

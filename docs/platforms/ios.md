@@ -19,8 +19,8 @@ This guide covers iOS-specific setup and usage for the Stellar KMP SDK.
 ## Platform Overview
 
 The iOS implementation supports:
-- **iOS 15.0+**
-- **iPadOS 15.0+**
+- **iOS 14.0+**
+- **iPadOS 14.0+**
 - **Mac Catalyst** apps
 
 Key characteristics:
@@ -871,12 +871,26 @@ dependencies: [
 ]
 ```
 
-#### Async/Await Issues
+#### Async/Await Support
+
+The SDK supports async/await on iOS 14.0+ with Swift 5.5+. This is the recommended approach:
 
 ```swift
-// Ensure minimum iOS 15.0
-// For older iOS versions, use completion handlers:
+// Standard async/await usage (iOS 14.0+ with Swift 5.5+)
+Task {
+    do {
+        let keypair = try await KeyPair.companion.random()
+        // Use keypair
+    } catch {
+        // Handle error
+    }
+}
+```
 
+For projects requiring iOS 13 compatibility, you can create completion handler wrappers:
+
+```swift
+// Optional: Completion handler wrapper for iOS 13 compatibility
 extension KeyPair {
     static func randomWithCompletion(
         completion: @escaping (Result<KeyPair, Error>) -> Void

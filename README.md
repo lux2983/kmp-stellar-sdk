@@ -52,7 +52,7 @@ See the [demo app](demo/README.md) for examples.
 The SDK provides comprehensive Stellar functionality:
 
 - **Cryptography** - Ed25519 keypairs, signing, verification with production-ready libraries (BouncyCastle, libsodium)
-- **Transaction Building** - TransactionBuilder with fluent API, all 26 Stellar operations, memos, time bounds, multi-signature support
+- **Transaction Building** - TransactionBuilder with fluent API, all 27 Stellar operations, memos, time bounds, multi-signature support
 - **Assets & Accounts** - Native (XLM) and issued assets, trustlines, muxed accounts, SAC contract ID derivation
 - **Horizon API Client** - Full REST API coverage with request builders, SSE streaming, automatic retries, SEP-29 validation
 - **Soroban Smart Contracts** - High-level ContractClient with beginner-friendly Map-based API and power-user mode
@@ -221,36 +221,17 @@ suspend fun callContract() {
 ```kotlin
 suspend fun multiSigContractCall() {
     val client = ContractClient.forContract(contractId, rpcUrl, Network.TESTNET)
+    val assembled = client.buildInvoke<String>(...)
 
-    // Build transaction without auto-execution
-    val assembled = client.buildInvoke<String>(
-        functionName = "transfer",
-        arguments = mapOf(
-            "from" to fromAddress,
-            "to" to toAddress,
-            "amount" to 1000
-        ),
-        source = sourceAccount,
-        signer = sourceKeypair,
-        parseResultXdrFn = { Scv.fromString(it) }
-    )
-
-    // Detect which addresses need to sign authorization entries
-    // Returns a Set<String> of account IDs that must authorize this transaction
+    // Detect and sign for additional signers
     val whoNeedsToSign = assembled.needsNonInvokerSigningBy()
+    whoNeedsToSign.forEach { assembled.signAuthEntries(getKeypairFor(it)) }
 
-    // Check if specific accounts need to sign and add their signatures
-    if (whoNeedsToSign.contains(account1Id)) {
-        assembled.signAuthEntries(account1Keypair)
-    }
-    if (whoNeedsToSign.contains(account2Id)) {
-        assembled.signAuthEntries(account2Keypair)
-    }
-
-    // Submit transaction when ready
     val result = assembled.signAndSubmit(sourceKeypair)
 }
 ```
+
+See [Advanced Topics](docs/advanced.md) for complete multi-signature examples and patterns.
 
 For deployment examples, authorization patterns, and advanced usage, see the [Getting Started Guide](docs/getting-started.md) and [Demo App](demo/README.md).
 
@@ -296,7 +277,7 @@ cd demo/macosApp && xcodegen generate && open StellarDemo.xcodeproj
 
 ### SDK Documentation
 - [Getting Started](docs/getting-started.md) - Installation, setup, and first steps
-- [Platform Guide](docs/platforms/) - Platform-specific setup and requirements
+- [Platform Guides](docs/platforms/) - Platform-specific setup and requirements
 - [Architecture Guide](CLAUDE.md) - Technical implementation details
 
 ### Demo App
@@ -320,7 +301,7 @@ This SDK uses **production-ready, audited cryptographic libraries** on all platf
 - **iOS/macOS**: libsodium (native C interop)
 - **JavaScript**: libsodium-wrappers-sumo (WebAssembly)
 
-All implementations provide constant-time operations, proper memory safety, and comprehensive input validation. No experimental or custom cryptography. See the [Platform Guide](docs/platforms.md) for detailed implementation information.
+All implementations provide constant-time operations, proper memory safety, and comprehensive input validation. No experimental or custom cryptography. See the [Platform Guides](docs/platforms/) for detailed implementation information.
 
 ## Testing
 

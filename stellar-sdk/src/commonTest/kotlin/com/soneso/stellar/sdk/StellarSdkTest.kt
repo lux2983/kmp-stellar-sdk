@@ -6,6 +6,6 @@ import kotlin.test.assertEquals
 class StellarSdkTest {
     @Test
     fun testVersion() {
-        assertEquals("0.1.0-SNAPSHOT", StellarSdk.VERSION)
+        assertEquals("0.2.1", StellarSdk.VERSION)
     }
 }

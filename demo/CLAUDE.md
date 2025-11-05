@@ -44,8 +44,8 @@ fun myOwnSign(data: ByteArray): ByteArray {
 The demo app is a **Kotlin Multiplatform** application showcasing the Stellar SDK across all platforms:
 
 - **Shared Module** (`demo/shared`): 100% of UI (Compose) and business logic
-- **Platform Apps**: Minimal entry points (5-28 lines) to launch shared UI
-- **Exception**: macOS native app uses SwiftUI (17 files) instead of Compose
+- **Platform Apps**: Lightweight entry points to launch shared UI
+- **Exception**: macOS native app uses SwiftUI (29 Swift files) instead of Compose
 
 ### Architecture
 
@@ -55,12 +55,12 @@ demo/shared (Compose Multiplatform)
 ├── Stellar Integration (11 feature modules using SDK)
 └── Platform APIs (clipboard only)
 
-Platform Apps (minimal entry points)
-├── androidApp (MainActivity.kt - 20 lines)
-├── iosApp (StellarDemoApp.swift - 28 lines)
-├── desktopApp (Main.kt - 15 lines)
-├── webApp (Main.kt + HTML - 12 lines Kotlin)
-└── macosApp (SwiftUI - 17 files, native alternative)
+Platform Apps (lightweight entry points)
+├── androidApp (MainActivity.kt)
+├── iosApp (StellarDemoApp.swift)
+├── desktopApp (Main.kt)
+├── webApp (Main.kt + HTML)
+└── macosApp (SwiftUI - 29 files, native alternative)
 ```
 
 ## Current Features

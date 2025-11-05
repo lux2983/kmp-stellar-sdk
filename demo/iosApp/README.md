@@ -375,7 +375,7 @@ If needed, add to `Info.plist`:
 
 1. **Select simulator**: Product → Destination → iOS Simulator → iPhone 15 Pro
 2. **Run**: ⌘R
-3. **Test features**: All 10 demo features should work on simulator
+3. **Test features**: All 11 demo features should work on simulator
 
 ### Run on Device
 

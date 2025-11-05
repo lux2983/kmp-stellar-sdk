@@ -582,163 +582,42 @@ When implementing features, use the Java Stellar SDK as a reference:
 - the main purpose of the demo app is to showcase sdk functionality for new developers who want to learn ho to use the sdk. when implementing business logic in the demo app use the sdk functionality available, do not implement functionality that is already available in the sdk
 - never mark integration tests with the @Ingnore annotation as they always have testnet connectivity and the accounts are funded by friendbot
 
-## Demo UI Component Architecture (October 2025 Refactoring)
-
-### Key Learnings: Component Extraction and Code Deduplication
-
-Between sessions, AI agents have limited memory. This section documents critical patterns learned during the demo UI refactoring (Oct 26, 2025) that eliminated ~670 lines of duplicated code.
+## Demo UI Component Architecture
 
 ### Reusable UI Components
 
 **Location**: `demo/shared/src/commonMain/kotlin/com/soneso/demo/ui/components/`
 
+The demo app uses shared UI components to eliminate code duplication across 11 screens (eliminated ~670 lines of duplicate code in Oct 2025 refactoring):
+
 #### StellarTopBar Component
-- **Purpose**: Reusable TopBar with gradient background, shadow, and navigation
-- **Usage**: Replaced 40+ lines per screen across all 11 screens
-- **Pattern**:
-  ```kotlin
-  StellarTopBar(
-      title = "Screen Title",
-      onNavigationClick = { navigator.pop() },
-      subtitle = "Optional subtitle"  // Optional parameter
-  )
-  ```
-- **Implementation Details**:
-  - Gradient: `Brush.horizontalGradient(Color(0xFF0A4FD6), Color(0xFF0639A3))`
-  - Shadow: 4.dp elevation with StellarBlue (0xFF0A4FD6) tint at 0.3f alpha
-  - Typography: `titleLarge`, `FontWeight.Bold`, `0.5.sp` letter spacing
-  - Navigation icon: `Icons.AutoMirrored.Filled.ArrowBack` (white)
+- Gradient TopBar with navigation
+- Usage: `StellarTopBar(title = "Screen Title", onNavigationClick = { navigator.pop() })`
+- Replaced 40+ lines per screen across all 11 screens
 
 #### AnimatedButton Component
-- **Purpose**: Reusable button with hover/press animations and loading state
-- **Usage**: Replaced 25-75 lines per button across 9 screens
-- **Pattern**:
-  ```kotlin
-  AnimatedButton(
-      onClick = { /* action */ },
-      modifier = Modifier.fillMaxWidth().height(56.dp),
-      enabled = !isLoading && validationCondition,
-      isLoading = isLoading,
-      colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0A4FD6))
-  ) {
-      Icon(...)  // Shown only when !isLoading
-      Spacer(...)
-      Text(if (isLoading) "Loading..." else "Action Text")
-  }
-  ```
-- **Implementation Details**:
-  - Hover state: `scale=1.02f`, `elevation=6.dp`
-  - Press state: `scale=0.98f`, `elevation=2.dp`
-  - Loading state: `scale=1.0f`, `elevation=0.dp`, automatic `CircularProgressIndicator`
-  - Animation timing: `tween(150ms)`
-  - Shadow: StellarBlue with 0.3f alpha
-  - Default shape: `RoundedCornerShape(12.dp)`
+- Button with hover/press animations and loading state
+- Usage: `AnimatedButton(onClick = {...}, isLoading = isLoading, enabled = !isLoading) { Text("Action") }`
+- Replaced 25-75 lines per button across 9 screens
 
-#### FormValidation Utility (October 2025 - COMPLETED)
-- **Purpose**: Centralized Stellar protocol validation for all input fields
+#### FormValidation Utility
 - **Location**: `demo/shared/src/commonMain/kotlin/com/soneso/demo/ui/FormValidation.kt`
-- **Impact**: Replaced 180 lines of duplicate validation across 10 screens
-- **Pattern**:
-  ```kotlin
-  // BEFORE: 180 lines of duplicate validation across 10 screens
-  fun validateInputs(): Map<String, String> {
-      val errors = mutableMapOf<String, String>()
-      if (accountId.isBlank()) errors["accountId"] = "Required"
-      else if (!accountId.startsWith('G')) errors["accountId"] = "Must start with G"
-      else if (accountId.length != 56) errors["accountId"] = "Must be 56 chars"
-      // ... repeated across 10 screens
-      return errors
-  }
+- Centralized Stellar protocol validation (account IDs, secret seeds, contract IDs, transaction hashes, asset codes)
+- Usage: `FormValidation.validateAccountIdField(value)?.let { errors["accountId"] = it }`
+- Replaced 180 lines of duplicate validation across 10 screens
 
-  // AFTER: Single line per field using FormValidation
-  fun validateInputs(): Map<String, String> {
-      val errors = mutableMapOf<String, String>()
-      FormValidation.validateAccountIdField(accountId)?.let { errors["accountId"] = it }
-      FormValidation.validateSecretSeedField(secretSeed)?.let { errors["secretSeed"] = it }
-      // Domain-specific validation inline (appropriate)
-      if (amount.isBlank()) errors["amount"] = "Amount required"
-      else if (amount.toDoubleOrNull()?.let { it <= 0 } == true) errors["amount"] = "Must be positive"
-      return errors
-  }
-  ```
-- **Available Methods**:
-  - `validateAccountIdField(value: String): String?` - G... addresses
-  - `validateSecretSeedField(value: String): String?` - S... seeds
-  - `validateContractIdField(value: String): String?` - C... contracts
-  - `validateTransactionHashField(value: String): String?` - 64-char hex hashes
-  - `validateAssetCodeField(value: String): String?` - 1-12 char asset codes
-- **When to Use FormValidation**:
-  - Stellar protocol validation (account IDs, secret seeds, contract IDs, transaction hashes, asset codes)
-  - Format validation (length, prefix, characters)
-  - Common input validation used across multiple screens
-- **When to Keep Validation Inline**:
-  - Domain-specific business rules (amount ranges, trust limits)
-  - Screen-specific constraints (constructor argument types)
-  - Multi-field dependencies (conditional validation based on radio buttons)
-- **Complete Documentation**: See `demo/FORMVALIDATION_COMPLETE.md`
+**When to Use**:
+- Use `FormValidation` for Stellar protocol format validation (G... addresses, S... seeds, C... contracts, transaction hashes, asset codes)
+- Keep domain-specific business rules inline (amount ranges, trust limits, screen-specific constraints)
 
-### Migration Strategy
+### Key Pattern for Adding Components
 
-**Critical Pattern**: Extract before migrating
-1. Analyze existing duplication across all screens
-2. Create production-ready component with ALL features from existing code
-3. Test component compiles successfully
-4. Migrate screens one at a time, verifying compilation after each
-5. Delete unused animation variables and imports after migration
+1. Analyze duplication across screens
+2. Create component with all features from existing code
+3. Migrate screens one at a time, verifying compilation
+4. Delete unused imports after migration
 
-**Before/After Comparison**:
-```kotlin
-// BEFORE: 40+ lines of TopBar duplication per screen
-Box(modifier = Modifier.fillMaxWidth()
-    .background(brush = Brush.horizontalGradient(...))
-    .shadow(elevation = 4.dp, spotColor = ...)
-) {
-    TopAppBar(
-        title = { Text(...) },
-        navigationIcon = { IconButton(...) { Icon(...) } },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-    )
-}
-
-// AFTER: 3 lines
-StellarTopBar(
-    title = "Screen Title",
-    onNavigationClick = { navigator.pop() }
-)
-```
-
-### Results from October 2025 Migration
-
-**Screens Migrated**: 11/11 (100%)
-- KeyGenerationScreen, MainScreen, FundAccountScreen, AccountDetailsScreen, TrustAssetScreen
-- SendPaymentScreen, FetchTransactionScreen, ContractDetailsScreen, DeployContractScreen
-- InvokeHelloWorldContractScreen, InvokeAuthContractScreen
-
-**Code Reduction**:
-- TopBar duplication eliminated: ~440 lines across 11 screens
-- Button animation duplication eliminated: ~480 lines across 9 screens (13 buttons)
-- Total code removed: ~920 lines
-- Component code added: ~250 lines
-- Net reduction: ~670 lines (15% of demo UI code)
-
-**Benefits Achieved**:
-1. Single source of truth for UI patterns
-2. Consistency guaranteed across all screens
-3. Faster development (90% less boilerplate for new screens)
-4. Easier maintenance (changes propagate automatically)
-5. Production-ready components with comprehensive documentation
-
-### Future Work (Documented in NEW_CODE_REPORT.md)
-
-**COMPLETED** (October 2025):
-- ✅ FormValidation enforcement - 180 lines removed across 10 screens
-
-**MEDIUM PRIORITY** (not yet done):
-- Create InfoCard, ResultCard, DetailCard components (138 Card instances to migrate)
-- Replace hardcoded `Color(0xFF...)` values with `MaterialTheme.colorScheme` references
-- Clean up unused theme colors (dark theme defined but unused)
-
-**Reference**: See `REFACTOR_SESSION_PROGRESS.md` for complete migration details and continuation instructions for future AI agents.
+**Reference**: See `demo/FORMVALIDATION_COMPLETE.md` and `REFACTOR_SESSION_PROGRESS.md` for detailed migration history.
 
 ## Git Safety Rules
 

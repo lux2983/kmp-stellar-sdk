@@ -132,7 +132,7 @@ demo/
 ├── shared/                          # Shared Compose Multiplatform module
 │   ├── src/
 │   │   ├── commonMain/kotlin/       # Shared code (UI + business logic)
-│   │   │   ├── ui/screens/          # All 10 demo screens
+│   │   │   ├── ui/screens/          # All 11 feature screens + MainScreen
 │   │   │   │   ├── MainScreen.kt
 │   │   │   │   ├── KeyGenerationScreen.kt
 │   │   │   │   ├── FundAccountScreen.kt
@@ -143,7 +143,8 @@ demo/
 │   │   │   │   ├── ContractDetailsScreen.kt
 │   │   │   │   ├── DeployContractScreen.kt
 │   │   │   │   ├── InvokeHelloWorldContractScreen.kt
-│   │   │   │   └── InvokeAuthContractScreen.kt
+│   │   │   │   ├── InvokeAuthContractScreen.kt
+│   │   │   │   └── InvokeTokenContractScreen.kt
 │   │   │   ├── stellar/             # Stellar SDK integration
 │   │   │   │   ├── KeyPairGeneration.kt
 │   │   │   │   ├── AccountFunding.kt
@@ -169,8 +170,8 @@ demo/
 │   ├── StellarDemo/StellarDemoApp.swift
 │   └── project.yml
 ├── macosApp/                        # macOS native entry point (SwiftUI)
-│   ├── StellarDemo/                 # 1 Swift file (StellarDemoApp.swift - 28 lines)
-│   │                                # Planned architecture includes Views/, Components/, Utilities/ - see macosApp/README.md
+│   ├── StellarDemo/                 # 29 Swift files (1 App + 12 Views + 10 Components + 6 Utilities)
+│   │                                # Full SwiftUI architecture - see macosApp/README.md
 │   └── project.yml
 ├── desktopApp/                      # Desktop JVM entry point
 │   ├── src/jvmMain/kotlin/.../Main.kt
@@ -365,8 +366,8 @@ The desktop app runs on macOS, Windows, and Linux with the same Compose UI as An
 |----------|--------------|--------|-------------|-------|
 | Android  | Compose | ✅ Production | API 24 (Android 7.0) | Fully tested |
 | iOS | Compose | ✅ Production | iOS 14.0 | Xcode 15+ required |
-| macOS Native | SwiftUI | ✅ Production | macOS 11.0 | Alternative to Desktop |
-| Desktop (JVM) | Compose | ✅ Production | macOS/Windows/Linux | Recommended for macOS |
+| macOS Native | SwiftUI | ✅ Production | macOS 11.0 | See comparison below |
+| Desktop (JVM) | Compose | ✅ Production | macOS/Windows/Linux | See comparison below |
 | Web (JS) | Compose | ✅ Production | Chrome 90+, Firefox 88+, Safari 15.4+ | Stable, production-ready |
 
 ## Development Workflow
@@ -404,7 +405,7 @@ The desktop app runs on macOS, Windows, and Linux with the same Compose UI as An
    )
    ```
 
-4. **Test all 10 demo features**:
+4. **Test all 11 demo features**:
    ```bash
    ./gradlew :demo:androidApp:installDebug
    ./gradlew :demo:desktopApp:run
@@ -417,7 +418,7 @@ The desktop app runs on macOS, Windows, and Linux with the same Compose UI as An
 The demo minimizes platform-specific code. Only used for:
 - **Clipboard access**: Each platform has its own implementation in `platform/Clipboard.*.kt`
 - **Entry points**: Minimal code to launch Compose UI
-- **macOS native**: Currently 1 Swift file (planned SwiftUI architecture in macosApp/README.md)
+- **macOS native**: Full SwiftUI implementation with 29 Swift files (Views, Components, Utilities)
 
 ### Testing
 
@@ -522,7 +523,7 @@ You have two options for running on macOS:
 - ✅ True native macOS app
 - ✅ Smaller bundle (no JVM)
 - ✅ Native SwiftUI integration
-- ❌ Separate SwiftUI codebase (currently minimal, see macosApp/README.md)
+- ❌ Separate SwiftUI codebase (29 Swift files, see macosApp/README.md)
 - ❌ macOS-only (not cross-platform)
 
 ```bash
