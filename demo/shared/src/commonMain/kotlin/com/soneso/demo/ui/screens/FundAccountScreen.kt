@@ -63,6 +63,7 @@ class FundAccountScreen : Screen {
         var validationError by remember { mutableStateOf<String?>(null) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
 
         // Show snackbar when message changes
         LaunchedEffect(snackbarMessage) {
@@ -72,6 +73,13 @@ class FundAccountScreen : Screen {
                     duration = SnackbarDuration.Short
                 )
                 snackbarMessage = null
+            }
+        }
+
+        // Auto-scroll to bottom when funding result appears
+        LaunchedEffect(fundingResult) {
+            fundingResult?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
             }
         }
 
@@ -94,7 +102,7 @@ class FundAccountScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)

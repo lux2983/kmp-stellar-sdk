@@ -1,6 +1,6 @@
 name: StellarDemo
 options:
-  bundleIdPrefix: com.soneso.demo
+  bundleIdPrefix: com.soneso.stellar.demo
   deploymentTarget:
     macOS: 13.0
 settings:
@@ -21,6 +21,7 @@ targets:
     resources:
       - path: StellarDemo/Assets.xcassets
     settings:
+      PRODUCT_NAME: "Stellar SDK Demo Native"  # Display name in Finder
       FRAMEWORK_SEARCH_PATHS:
         - $(inherited)
         - $(SRCROOT)/../../shared/build/bin/macosArm64/debugFramework

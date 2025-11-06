@@ -62,6 +62,14 @@ class FetchTransactionScreen : Screen {
         var validationError by remember { mutableStateOf<String?>(null) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when transaction result appears
+        LaunchedEffect(fetchResult) {
+            fetchResult?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Function to copy to clipboard with snackbar feedback
         fun copyToClipboard(text: String, label: String) {
@@ -116,7 +124,7 @@ class FetchTransactionScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)

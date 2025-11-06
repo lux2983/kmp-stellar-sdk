@@ -16,18 +16,27 @@ struct FundAccountScreen: View {
     @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                inputField
-                actionButtons
-                resultView
-                placeholderView
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    inputField
+                    actionButtons
+                    resultView
+                    placeholderView
+                }
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Fund Testnet Account")
+            .onChange(of: fundingResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Fund Testnet Account")
     }
 
     // MARK: - View Components
@@ -163,8 +172,10 @@ struct FundAccountScreen: View {
         if let result = fundingResult {
             if let success = result as? AccountFundingResult.Success {
                 successCard(success)
+                    .id("resultCard")
             } else if let error = result as? AccountFundingResult.Error {
                 errorCard(error)
+                    .id("resultCard")
                 troubleshootingCard
             }
         }

@@ -67,6 +67,14 @@ class AccountDetailsScreen : Screen {
         var validationError by remember { mutableStateOf<String?>(null) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when account details appear
+        LaunchedEffect(detailsResult) {
+            detailsResult?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Function to fetch account details
         fun fetchDetails() {
@@ -105,7 +113,7 @@ class AccountDetailsScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)

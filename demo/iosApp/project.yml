@@ -1,6 +1,6 @@
 name: StellarDemo
 options:
-  bundleIdPrefix: com.soneso.demo
+  bundleIdPrefix: com.soneso.stellar.demo
   deploymentTarget:
     iOS: 14.0
 settings:

@@ -20,27 +20,43 @@ struct InvokeAuthContractScreen: View {
     @State private var validationErrors: [String: String] = [:]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                contractDetailsCard
-                userAccountCard
-                sameAccountToggle
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    contractDetailsCard
+                    userAccountCard
+                    sameAccountToggle
 
-                // Source account card (conditional, shown when toggle is OFF)
-                if !useSameAccount {
-                    sourceAccountCard
+                    // Source account card (conditional, shown when toggle is OFF)
+                    if !useSameAccount {
+                        sourceAccountCard
+                    }
+
+                    valueInputCard
+                    invokeButton
+                    resultView
+                    placeholderView
                 }
-
-                valueInputCard
-                invokeButton
-                resultView
-                placeholderView
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Invoke Auth Contract")
+            .onChange(of: invocationResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
+            .onChange(of: errorMessage) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Invoke Auth Contract")
     }
 
     // MARK: - View Components
@@ -231,15 +247,21 @@ struct InvokeAuthContractScreen: View {
     @ViewBuilder
     private var resultView: some View {
         if let result = invocationResult {
-            if let success = result as? InvokeAuthContractResult.Success {
-                successCard(success)
-            } else if let failure = result as? InvokeAuthContractResult.Failure {
-                errorCard(failure.message)
+            VStack(spacing: 16) {
+                if let success = result as? InvokeAuthContractResult.Success {
+                    successCard(success)
+                } else if let failure = result as? InvokeAuthContractResult.Failure {
+                    errorCard(failure.message)
+                    troubleshootingCard
+                }
+            }
+            .id("resultCard")
+        } else if let error = errorMessage {
+            VStack(spacing: 16) {
+                errorCard(error)
                 troubleshootingCard
             }
-        } else if let error = errorMessage {
-            errorCard(error)
-            troubleshootingCard
+            .id("resultCard")
         }
     }
 

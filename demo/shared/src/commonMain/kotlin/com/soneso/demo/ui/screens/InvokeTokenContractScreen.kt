@@ -70,6 +70,14 @@ class InvokeTokenContractScreen : Screen {
         var invocationState by remember { mutableStateOf(InvocationState()) }
         var signingState by remember { mutableStateOf(SigningState()) }
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when invocation result appears
+        LaunchedEffect(invocationState.result) {
+            invocationState.result?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Update expected signers when function or args change
         LaunchedEffect(invocationState.selectedFunction, invocationState.arguments) {
@@ -301,7 +309,7 @@ class InvokeTokenContractScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)

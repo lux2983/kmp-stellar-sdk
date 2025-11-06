@@ -1,4 +1,4 @@
-package com.soneso.demo.android
+package com.soneso.stellar.demo.android
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

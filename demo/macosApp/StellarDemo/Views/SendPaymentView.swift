@@ -18,19 +18,28 @@ struct SendPaymentScreen: View {
     @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                importantNotesCard
-                inputFields
-                submitButton
-                resultView
-                placeholderView
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    importantNotesCard
+                    inputFields
+                    submitButton
+                    resultView
+                    placeholderView
+                }
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Send a Payment")
+            .onChange(of: paymentResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Send a Payment")
     }
 
     // MARK: - View Components
@@ -210,8 +219,10 @@ struct SendPaymentScreen: View {
             switch result {
             case let success as SendPaymentResult.Success:
                 PaymentSuccessCards(success: success)
+                    .id("resultCard")
             case let error as SendPaymentResult.Error:
                 errorCard(error)
+                    .id("resultCard")
                 troubleshootingCard
             default:
                 EmptyView()

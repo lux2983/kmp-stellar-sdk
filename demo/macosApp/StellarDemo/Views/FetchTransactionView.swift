@@ -4,7 +4,7 @@ import shared
 struct FetchTransactionScreen: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var toastManager: ToastManager
-    @State private var transactionHash = "639cce30b6c166224010e31abf4ae60468d3480bfc5140eb2abf0eea3e4edf99"
+    @State private var transactionHash = ""
     @State private var selectedAPI: APISelection = .horizon
     @State private var isFetching = false
     @State private var fetchResult: FetchTransactionResult?
@@ -34,25 +34,34 @@ struct FetchTransactionScreen: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                apiSelectionCard
-                inputField
-                apiPicker
-                fetchButton
-                resultView
-                placeholderView
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    apiSelectionCard
+                    inputField
+                    apiPicker
+                    fetchButton
+                    resultView
+                    placeholderView
+                }
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(
+                title: "Fetch Transaction Details",
+                showBackButton: true,
+                onBack: { dismiss() }
+            )
+            .navigationBarBackButtonHidden(true)
+            .onChange(of: fetchResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(
-            title: "Fetch Transaction Details",
-            showBackButton: true,
-            onBack: { dismiss() }
-        )
-        .navigationBarBackButtonHidden(true)
     }
 
     // MARK: - View Components
@@ -97,37 +106,30 @@ struct FetchTransactionScreen: View {
     }
 
     private var inputField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("This is a demo transaction hash. You can replace it with your own transaction hash to fetch different transaction details.")
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Transaction Hash")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Material3Colors.onSurfaceVariant.opacity(0.7))
-                .fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(Material3Colors.onSurfaceVariant)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Transaction Hash")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-
-                TextField("64-character hex string", text: $transactionHash)
-                    .textFieldStyle(.plain)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(12)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(validationError != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
-                    )
-                    .onChange(of: transactionHash) { newValue in
-                        transactionHash = newValue.trimmingCharacters(in: .whitespaces).lowercased()
-                        validationError = nil
-                        fetchResult = nil
-                    }
-
-                if let error = validationError {
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Material3Colors.onErrorContainer)
+            TextField("64-character hex string", text: $transactionHash)
+                .textFieldStyle(.plain)
+                .font(.system(.body, design: .monospaced))
+                .padding(12)
+                .background(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(validationError != nil ? Material3Colors.onErrorContainer : Material3Colors.onSurfaceVariant.opacity(0.3), lineWidth: 1)
+                )
+                .onChange(of: transactionHash) { newValue in
+                    transactionHash = newValue.trimmingCharacters(in: .whitespaces).lowercased()
+                    validationError = nil
+                    fetchResult = nil
                 }
+
+            if let error = validationError {
+                Text(error)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Material3Colors.onErrorContainer)
             }
         }
     }
@@ -194,11 +196,16 @@ struct FetchTransactionScreen: View {
             switch result {
             case let success as FetchTransactionResult.HorizonSuccess:
                 HorizonTransactionView(transaction: success.transaction, operations: success.operations)
+                    .id("resultCard")
             case let success as FetchTransactionResult.RpcSuccess:
                 RpcTransactionView(transaction: success.transaction)
+                    .id("resultCard")
             case let error as FetchTransactionResult.Error:
-                errorCard(error)
-                troubleshootingCard
+                VStack(spacing: 16) {
+                    errorCard(error)
+                    troubleshootingCard
+                }
+                .id("resultCard")
             default:
                 EmptyView()
             }

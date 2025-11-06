@@ -3,7 +3,7 @@ import shared
 
 struct ContractDetailsScreen: View {
     @ObservedObject var toastManager: ToastManager
-    @State private var contractId = "CBNCMQU5VCEVFASCPT4CCQX2LGYJK6YZ7LOIZLRXDEVJYQB7K6UTQNWW"
+    @State private var contractId = ""
     @State private var isFetching = false
     @State private var detailsResult: ContractDetailsResult?
     @State private var validationError: String?
@@ -11,19 +11,27 @@ struct ContractDetailsScreen: View {
     @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                exampleCard
-                inputField
-                fetchButton
-                resultView
-                placeholderView
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    inputField
+                    fetchButton
+                    resultView
+                    placeholderView
+                }
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Fetch Smart Contract Details")
+            .onChange(of: detailsResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Fetch Smart Contract Details")
     }
 
     // MARK: - View Components
@@ -33,20 +41,6 @@ struct ContractDetailsScreen: View {
             Text("Enter a contract ID to fetch its WASM bytecode from the network and parse the contract specification including metadata and function definitions.")
                 .font(.system(size: 13))
                 .foregroundStyle(Material3Colors.onSecondaryContainer)
-        }
-    }
-
-    private var exampleCard: some View {
-        InfoCard(title: "Example Testnet Contract", color: .primary) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("The contract ID field is pre-filled with a testnet contract ID.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Material3Colors.onPrimaryContainer)
-
-                Text("You can use it as-is or replace it with your own contract ID.")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Material3Colors.onPrimaryContainer)
-            }
         }
     }
 
@@ -82,8 +76,10 @@ struct ContractDetailsScreen: View {
             switch result {
             case let success as ContractDetailsResult.Success:
                 ContractInfoView(contractInfo: success.contractInfo)
+                    .id("resultCard")
             case let error as ContractDetailsResult.Error:
                 ContractErrorView(error: error)
+                    .id("resultCard")
             default:
                 EmptyView()
             }

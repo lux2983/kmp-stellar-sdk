@@ -19,38 +19,54 @@ struct InvokeTokenContractScreen: View {
     @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                contractLoadingCard
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    contractLoadingCard
 
-                if let error = loadError {
-                    errorCard(message: error)
-                }
+                    if let error = loadError {
+                        errorCard(message: error)
+                    }
 
-                if let contract = loadedContract {
-                    contractInfoCard(contract: contract)
-                    functionSelectionCard(contract: contract)
+                    if let contract = loadedContract {
+                        contractInfoCard(contract: contract)
+                        functionSelectionCard(contract: contract)
 
-                    if let function = selectedFunction {
-                        if !function.isReadOnly {
-                            expectedSignersWarning(function: function)
-                            sourceAccountAndSignersCard
+                        if let function = selectedFunction {
+                            if !function.isReadOnly {
+                                expectedSignersWarning(function: function)
+                                sourceAccountAndSignersCard
+                            }
+                            invokeButton(function: function)
                         }
-                        invokeButton(function: function)
+                    }
+
+                    if let result = invocationResult {
+                        resultCard(result: result)
+                    }
+
+                    placeholderView
+                }
+                .padding(16)
+            }
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Invoke Token Contract")
+            .onChange(of: invocationResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
                     }
                 }
-
-                if let result = invocationResult {
-                    resultCard(result: result)
-                }
-
-                placeholderView
             }
-            .padding(16)
+            .onChange(of: loadError) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("errorCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Invoke Token Contract")
     }
 
     // MARK: - View Components
@@ -365,10 +381,13 @@ struct InvokeTokenContractScreen: View {
         Group {
             if let success = result as? InvokeTokenResult.InvocationSuccess {
                 successCard(success: success)
+                    .id("resultCard")
             } else if let needsSigners = result as? InvokeTokenResult.NeedsAdditionalSigners {
                 needsSignersCard(result: needsSigners)
+                    .id("resultCard")
             } else if let error = result as? InvokeTokenResult.Error {
                 errorCard(message: error.message)
+                    .id("resultCard")
             }
         }
     }
@@ -462,6 +481,7 @@ struct InvokeTokenContractScreen: View {
                     .foregroundStyle(Material3Colors.onErrorContainer)
             }
         }
+        .id("errorCard")
     }
 
     @ViewBuilder

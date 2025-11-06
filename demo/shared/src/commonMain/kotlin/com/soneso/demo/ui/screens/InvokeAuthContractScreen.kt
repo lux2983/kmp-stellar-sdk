@@ -57,6 +57,14 @@ class InvokeAuthContractScreen : Screen {
         var validationErrors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when result appears
+        LaunchedEffect(result) {
+            result?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Auto-fill source fields when useSameAccount is checked
         LaunchedEffect(useSameAccount, userAccountId, userSecretKey) {
@@ -168,7 +176,7 @@ class InvokeAuthContractScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)

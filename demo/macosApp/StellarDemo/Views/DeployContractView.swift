@@ -21,25 +21,34 @@ struct DeployContractView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                contractSelectionCard
-                sourceAccountCard
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    contractSelectionCard
+                    sourceAccountCard
 
-                // Constructor parameters card (conditional)
-                if let contract = selectedContract, contract.hasConstructor {
-                    constructorParamsCard(for: contract)
+                    // Constructor parameters card (conditional)
+                    if let contract = selectedContract, contract.hasConstructor {
+                        constructorParamsCard(for: contract)
+                    }
+
+                    deployButton
+                    resultView
+                    placeholderView
                 }
-
-                deployButton
-                resultView
-                placeholderView
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Deploy a Smart Contract")
+            .onChange(of: deploymentResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Deploy a Smart Contract")
     }
 
     // MARK: - View Components
@@ -189,8 +198,10 @@ struct DeployContractView: View {
             switch result {
             case let success as DeployContractResult.Success:
                 successCard(success)
+                    .id("resultCard")
             case let error as DeployContractResult.Error:
                 errorCard(error)
+                    .id("resultCard")
                 troubleshootingCard
             default:
                 EmptyView()

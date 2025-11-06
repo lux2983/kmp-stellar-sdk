@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -124,6 +125,12 @@ class MainScreen : Screen {
                 description = "Interact with Stellar token contracts using dynamic function selection",
                 icon = Icons.Default.AttachMoney,
                 screen = InvokeTokenContractScreen()
+            ),
+            DemoTopic(
+                title = "Info",
+                description = "About this app, SDK information, and support",
+                icon = Icons.Default.Info,
+                screen = InfoScreen()
             )
         )
 
@@ -200,6 +207,7 @@ fun DemoTopicCard(
         Icons.Default.AccountBalance, Icons.Default.Person -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
         Icons.Default.AttachMoney, Icons.AutoMirrored.Filled.Send -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
         Icons.Default.Code, Icons.Default.CloudUpload, Icons.Default.PlayArrow, Icons.Default.VerifiedUser -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+        Icons.Default.Info -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
         else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
     }
 
@@ -208,6 +216,7 @@ fun DemoTopicCard(
         Icons.Default.AccountBalance, Icons.Default.Person -> MaterialTheme.colorScheme.secondary
         Icons.Default.AttachMoney, Icons.AutoMirrored.Filled.Send -> MaterialTheme.colorScheme.tertiary
         Icons.Default.Code, Icons.Default.CloudUpload, Icons.Default.PlayArrow, Icons.Default.VerifiedUser -> MaterialTheme.colorScheme.secondary
+        Icons.Default.Info -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.primary
     }
 

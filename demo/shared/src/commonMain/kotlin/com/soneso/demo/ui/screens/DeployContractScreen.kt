@@ -51,6 +51,14 @@ class DeployContractScreen : Screen {
         var validationErrors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when deployment result appears
+        LaunchedEffect(deploymentResult) {
+            deploymentResult?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Validation functions
         fun validateInputs(): Map<String, String> {
@@ -167,7 +175,7 @@ class DeployContractScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)

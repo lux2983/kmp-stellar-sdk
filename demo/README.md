@@ -99,7 +99,7 @@ The demo app includes 11 comprehensive feature demonstrations:
 - One-step deployment with constructor arguments
 - Two-step deployment (install WASM + deploy from WASM ID)
 - Platform-specific WASM file loading
-- Support for 4 demo contracts (hello_world, token, atomic_swap, auth)
+- Support for 3 demo contracts (hello_world, auth, token)
 - Located in `shared/src/commonMain/resources/wasm/`
 - Demonstrates: `ContractClient.deploy()`, `install()`, `deployFromWasmId()`
 

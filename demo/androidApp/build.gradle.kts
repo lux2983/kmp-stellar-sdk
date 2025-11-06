@@ -6,15 +6,15 @@ plugins {
 }
 
 android {
-    namespace = "com.soneso.demo.android"
+    namespace = "com.soneso.stellar.demo.android"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.soneso.demo.android"
+        applicationId = "com.soneso.stellar.demo.android"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = project.property("demo.version") as String
     }
 
     buildTypes {

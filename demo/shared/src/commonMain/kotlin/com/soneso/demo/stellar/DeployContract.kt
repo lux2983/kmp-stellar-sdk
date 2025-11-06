@@ -116,13 +116,6 @@ val AVAILABLE_CONTRACTS = listOf(
                 placeholder = "MYTKN"
             )
         )
-    ),
-    ContractMetadata(
-        id = "atomic_swap",
-        name = "Atomic Swap",
-        description = "Multi-party atomic token swap contract for trustless exchange between two parties",
-        wasmFilename = "soroban_atomic_swap_contract.wasm",
-        hasConstructor = false
     )
 )
 

@@ -26,17 +26,28 @@ compose {
 
             nativeDistributions {
                 targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-                packageName = "StellarDemo"
-                packageVersion = "1.0.0"
+                packageName = "Stellar SDK Demo"  // Display name in Finder
+                // Desktop native distributions require semantic versioning (MAJOR.MINOR.PATCH)
+                // Strip any suffix like "-alpha" for packaging
+                packageVersion = (project.property("demo.version") as String).substringBefore("-")
+                description = "Stellar SDK Demo Application (Desktop Edition)"
+                vendor = "Stellar Development Foundation"
 
+                // Unique bundle identifier for JVM desktop app
                 macOS {
-                    iconFile.set(project.file("icon.icns"))
+                    bundleID = "com.soneso.stellar.demo.desktop"
+                    // Icons are optional - will use default if not provided
+                    // iconFile.set(project.file("icon.icns"))
                 }
+
                 windows {
-                    iconFile.set(project.file("icon.ico"))
+                    // Windows doesn't use bundle IDs
+                    // iconFile.set(project.file("icon.ico"))
                 }
+
                 linux {
-                    iconFile.set(project.file("icon.png"))
+                    packageName = "stellar-demo-desktop"
+                    // iconFile.set(project.file("icon.png"))
                 }
             }
         }

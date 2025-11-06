@@ -67,7 +67,7 @@ struct NavigationToolbar: ViewModifier {
                 }
                 .frame(maxHeight: .infinity)
             }
-            .frame(height: 24)
+            .frame(height: 52)
             .background(
                 LinearGradient(
                     gradient: Gradient(colors: [

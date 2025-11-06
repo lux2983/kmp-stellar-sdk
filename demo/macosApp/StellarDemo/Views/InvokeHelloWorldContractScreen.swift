@@ -15,19 +15,28 @@ struct InvokeHelloWorldContractScreen: View {
     @State private var validationErrors: [String: String] = [:]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                contractDetailsCard
-                submitterAccountCard
-                invokeButton
-                resultView
-                placeholderView
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    contractDetailsCard
+                    submitterAccountCard
+                    invokeButton
+                    resultView
+                    placeholderView
+                }
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Invoke Hello World Contract")
+            .onChange(of: invocationResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Invoke Hello World Contract")
     }
 
     // MARK: - View Components
@@ -126,15 +135,18 @@ struct InvokeHelloWorldContractScreen: View {
     @ViewBuilder
     private var resultView: some View {
         if let result = invocationResult {
-            switch result {
-            case let success as InvokeHelloWorldResult.Success:
-                successCard(success)
-            case let error as InvokeHelloWorldResult.Error:
-                errorCard(error)
-                troubleshootingCard
-            default:
-                EmptyView()
+            VStack(spacing: 16) {
+                switch result {
+                case let success as InvokeHelloWorldResult.Success:
+                    successCard(success)
+                case let error as InvokeHelloWorldResult.Error:
+                    errorCard(error)
+                    troubleshootingCard
+                default:
+                    EmptyView()
+                }
             }
+            .id("resultCard")
         }
     }
 

@@ -1,6 +1,6 @@
 # Stellar SDK Demo - macOS Native App
 
-Native macOS application demonstrating the Stellar SDK with **SwiftUI** and complete integration with all 11 demo features.
+Native macOS application demonstrating the Stellar SDK with **SwiftUI** and complete integration with all 12 demo features.
 
 ## Overview
 
@@ -12,6 +12,7 @@ This is a **native macOS app** built with SwiftUI (not Compose), showcasing the 
 - **Transaction Details**: View transaction operations and events
 - **Smart Contracts**: Fetch and parse Soroban contract details
 - **Contract Deployment**: Upload and deploy WASM contracts to testnet
+- **Info**: App version, GitHub repository, and feedback contact
 
 The app demonstrates how to integrate the Kotlin Multiplatform Stellar SDK into a pure SwiftUI macOS application.
 
@@ -26,9 +27,9 @@ The app demonstrates how to integrate the Kotlin Multiplatform Stellar SDK into 
 └──────────────────────────────────────────────┘
                     ▼
 ┌──────────────────────────────────────────────┐
-│    demo:macosApp (29 Swift files)            │
+│    demo:macosApp (30 Swift files)            │
 │  • Native SwiftUI UI (Material 3 design)     │
-│  • 12 Views (one per feature screen)         │
+│  • 13 Views (one per feature screen)         │
 │  • 10 Components (reusable UI)               │
 │  • 6 Utilities (helpers)                     │
 └──────────────────────────────────────────────┘
@@ -55,8 +56,8 @@ The app demonstrates how to integrate the Kotlin Multiplatform Stellar SDK into 
 The macOS app was recently refactored from a single file to a well-structured project:
 
 **Before**: 1 monolithic Swift file
-**After**: 29 organized Swift files:
-- **12 Views**: Dedicated view for each feature screen
+**After**: 30 organized Swift files:
+- **13 Views**: Dedicated view for each feature screen
 - **10 Components**: Reusable UI components
 - **6 Utilities**: Helper classes
 - **1 App**: Main entry point
@@ -67,7 +68,7 @@ The macOS app was recently refactored from a single file to a well-structured pr
 macosApp/
 ├── StellarDemo/
 │   ├── StellarDemoApp.swift       # App entry point
-│   ├── Views/                     # 12 SwiftUI views
+│   ├── Views/                     # 13 SwiftUI views
 │   │   ├── MainScreen.swift
 │   │   ├── KeyGenerationView.swift
 │   │   ├── FundAccountView.swift
@@ -79,7 +80,8 @@ macosApp/
 │   │   ├── DeployContractView.swift
 │   │   ├── InvokeHelloWorldContractScreen.swift
 │   │   ├── InvokeAuthContractScreen.swift
-│   │   └── InvokeTokenContractScreen.swift
+│   │   ├── InvokeTokenContractScreen.swift
+│   │   └── InfoView.swift
 │   ├── Components/                # 10 reusable components
 │   │   ├── DemoTopicCard.swift
 │   │   ├── InfoCard.swift
@@ -189,7 +191,7 @@ In Xcode:
 
 ## Features
 
-All 11 demo features are fully implemented in SwiftUI:
+All 12 demo features are fully implemented in SwiftUI:
 
 ### 1. Key Generation
 - **View**: `KeyGenerationView.swift`
@@ -275,6 +277,14 @@ All 11 demo features are fully implemented in SwiftUI:
 - Function selection from contract spec
 - Automatic type conversion for token operations
 - Uses: `ContractClient.buildInvoke()`, token interface support
+
+### 12. Info
+- **View**: `InfoView.swift`
+- Display app version (from demo.version in gradle.properties)
+- About the KMP Stellar SDK
+- GitHub repository link (opens in default browser)
+- Support message
+- Feedback email (opens in default email client)
 
 ## Design System
 
@@ -399,7 +409,7 @@ To change networks, modify the SDK initialization in the Kotlin framework.
 
 1. **Build**: ⌘B
 2. **Run**: ⌘R
-3. **Test all features**: Navigate through all 11 demo feature screens
+3. **Test all features**: Navigate through all 12 demo feature screens
 
 ### Manual Testing Checklist
 
@@ -409,6 +419,7 @@ To change networks, modify the SDK initialization in the Kotlin framework.
 - [ ] Trust Asset: Establish a trustline
 - [ ] Send Payment: Send XLM to another account
 - [ ] Contract Details: Fetch contract metadata
+- [ ] Info: View app version, GitHub link, contact email
 
 ### Network Testing
 

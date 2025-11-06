@@ -9,13 +9,6 @@ struct MainScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // App Subtitle
-                Text("Explore the Stellar SDK features")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Material3Colors.onSurfaceVariant)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 16)
-
                 // Demo topics list
                 LazyVStack(spacing: 12) {
                     // Key Generation topic
@@ -105,13 +98,21 @@ struct MainScreen: View {
                         icon: "bitcoinsign.circle.fill",
                         destination: InvokeTokenContractScreen(toastManager: toastManager)
                     )
+
+                    // Info topic
+                    DemoTopicCard(
+                        title: "Info",
+                        description: "About the app, GitHub repository, and how to provide feedback",
+                        icon: "info.circle.fill",
+                        destination: InfoView(toastManager: toastManager)
+                    )
                 }
             }
             .padding(16)
         }
         .background(Material3Colors.surface)
         .frame(minWidth: 700, minHeight: 600)
-        .navigationToolbar(title: "Stellar SDK Demo", showBackButton: false)
+        .navigationToolbar(title: "KMP Stellar SDK Demo", subtitle: "Explore SDK Features on Testnet", showBackButton: false)
         .toast(toastManager)
     }
 }

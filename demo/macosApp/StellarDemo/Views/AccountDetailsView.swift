@@ -11,18 +11,27 @@ struct AccountDetailsScreen: View {
     @EnvironmentObject var bridgeWrapper: MacOSBridgeWrapper
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                infoCard
-                inputField
-                fetchButton
-                resultView
-                placeholderView
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 16) {
+                    infoCard
+                    inputField
+                    fetchButton
+                    resultView
+                    placeholderView
+                }
+                .padding(16)
             }
-            .padding(16)
+            .background(Material3Colors.surface)
+            .navigationToolbar(title: "Fetch Account Details")
+            .onChange(of: detailsResult) { newValue in
+                if newValue != nil {
+                    withAnimation {
+                        proxy.scrollTo("resultCard", anchor: .bottom)
+                    }
+                }
+            }
         }
-        .background(Material3Colors.surface)
-        .navigationToolbar(title: "Fetch Account Details")
     }
 
     // MARK: - View Components
@@ -67,8 +76,10 @@ struct AccountDetailsScreen: View {
             switch result {
             case let success as AccountDetailsResult.Success:
                 AccountDetailsCard(account: success.accountResponse)
+                    .id("resultCard")
             case let error as AccountDetailsResult.Error:
                 errorCard(error)
+                    .id("resultCard")
                 troubleshootingCard
             default:
                 EmptyView()

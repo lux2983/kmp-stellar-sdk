@@ -30,7 +30,6 @@ struct StellarDemoApp: App {
             .environmentObject(bridgeWrapper)
             .accentColor(Material3Colors.primary)
         }
-        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
     }
 }

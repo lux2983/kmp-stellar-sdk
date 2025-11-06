@@ -47,6 +47,7 @@ class KeyGenerationScreen : Screen {
         var snackbarMessage by remember { mutableStateOf<String?>(null) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
 
         // Show snackbar when message changes
         LaunchedEffect(snackbarMessage) {
@@ -56,6 +57,13 @@ class KeyGenerationScreen : Screen {
                     duration = SnackbarDuration.Short
                 )
                 snackbarMessage = null
+            }
+        }
+
+        // Auto-scroll to bottom when keypair is generated
+        LaunchedEffect(keypair) {
+            keypair?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
             }
         }
 
@@ -78,7 +86,7 @@ class KeyGenerationScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)

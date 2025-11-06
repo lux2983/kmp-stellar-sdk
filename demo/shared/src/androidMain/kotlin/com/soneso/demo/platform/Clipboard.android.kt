@@ -26,21 +26,14 @@ private class AndroidClipboard(private val context: Context) : Clipboard {
     }
 }
 
-// Global context holder - must be initialized from Android application
-private var applicationContext: Context? = null
-
 /**
  * Initialize the clipboard with Android application context.
  * Should be called from Application.onCreate() or Activity.onCreate().
  */
 fun initAndroidClipboard(context: Context) {
-    applicationContext = context.applicationContext
+    AndroidContext.init(context)
 }
 
 actual fun getClipboard(): Clipboard {
-    val context = applicationContext
-        ?: throw IllegalStateException(
-            "Android clipboard not initialized. Call initAndroidClipboard(context) first."
-        )
-    return AndroidClipboard(context)
+    return AndroidClipboard(AndroidContext.get())
 }

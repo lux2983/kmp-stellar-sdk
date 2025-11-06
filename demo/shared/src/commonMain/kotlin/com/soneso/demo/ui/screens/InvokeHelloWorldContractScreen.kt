@@ -52,6 +52,14 @@ class InvokeHelloWorldContractScreen : Screen {
         var validationErrors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when invocation result appears
+        LaunchedEffect(invocationResult) {
+            invocationResult?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Validation function using FormValidation utility
         fun validateInputs(): Map<String, String> {
@@ -121,7 +129,7 @@ class InvokeHelloWorldContractScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)

@@ -60,6 +60,14 @@ class SendPaymentScreen : Screen {
         var validationErrors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
         val snackbarHostState = remember { SnackbarHostState() }
+        val scrollState = rememberScrollState()
+
+        // Auto-scroll to bottom when payment result appears
+        LaunchedEffect(paymentResult) {
+            paymentResult?.let {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
+        }
 
         // Validation functions
         // Validation functions
@@ -160,7 +168,7 @@ class SendPaymentScreen : Screen {
                     modifier = Modifier
                         .widthIn(max = 800.dp)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(scrollState)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp)
