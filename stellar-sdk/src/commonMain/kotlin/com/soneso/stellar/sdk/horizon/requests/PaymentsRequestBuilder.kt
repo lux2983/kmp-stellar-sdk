@@ -71,6 +71,19 @@ class PaymentsRequestBuilder(
         return this
     }
 
+    /**
+     * Adds a parameter defining whether to include payment operations from failed transactions.
+     * By default only payment operations from successful transactions are returned.
+     *
+     * @param value Set to true to include payment operations from failed transactions
+     * @return This request builder instance
+     * @see <a href="https://developers.stellar.org/api/resources/operations/list-payments/">Payments</a>
+     */
+    fun includeFailed(value: Boolean): PaymentsRequestBuilder {
+        uriBuilder.parameters["include_failed"] = value.toString()
+        return this
+    }
+
     private fun updateToJoin(value: String, include: Boolean) {
         if (include) {
             toJoin.add(value)

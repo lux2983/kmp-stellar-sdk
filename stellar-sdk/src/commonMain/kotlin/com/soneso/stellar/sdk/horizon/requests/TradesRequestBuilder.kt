@@ -174,4 +174,15 @@ class TradesRequestBuilder(
         super.limit(number)
         return this
     }
+
+    /**
+     * Sets the order of returned results. Default is descending (newest first).
+     *
+     * @param direction The order direction (ASC or DESC)
+     * @return This request builder instance
+     */
+    override fun order(direction: Order): TradesRequestBuilder {
+        super.order(direction)
+        return this
+    }
 }
