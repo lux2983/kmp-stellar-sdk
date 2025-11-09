@@ -2,7 +2,7 @@
 
 Welcome to the comprehensive documentation for the Stellar SDK for Kotlin Multiplatform. This documentation covers everything from getting started to advanced implementation details.
 
-**This SDK is in active development (v0.2.1). While production-ready cryptography and comprehensive testing are in place, the API may evolve before the 1.0 release. Use with appropriate testing and caution in production environments.**
+**This SDK is in active development (v0.3.0). While production-ready cryptography and comprehensive testing are in place, the API may evolve before the 1.0 release. Use with appropriate testing and caution in production environments.**
 
 ## Documentation Structure
 

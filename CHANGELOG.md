@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-11-08
+
+### Added
+- **Horizon API**: Added missing parameters to match official Horizon specification (improved API coverage)
+- **Demo App**: Added Invoke Token Contract demo showcasing token interaction
+- **Demo App**: Added Info screen with centralized version display and auto-scroll functionality
+- **Type Conversion**: Complete scValToNative implementation with error and contract instance support
+- **Contract Spec**: Complete SCSpecType support in ContractSpec for all Soroban types
+- **Demo App**: Modernized UI with complete redesign and comprehensive app icons for all platforms
+
+### Changed
+- **Demo App**: Refactored macOS demo app with updated documentation for 11 demo features
+- **Documentation**: Updated for accuracy and conciseness across all docs
+
+### Fixed
+- **Web App**: Fixed WASM loading for production deployments
+- **RPC**: Fixed getEvents RPC implementation to match Stellar RPC specification
+
 ## [0.2.1] - 2025-10-25
 
 ### Fixed

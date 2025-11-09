@@ -59,7 +59,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 // Maven artifact works perfectly
-                implementation("com.soneso.stellar:stellar-sdk:0.2.1")
+                implementation("com.soneso.stellar:stellar-sdk:0.3.0")
                 implementation(compose.runtime)
                 implementation(compose.material3)
             }
