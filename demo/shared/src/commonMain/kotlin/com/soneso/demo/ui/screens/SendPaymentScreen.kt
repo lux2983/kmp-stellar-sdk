@@ -62,10 +62,13 @@ class SendPaymentScreen : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         val scrollState = rememberScrollState()
 
-        // Auto-scroll to bottom when payment result appears
+        // Smart auto-scroll: scroll just enough to reveal result when payment completes
         LaunchedEffect(paymentResult) {
-            paymentResult?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (paymentResult != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
 
@@ -490,15 +493,22 @@ class SendPaymentScreen : Screen {
                 }
 
                 // Submit button with AnimatedButton
+                val isFormValid = remember(
+                    isLoading, sourceAccountId, destinationAccountId,
+                    amount, secretSeed, assetType, assetCode, assetIssuer
+                ) {
+                    !isLoading && sourceAccountId.isNotBlank() &&
+                            destinationAccountId.isNotBlank() && amount.isNotBlank() &&
+                            secretSeed.isNotBlank() &&
+                            (assetType == AssetType.NATIVE || (assetCode.isNotBlank() && assetIssuer.isNotBlank()))
+                }
+
                 AnimatedButton(
                     onClick = { submitPayment() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !isLoading && sourceAccountId.isNotBlank() &&
-                            destinationAccountId.isNotBlank() && amount.isNotBlank() &&
-                            secretSeed.isNotBlank() &&
-                            (assetType == AssetType.NATIVE || (assetCode.isNotBlank() && assetIssuer.isNotBlank())),
+                    enabled = isFormValid,
                     isLoading = isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF0A4FD6) // Stellar Blue

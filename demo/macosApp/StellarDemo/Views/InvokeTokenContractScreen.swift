@@ -55,14 +55,15 @@ struct InvokeTokenContractScreen: View {
             .onChange(of: invocationResult) { newValue in
                 if newValue != nil {
                     withAnimation {
-                        proxy.scrollTo("resultCard", anchor: .bottom)
+                        // Smart auto-scroll: reveal result without scrolling too far
+                        proxy.scrollTo("resultCard", anchor: .top)
                     }
                 }
             }
             .onChange(of: loadError) { newValue in
                 if newValue != nil {
                     withAnimation {
-                        proxy.scrollTo("errorCard", anchor: .bottom)
+                        proxy.scrollTo("errorCard", anchor: .top)
                     }
                 }
             }

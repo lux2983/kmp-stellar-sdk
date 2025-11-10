@@ -32,7 +32,8 @@ struct FundAccountScreen: View {
             .onChange(of: fundingResult) { newValue in
                 if newValue != nil {
                     withAnimation {
-                        proxy.scrollTo("resultCard", anchor: .bottom)
+                        // Smart auto-scroll: reveal result without scrolling too far
+                        proxy.scrollTo("resultCard", anchor: .top)
                     }
                 }
             }

@@ -54,10 +54,13 @@ class InvokeHelloWorldContractScreen : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         val scrollState = rememberScrollState()
 
-        // Auto-scroll to bottom when invocation result appears
+        // Smart auto-scroll: scroll just enough to reveal result when invocation completes
         LaunchedEffect(invocationResult) {
-            invocationResult?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (invocationResult != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
 
@@ -304,16 +307,21 @@ class InvokeHelloWorldContractScreen : Screen {
                     )
                 }
 
+                // Memoized form validation for button enabled state (iOS performance optimization)
+                val isFormValid = remember(contractId, toParameter, submitterAccountId, secretKey) {
+                    contractId.isNotBlank() &&
+                            toParameter.isNotBlank() &&
+                            submitterAccountId.isNotBlank() &&
+                            secretKey.isNotBlank()
+                }
+
                 // Invoke button with AnimatedButton
                 AnimatedButton(
                     onClick = { invokeContract() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = contractId.isNotBlank() &&
-                            toParameter.isNotBlank() &&
-                            submitterAccountId.isNotBlank() &&
-                            secretKey.isNotBlank(),
+                    enabled = isFormValid,
                     isLoading = isInvoking,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF0A4FD6), // Stellar Blue

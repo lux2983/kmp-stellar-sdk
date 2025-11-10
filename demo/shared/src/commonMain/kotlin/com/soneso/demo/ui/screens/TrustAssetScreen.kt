@@ -66,10 +66,13 @@ class TrustAssetScreen : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         val scrollState = rememberScrollState()
 
-        // Auto-scroll to bottom when trust result appears
+        // Smart auto-scroll: scroll just enough to reveal result when trust asset completes
         LaunchedEffect(trustResult) {
-            trustResult?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (trustResult != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
 
@@ -361,14 +364,19 @@ class TrustAssetScreen : Screen {
                     )
                 }
 
+                // Memoized form validation for button enabled state (iOS performance optimization)
+                val isFormValid = remember(isLoading, accountId, assetCode, assetIssuer, secretSeed) {
+                    !isLoading && accountId.isNotBlank() && assetCode.isNotBlank() &&
+                            assetIssuer.isNotBlank() && secretSeed.isNotBlank()
+                }
+
                 // Submit button using AnimatedButton component
                 AnimatedButton(
                     onClick = { submitTrustAsset() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !isLoading && accountId.isNotBlank() && assetCode.isNotBlank() &&
-                            assetIssuer.isNotBlank() && secretSeed.isNotBlank(),
+                    enabled = isFormValid,
                     isLoading = isLoading,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF0A4FD6), // StellarBlue

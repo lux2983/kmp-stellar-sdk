@@ -60,12 +60,16 @@ class KeyGenerationScreen : Screen {
             }
         }
 
-        // Auto-scroll to bottom when keypair is generated
+        // Smart auto-scroll: scroll just enough to reveal result when keypair is generated
         LaunchedEffect(keypair) {
-            keypair?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (keypair != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
+
 
         Scaffold(
             topBar = {

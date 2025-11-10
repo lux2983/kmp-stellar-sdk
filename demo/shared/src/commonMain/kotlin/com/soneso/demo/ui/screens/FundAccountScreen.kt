@@ -76,12 +76,16 @@ class FundAccountScreen : Screen {
             }
         }
 
-        // Auto-scroll to bottom when funding result appears
+        // Smart auto-scroll: scroll just enough to reveal result when funding completes
         LaunchedEffect(fundingResult) {
-            fundingResult?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (fundingResult != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
+
 
         Scaffold(
             topBar = {

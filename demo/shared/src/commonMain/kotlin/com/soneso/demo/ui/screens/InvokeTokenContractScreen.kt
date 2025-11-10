@@ -72,10 +72,13 @@ class InvokeTokenContractScreen : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         val scrollState = rememberScrollState()
 
-        // Auto-scroll to bottom when invocation result appears
+        // Smart auto-scroll: scroll just enough to reveal result when invocation completes
         LaunchedEffect(invocationState.result) {
-            invocationState.result?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (invocationState.result != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
 
@@ -516,17 +519,27 @@ class InvokeTokenContractScreen : Screen {
                                 )
                             }
 
+                            // Memoized form validation for button enabled state (iOS performance optimization)
+                            val isFormValid = remember(
+                                invocationState.isInvoking,
+                                invocationState.selectedFunction,
+                                signingState.sourceAccountId,
+                                signingState.signerSeeds
+                            ) {
+                                when {
+                                    invocationState.isInvoking -> false
+                                    function.isReadOnly -> true
+                                    else -> signingState.sourceAccountId.isNotBlank() && signingState.signerSeeds.any { it.isNotBlank() }
+                                }
+                            }
+
                             // Invoke button
                             AnimatedButton(
                                 onClick = { invokeFunction() },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(56.dp),
-                                enabled = when {
-                                    invocationState.isInvoking -> false
-                                    function.isReadOnly -> true // No validation needed for read-only
-                                    else -> signingState.sourceAccountId.isNotBlank() && signingState.signerSeeds.any { it.isNotBlank() }
-                                },
+                                enabled = isFormValid,
                                 isLoading = invocationState.isInvoking,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (function.isReadOnly) {

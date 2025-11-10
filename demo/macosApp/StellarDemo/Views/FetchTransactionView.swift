@@ -57,7 +57,8 @@ struct FetchTransactionScreen: View {
             .onChange(of: fetchResult) { newValue in
                 if newValue != nil {
                     withAnimation {
-                        proxy.scrollTo("resultCard", anchor: .bottom)
+                        // Smart auto-scroll: reveal result without scrolling too far
+                        proxy.scrollTo("resultCard", anchor: .top)
                     }
                 }
             }

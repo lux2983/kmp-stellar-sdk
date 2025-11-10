@@ -53,10 +53,13 @@ class DeployContractScreen : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         val scrollState = rememberScrollState()
 
-        // Auto-scroll to bottom when deployment result appears
+        // Smart auto-scroll: scroll just enough to reveal result when deployment completes
         LaunchedEffect(deploymentResult) {
-            deploymentResult?.let {
-                scrollState.animateScrollTo(scrollState.maxValue)
+            // Only scroll when we have a result, not when clearing it
+            if (deploymentResult != null) {
+                val currentScroll = scrollState.value
+                val targetScroll = (currentScroll + 300).coerceAtMost(scrollState.maxValue)
+                scrollState.animateScrollTo(targetScroll)
             }
         }
 
@@ -428,14 +431,18 @@ class DeployContractScreen : Screen {
                     }
                 }
 
+                // Memoized form validation for button enabled state (iOS performance optimization)
+                val isFormValid = remember(selectedContract, sourceAccountId, secretKey) {
+                    selectedContract != null && sourceAccountId.isNotBlank() && secretKey.isNotBlank()
+                }
+
                 // Deploy button with AnimatedButton
                 AnimatedButton(
                     onClick = { deployContract() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = selectedContract != null &&
-                            sourceAccountId.isNotBlank() && secretKey.isNotBlank(),
+                    enabled = isFormValid,
                     isLoading = isDeploying,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF0A4FD6)

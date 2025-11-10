@@ -25,9 +25,10 @@ struct AccountDetailsScreen: View {
             .background(Material3Colors.surface)
             .navigationToolbar(title: "Fetch Account Details")
             .onChange(of: detailsResult) { newValue in
+                // Smart auto-scroll: reveal result without scrolling too far
                 if newValue != nil {
                     withAnimation {
-                        proxy.scrollTo("resultCard", anchor: .bottom)
+                        proxy.scrollTo("resultCard", anchor: .top)
                     }
                 }
             }

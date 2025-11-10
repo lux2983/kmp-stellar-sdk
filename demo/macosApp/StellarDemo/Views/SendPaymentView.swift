@@ -33,9 +33,10 @@ struct SendPaymentScreen: View {
             .background(Material3Colors.surface)
             .navigationToolbar(title: "Send a Payment")
             .onChange(of: paymentResult) { newValue in
+                // Smart auto-scroll: reveal result without scrolling too far
                 if newValue != nil {
                     withAnimation {
-                        proxy.scrollTo("resultCard", anchor: .bottom)
+                        proxy.scrollTo("resultCard", anchor: .top)
                     }
                 }
             }
