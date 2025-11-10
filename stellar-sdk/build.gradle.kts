@@ -224,6 +224,14 @@ kotlin {
     }
 }
 
+// Configure Dokka to suppress native target cross-compilation errors on CI
+// Dokka can generate docs from shared source sets without actually compiling native code
+tasks.named("dokkaHtml").configure {
+    // Suppress warnings about disabled native targets
+    suppressObviousFunctions.set(false)
+    failOnWarning.set(false)
+}
+
 // Dokka Configuration for API Documentation (V2 mode)
 tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
