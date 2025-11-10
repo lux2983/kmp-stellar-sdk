@@ -200,12 +200,14 @@ This serves the dist/ directory at http://localhost:8082
 
 ### Large Bundle Size
 
-The production bundle is approximately 28 MB uncompressed. This is expected for a Compose Multiplatform web app. To reduce load time:
+The production bundle is approximately 28 MB uncompressed (20 MB JavaScript + 8 MB WASM). This is expected for a Compose Multiplatform web app. To reduce load time:
 
-1. **Enable gzip compression** on your web server (reduces to ~2.7 MB)
+1. **Enable gzip compression** on your web server (reduces JavaScript from 20 MB to ~2.9 MB; WASM stays 8 MB)
 2. **Use CDN** for faster global distribution
 3. **Enable HTTP/2** for parallel file downloads
-4. **Consider code splitting** if you add more features
+4. **Total download size**: ~11 MB (2.9 MB JS gzipped + 8 MB WASM uncompressed)
+
+**Note**: WASM files cannot be compressed with gzip, so the Skiko rendering engine (8 MB) always transfers at full size.
 
 ### Memory Issues During Build
 
@@ -227,13 +229,21 @@ export NODE_OPTIONS="--max-old-space-size=4096"
 ## Bundle Size Analysis
 
 Production bundle breakdown:
-- Kotlin stdlib: 19.3 MB (Kotlin language runtime)
-- Vendors: 1.01 MB (libsodium, Compose libraries)
-- App code: 8.55 KB (demo application logic)
-- Skiko WASM: 8.02 MB (Compose rendering engine)
-- Contract WASMs: ~11 KB total (Stellar smart contracts)
 
-Total: ~28 MB uncompressed, ~2.7 MB gzipped
+**JavaScript Files** (compressible):
+- Kotlin stdlib: 19 MB → 2.5 MB gzipped (Kotlin language runtime)
+- Vendors: 1 MB → 325 KB gzipped (libsodium, Compose libraries)
+- App code: 8.5 KB → 2.4 KB gzipped (demo application logic)
+- **JS Total**: 20 MB → 2.9 MB gzipped
+
+**WebAssembly Files** (not compressible):
+- Skiko WASM: 8 MB (Compose rendering engine)
+- Contract WASMs: ~11 KB total (Stellar smart contracts)
+- **WASM Total**: 8 MB (always uncompressed)
+
+**Total Bundle**:
+- Uncompressed: 28 MB (20 MB JS + 8 MB WASM)
+- Download size: ~11 MB (2.9 MB JS gzipped + 8 MB WASM)
 
 ## Support
 

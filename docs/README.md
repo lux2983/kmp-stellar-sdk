@@ -21,21 +21,21 @@ Welcome to the comprehensive documentation for the Stellar SDK for Kotlin Multip
 ### Development
 - **[Demo Apps Guide](sample-apps.md)** - Learn from complete example applications
 - **[Soroban RPC Usage](soroban-rpc-usage.md)** - Using Soroban smart contracts
+- **[Testing Guide](testing.md)** - Testing strategies and best practices
 
 ### Advanced Topics
 - **[Advanced Topics](advanced.md)** - Hardware wallets, multi-sig, performance optimization
-- **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
 
 ## Key Features
 
 This SDK provides a complete implementation of the Stellar protocol with:
 
-- ✅ **Cross-platform support** - JVM, JavaScript, iOS, macOS
-- ✅ **Production-ready cryptography** - Audited libraries on all platforms
-- ✅ **Comprehensive API coverage** - Horizon, Soroban RPC, and more
-- ✅ **Type-safe APIs** - Leverage Kotlin's type system
-- ✅ **Async/await support** - Modern coroutines-based API
-- ✅ **Smart contract interaction** - Full Soroban support
+- **Cross-platform support** - JVM, JavaScript, iOS, macOS
+- **Production-ready cryptography** - Audited libraries on all platforms
+- **Comprehensive API coverage** - Horizon, Soroban RPC, and more
+- **Type-safe APIs** - Leverage Kotlin's type system
+- **Async/await support** - Modern coroutines-based API
+- **Smart contract interaction** - Full Soroban support
 
 ## Quick Links
 
@@ -66,7 +66,14 @@ This SDK provides a complete implementation of the Stellar protocol with:
 **Mobile Development**
 - [Android Setup](platforms/jvm.md#android-setup)
 - [iOS Setup](platforms/ios.md)
-- [Demo Mobile Apps](sample-apps.md#android)
+- [macOS Setup](platforms/macos.md)
+- [Demo Android App](sample-apps.md#android)
+- [Demo iOS App](sample-apps.md#ios)
+- [Demo macOS App](sample-apps.md#macos-native)
+
+**Desktop Development**
+- [JVM/Desktop Setup](platforms/jvm.md)
+- [Demo Desktop App](sample-apps.md#desktop-jvm)
 
 **Web Development**
 - [Browser Setup](platforms/javascript.md#browser-setup)
@@ -79,7 +86,7 @@ This SDK provides a complete implementation of the Stellar protocol with:
 
 ## Current Implementation Status
 
-### Core Features ✅
+### Core Features
 - Ed25519 keypair generation and management
 - StrKey encoding/decoding (G..., S..., C..., M... addresses)
 - Transaction building and signing
@@ -88,7 +95,7 @@ This SDK provides a complete implementation of the Stellar protocol with:
 - All 27 Stellar operations
 - Complete XDR serialization/deserialization
 
-### Horizon API ✅
+### Horizon API
 - Accounts, Assets, Claimable Balances
 - Ledgers, Liquidity Pools, Offers
 - Operations, Payments, Trades
@@ -96,7 +103,15 @@ This SDK provides a complete implementation of the Stellar protocol with:
 - Fee Statistics, Health Monitoring
 - Server-Sent Events (SSE) streaming
 
-### Soroban (Smart Contracts) ✅
+### Soroban RPC API
+- Transaction simulation and resource estimation
+- Contract invocation and deployment
+- Event queries and filtering
+- Ledger entries and contract data retrieval
+- Network information and versioning
+- Health monitoring and status checks
+
+### Soroban (Smart Contracts)
 - ContractClient for easy interaction
 - AssembledTransaction lifecycle management
 - Authorization handling
@@ -104,7 +119,7 @@ This SDK provides a complete implementation of the Stellar protocol with:
 - Transaction simulation
 - Result parsing with type safety
 
-### Security Features ✅
+### Security Features
 - Production-ready crypto libraries
 - Constant-time operations
 - Memory-safe implementations
@@ -113,8 +128,7 @@ This SDK provides a complete implementation of the Stellar protocol with:
 
 ## Getting Help
 
-- **[Troubleshooting Guide](troubleshooting.md)** - Common issues and solutions
-- **[GitHub Issues](https://github.com/your-repo/issues)** - Bug reports and feature requests
+- **[GitHub Issues](https://github.com/Soneso/kmp-stellar-sdk/issues)** - Bug reports and feature requests
 - **[Stellar Developers Discord](https://discord.gg/stellardev)** - Community support
 
 ## Contributing

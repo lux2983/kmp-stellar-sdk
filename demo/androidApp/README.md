@@ -110,7 +110,7 @@ androidApp/
 ├── src/
 │   └── main/
 │       ├── AndroidManifest.xml           # App manifest
-│       ├── java/com/soneso/demo/android/
+│       ├── java/com/soneso/stellar/demo/android/
 │       │   └── MainActivity.kt           # Entry point (20 lines)
 │       └── res/
 │           ├── values/

@@ -27,7 +27,7 @@ The app uses 100% shared Compose UI from the `demo:shared` module, wrapped in a 
 └──────────────────────────────────────────────┘
                     ▼
 ┌──────────────────────────────────────────────┐
-│      demo:iosApp (28 lines Swift)            │
+│      demo:iosApp (27 lines Swift)            │
 │  • StellarDemoApp.swift                      │
 │  • UIViewControllerRepresentable wrapper     │
 │  • Launches Compose UI                       │
@@ -127,7 +127,7 @@ This runs before every build, ensuring the framework is up-to-date.
 ```
 iosApp/
 ├── StellarDemo/
-│   ├── StellarDemoApp.swift        # SwiftUI app entry (28 lines)
+│   ├── StellarDemoApp.swift        # SwiftUI app entry (27 lines)
 │   └── Info.plist                  # iOS app configuration
 ├── project.yml                      # xcodegen configuration
 ├── StellarDemo.xcodeproj/          # Generated Xcode project (gitignored)

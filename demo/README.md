@@ -88,7 +88,7 @@ The demo app uses a **Compose Multiplatform** architecture with maximum code sha
 **Key Points**:
 - **Shared Module**: Contains 100% of the UI code (Compose) and business logic (Stellar SDK integration)
 - **Platform Apps**: Minimal entry point code (5-20 lines) to launch the shared UI
-- **macOS Exception**: The macOS app uses native SwiftUI (not Compose) - see macosApp/README.md for details
+- **macOS Native App**: A separate native SwiftUI app (not using the shared Compose module) - see macosApp/README.md
 - **Code Reuse**: ~95% code sharing across Android, Desktop, iOS, and Web
 
 ## Features
@@ -221,7 +221,7 @@ demo/
 │   ├── StellarDemo/StellarDemoApp.swift
 │   └── project.yml
 ├── macosApp/                        # macOS native entry point (SwiftUI)
-│   ├── StellarDemo/                 # 29 Swift files (1 App + 12 Views + 10 Components + 6 Utilities)
+│   ├── StellarDemo/                 # 30 Swift files (1 App + 13 Views + 10 Components + 6 Utilities)
 │   │                                # Full SwiftUI architecture - see macosApp/README.md
 │   └── project.yml
 ├── desktopApp/                      # Desktop JVM entry point
@@ -288,7 +288,7 @@ demo/
 
 ### iOS
 
-**Prerequisites**: Add libsodium via Swift Package Manager before building. See [iosApp/README.md](iosApp/README.md#swift-package-manager) for detailed libsodium setup instructions.
+**Prerequisites**: Add libsodium via Swift Package Manager before building. See [iosApp/README.md](iosApp/README.md) for detailed libsodium setup instructions.
 
 ```bash
 # From project root
@@ -469,7 +469,7 @@ The desktop app runs on macOS, Windows, and Linux with the same Compose UI as An
 The demo minimizes platform-specific code. Only used for:
 - **Clipboard access**: Each platform has its own implementation in `platform/Clipboard.*.kt`
 - **Entry points**: Minimal code to launch Compose UI
-- **macOS native**: Full SwiftUI implementation with 29 Swift files (Views, Components, Utilities)
+- **macOS native**: Full SwiftUI implementation with 30 Swift files (Views, Components, Utilities)
 
 ### Testing
 
@@ -574,7 +574,7 @@ You have two options for running on macOS:
 - ✅ True native macOS app
 - ✅ Smaller bundle (no JVM)
 - ✅ Native SwiftUI integration
-- ❌ Separate SwiftUI codebase (29 Swift files, see macosApp/README.md)
+- ❌ Separate SwiftUI codebase (30 Swift files, see macosApp/README.md)
 - ❌ macOS-only (not cross-platform)
 
 ```bash

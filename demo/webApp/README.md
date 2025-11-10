@@ -4,7 +4,7 @@ Production-ready web application demonstrating the Stellar SDK with **Compose Mu
 
 > **✅ VITE MIGRATION (October 23, 2025)**: Now using Vite for development server. Vite provides lightning-fast HMR while webpack handles Kotlin/JS bundling. Development experience significantly improved with instant hot reload.
 >
-> **✅ PRODUCTION BUILD (October 23, 2025)**: Production webpack build works perfectly. Build completes in ~5 seconds and creates a 28 MB bundle (2.7 MB with gzip).
+> **✅ PRODUCTION BUILD (October 23, 2025)**: Production webpack build works perfectly. Build completes in ~5 seconds and creates a 28 MB bundle (JavaScript: 2.9 MB gzipped, WASM: 8 MB uncompressed, total download: ~11 MB).
 
 ## Overview
 
@@ -130,11 +130,14 @@ Features:
 # - Deployment dist: demo/webApp/dist/
 
 # Bundle details:
-# - stellarDemoJs-kotlin-stdlib.js: 18 MB (2.4 MB gzipped)
-# - stellarDemoJs-vendors.js: 1 MB (325 KB gzipped)
-# - stellarDemoJs.js: 8.5 KB (2.4 KB gzipped)
-# - skiko.wasm: 8 MB
-# Total: 28 MB unminified (2.7 MB JS gzipped + 8 MB WASM)
+# - app-kotlin-stdlib.js: 19 MB (2.5 MB gzipped)
+# - app-vendors.js: 1 MB (325 KB gzipped)
+# - app.js: 8.5 KB (2.4 KB gzipped)
+# - bccfa839aa4b38489c76.wasm: 8 MB Compose resources (not compressible)
+# - skiko.wasm: 8 MB Compose rendering engine (not compressible, in dist/ only)
+# - wasm/: ~10 KB total smart contract WASM files (4 contracts)
+# Total uncompressed: 36 MB (20 MB JS + 16 MB WASM + compose resources)
+# Total download: ~28 MB (2.9 MB JS gzipped + 16 MB WASM + 10 KB contracts)
 ```
 
 **What Changed**: Webpack configuration disables minification and module concatenation (which caused the hang) while enabling code splitting. See [webpack.config.d/production-optimization.js](webpack.config.d/production-optimization.js) for the configuration.
@@ -348,23 +351,47 @@ The production build can be deployed to any static hosting service.
 Output directory: `demo/webApp/build/kotlin-webpack/js/productionExecutable/`
 
 Contains:
+- `app-kotlin-stdlib.js` - Kotlin stdlib (19 MB uncompressed, 2.5 MB gzipped)
+- `app-vendors.js` - Dependencies (1 MB uncompressed, 325 KB gzipped)
+- `app.js` - App code (8.5 KB uncompressed, 2.4 KB gzipped)
+- `bccfa839aa4b38489c76.wasm` - Compose resources (8 MB, not compressible)
+- `wasm/` - Smart contract WASM files directory:
+  - `soroban_hello_world_contract.wasm` (538 bytes)
+  - `soroban_auth_contract.wasm` (910 bytes)
+  - `soroban_token_contract.wasm` (7.1 KB)
+  - `soroban_atomic_swap_contract.wasm` (2 KB)
+- Source maps (optional, for debugging): `*.js.map` files
+
+**Alternative: Complete Deployment Bundle**
+
+For a complete, ready-to-deploy bundle with all files (including `index.html` and `skiko.wasm`):
+
+```bash
+./gradlew :demo:webApp:productionDist
+```
+
+Output directory: `demo/webApp/dist/`
+
+Contains everything from the webpack output above, plus:
 - `index.html` - HTML entry point
-- `stellarDemoJs-kotlin-stdlib.js` - Kotlin stdlib (~18 MB)
-- `stellarDemoJs-vendors.js` - Dependencies (~1 MB)
-- `stellarDemoJs.js` - App code (~8.5 KB)
-- `skiko.wasm` - Rendering engine (8 MB)
-- Source maps (optional, for debugging)
+- `skiko.wasm` - Compose rendering engine (8 MB)
+- `composeResources/` - Compose resource files
+
+This is the recommended approach for deployment as it includes all necessary files in a single directory.
 
 #### 2. Deploy to Hosting
 
-Copy the output directory to your hosting service:
+Copy the complete deployment bundle to your hosting service:
 
 ```bash
+# Recommended: Use the complete dist/ bundle
+./gradlew :demo:webApp:productionDist
+
 # Example: Deploy to /var/www/html
-cp -r demo/webApp/build/kotlin-webpack/js/productionExecutable/* /var/www/html/
+cp -r demo/webApp/dist/* /var/www/html/
 
 # Or create a zip for upload
-cd demo/webApp/build/kotlin-webpack/js/productionExecutable/
+cd demo/webApp/dist/
 zip -r stellar-demo.zip *
 ```
 
@@ -372,24 +399,24 @@ zip -r stellar-demo.zip *
 
 #### Netlify
 
-1. **Build command**: `./gradlew :demo:webApp:jsBrowserProductionWebpack`
-2. **Publish directory**: `demo/webApp/build/kotlin-webpack/js/productionExecutable`
+1. **Build command**: `./gradlew :demo:webApp:productionDist`
+2. **Publish directory**: `demo/webApp/dist`
 3. **Deploy**: Drag & drop or connect Git repository
 
 #### Vercel
 
-1. **Build command**: `./gradlew :demo:webApp:jsBrowserProductionWebpack`
-2. **Output directory**: `demo/webApp/build/kotlin-webpack/js/productionExecutable`
+1. **Build command**: `./gradlew :demo:webApp:productionDist`
+2. **Output directory**: `demo/webApp/dist`
 3. **Deploy**: `vercel deploy`
 
 #### GitHub Pages
 
 ```bash
 # Build production bundle
-./gradlew :demo:webApp:jsBrowserProductionWebpack
+./gradlew :demo:webApp:productionDist
 
 # Copy to docs/ or gh-pages branch
-cp -r demo/webApp/build/kotlin-webpack/js/productionExecutable/* docs/
+cp -r demo/webApp/dist/* docs/
 
 # Commit and push
 git add docs/
@@ -443,11 +470,12 @@ npx http-server demo/webApp/build/kotlin-webpack/js/productionExecutable/ -p 800
 
 ### Bundle Sizes
 
-| Build Type | Size | Gzipped | Notes |
-|------------|------|---------|-------|
-| Development | ~63.5 MB | N/A | With source maps |
-| Production | ~28 MB | ~2.7 MB | Code splitting, no minification |
-| WASM File | 8 MB | N/A | Skiko rendering engine |
+| Build Type | Uncompressed | JS Gzipped | Total Download | Notes |
+|------------|--------------|------------|----------------|-------|
+| Development | ~63.5 MB | N/A | ~63.5 MB | With source maps |
+| Production | ~28 MB | ~2.9 MB | ~11 MB | JS gzipped + 8 MB WASM |
+
+**Note**: WASM files (8 MB for Skiko rendering engine) cannot be compressed and transfer at full size. JavaScript files compress well with gzip (20 MB → 2.9 MB).
 
 ### Load Times (on 3G)
 
@@ -465,10 +493,10 @@ npx http-server demo/webApp/build/kotlin-webpack/js/productionExecutable/ -p 800
 
 ### Optimization Tips
 
-1. **Enable gzip**: Reduces JS bundle from 28 MB to ~2.7 MB
+1. **Enable gzip**: Reduces JS bundle from 20 MB to ~2.9 MB (WASM stays 8 MB)
 2. **Use CDN**: Faster delivery globally
 3. **Cache headers**: Browser caching for static assets
-4. **Code splitting**: Already enabled (4 separate chunks)
+4. **Code splitting**: Already enabled (3 separate JS chunks)
 5. **Preload**: Add `<link rel="preload">` for critical resources
 6. **Brotli compression**: Even better than gzip for further size reduction
 
@@ -610,8 +638,8 @@ org.gradle.daemon=true
 - If custom server: Add CORS headers
 
 **Slow loading**:
-- Use production build (28 MB unminified, 2.7 MB gzipped vs 63.5 MB development)
-- Enable gzip or Brotli compression
+- Use production build (~11 MB download vs 63.5 MB development)
+- Enable gzip or Brotli compression for JavaScript files
 - Use CDN for faster delivery
 - Check network throttling in DevTools
 - Consider serving WASM file from CDN
@@ -701,7 +729,7 @@ add_header Referrer-Policy "strict-origin-when-cross-origin";
 | Feature | Web (JS) | Desktop (JVM) | macOS Native | Android | iOS |
 |---------|----------|---------------|--------------|---------|-----|
 | Deployment | Static hosting | Installer | App Store | Play Store | App Store |
-| Bundle Size | ~28 MB (2.7 MB gzipped) | ~35 MB | ~8 MB | ~12 MB | ~15 MB |
+| Bundle Size | 28 MB (~11 MB download) | ~35 MB | ~8 MB | ~12 MB | ~15 MB |
 | Startup Time | 1-2s | 2-3s | <1s | 1-2s | 1-2s |
 | Updates | Instant | Manual | Manual | Auto | Auto |
 | Platform Access | Limited | Good | Excellent | Excellent | Excellent |

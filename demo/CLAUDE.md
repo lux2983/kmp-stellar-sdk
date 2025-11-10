@@ -45,7 +45,7 @@ The demo app is a **Kotlin Multiplatform** application showcasing the Stellar SD
 
 - **Shared Module** (`demo/shared`): 100% of UI (Compose) and business logic
 - **Platform Apps**: Lightweight entry points to launch shared UI
-- **Exception**: macOS native app uses SwiftUI (29 Swift files) instead of Compose
+- **Exception**: macOS native app uses SwiftUI (30 Swift files) instead of Compose
 
 ### Architecture
 
@@ -599,7 +599,7 @@ result?.let { res ->
 ### macOS Native
 - Uses SwiftUI (not Compose)
 - Requires libsodium via Homebrew
-- 17 Swift files with Views/Components/Utilities structure
+- 30 Swift files with Views/Components/Utilities structure
 
 ### Desktop (JVM)
 - Runs on macOS, Windows, Linux
