@@ -38,7 +38,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Generate Dokka documentation
-        run: ./gradlew dokkaHtml --no-daemon
+        run: ./gradlew :stellar-sdk:dokkaGenerateHtml --no-daemon
 
       - name: Extract version from tag
         id: version
