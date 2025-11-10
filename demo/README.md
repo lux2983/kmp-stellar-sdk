@@ -49,6 +49,9 @@ The demo app runs on all major platforms with a consistent celestial-themed UI:
     </td>
   </tr>
   <tr>
+    <td height="30"></td>
+  </tr>
+  <tr>
     <td align="center">
       <img src="screenshots/macos-native-demo.png" width="600" alt="macOS Native Demo"><br>
       <b>macOS (Native SwiftUI)</b>

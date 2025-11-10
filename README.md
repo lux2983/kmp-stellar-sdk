@@ -71,43 +71,18 @@ dependencies {
 }
 ```
 
-**Alternative: For advanced native Swift interop** (only needed for native iOS/macOS apps where Swift directly uses SDK types):
-
-```kotlin
-// settings.gradle.kts
-includeBuild("/path/to/kmp-stellar-sdk")
-
-// In your module's build.gradle.kts
-dependencies {
-    implementation("com.soneso.stellar:stellar-sdk:0.3.0")
-}
-```
-
 See [Platform-Specific Requirements](#platform-specific-requirements) below and [docs/platforms/](docs/platforms/) for detailed setup instructions
 
 ### Platform-Specific Requirements
 
-#### JVM/Android
-No additional setup required. BouncyCastle is included as a dependency.
+Most platforms require no additional setup. The SDK includes all necessary cryptographic libraries (BouncyCastle for JVM/Android, libsodium.js for JavaScript/Web).
 
-#### iOS (Compose Multiplatform)
-No additional setup required when using Compose Multiplatform UI. The SDK handles cryptography internally using Maven artifacts.
-
-#### macOS (Desktop App - Recommended)
-No additional setup required. Use the Desktop app with Compose UI:
-- Uses BouncyCastle (JVM) for cryptography
-- Cross-platform (macOS/Windows/Linux)
-- Same code as Android/iOS/Web
-
-#### iOS/macOS (Native SwiftUI/UIKit Apps - Advanced)
+**Exception - Native iOS/macOS SwiftUI/UIKit Apps:**
 For native Swift apps where Swift code directly uses SDK types, add libsodium:
-- **iOS**: Add via Swift Package Manager: `https://github.com/jedisct1/swift-sodium` (Clibsodium product)
+- **iOS**: Add via Swift Package Manager: `https://github.com/jedisct1/swift-sodium`
 - **macOS Native**: Install via Homebrew: `brew install libsodium`
 
 See [docs/platforms/](docs/platforms/) for detailed platform-specific instructions.
-
-#### JavaScript
-No additional setup required. The SDK automatically bundles and initializes libsodium.js.
 
 ## Quick Start
 
@@ -140,6 +115,21 @@ suspend fun fromSeed() {
 }
 ```
 
+### Fetch Data from Horizon
+
+```kotlin
+import com.soneso.stellar.sdk.horizon.HorizonServer
+
+suspend fun fetchAccountData() {
+    val server = HorizonServer("https://horizon-testnet.stellar.org")
+    val accountId = "GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D"
+
+    val account = server.accounts().account(accountId)
+    println("Sequence: ${account.sequenceNumber}")
+    println("Balances: ${account.balances}")
+}
+```
+
 ### Build and Sign a Transaction
 
 ```kotlin
@@ -155,21 +145,43 @@ suspend fun sendPayment() {
 
     val transaction = TransactionBuilder(sourceAccount, Network.TESTNET)
         .addOperation(
-            PaymentOperation(
-                destination = destination,
-                asset = AssetTypeNative,
-                amount = "10.0"
-            )
+            PaymentOperation(destination, AssetTypeNative, "10.0")
         )
         .addMemo(MemoText("Test payment"))
-        .setTimeout(300)
-        .setBaseFee(100)
         .build()
 
     transaction.sign(sourceKeypair)
 
     val response = server.submitTransaction(transaction)
     println("Transaction successful: ${response.hash}")
+}
+```
+
+### Fetch Data from Soroban RPC
+
+```kotlin
+import com.soneso.stellar.sdk.rpc.SorobanServer
+import com.soneso.stellar.sdk.rpc.GetTransactionStatus
+
+suspend fun fetchTransactionData() {
+    val server = SorobanServer("https://soroban-testnet.stellar.org")
+    val txHash = "3389e9f0f1a65f19736cacf544c2e825313e8447f569233bb8db39aa607c8889"
+
+    val response = server.getTransaction(txHash)
+    when (response.status) {
+        GetTransactionStatus.SUCCESS -> {
+            println("Transaction succeeded in ledger ${response.ledger}")
+            println("Result: ${response.resultXdr}")
+        }
+        GetTransactionStatus.FAILED -> {
+            println("Transaction failed: ${response.resultXdr}")
+        }
+        GetTransactionStatus.NOT_FOUND -> {
+            println("Transaction not yet in ledger")
+        }
+    }
+
+    server.close()
 }
 ```
 
@@ -251,27 +263,7 @@ The [demo app](demo/README.md) showcases SDK usage across all platforms with 11 
 10. **Invoke Auth Contract** - Dynamic authorization handling for same-invoker and different-invoker scenarios
 11. **Invoke Token Contract** - SEP-41 token contract interaction with multi-signature workflows
 
-Run the demo:
-
-```bash
-# Android
-./gradlew :demo:androidApp:installDebug
-
-# iOS (requires Xcode)
-./gradlew :demo:shared:linkDebugFrameworkIosSimulatorArm64
-cd demo/iosApp && xcodegen generate && open StellarDemo.xcodeproj
-
-# macOS Native (requires Xcode + libsodium)
-brew install libsodium
-./gradlew :demo:shared:linkDebugFrameworkMacosArm64
-cd demo/macosApp && xcodegen generate && open StellarDemo.xcodeproj
-
-# Desktop (macOS/Windows/Linux - Compose)
-./gradlew :demo:desktopApp:run
-
-# Web (Vite dev server with hot reload)
-./gradlew :demo:webApp:viteDev
-```
+See [demo/README.md](demo/README.md) for screenshots and platform-specific build instructions.
 
 ## Documentation
 
@@ -305,32 +297,11 @@ All implementations provide constant-time operations, proper memory safety, and 
 
 ## Testing
 
-The SDK includes comprehensive test coverage across all platforms.
-
-```bash
-# All tests
-./gradlew test
-
-# JVM tests
-./gradlew :stellar-sdk:jvmTest
-
-# Specific test class
-./gradlew :stellar-sdk:jvmTest --tests "KeyPairTest"
-
-# JavaScript tests (Node.js)
-./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"
-
-# JavaScript tests (Browser - requires Chrome)
-./gradlew :stellar-sdk:jsBrowserTest --tests "KeyPairTest"
-
-# Native tests
-./gradlew :stellar-sdk:macosArm64Test
-./gradlew :stellar-sdk:iosSimulatorArm64Test
-```
+See [Testing Guide](docs/testing.md) for information on running tests.
 
 ## Requirements
 
-- **Kotlin**: 2.0.21+
+- **Kotlin**: 2.2.20+
 - **Gradle**: 8.0+
 - **JVM**: Java 11+
 - **Android**: API 24+ (Android 7.0)
@@ -340,20 +311,11 @@ The SDK includes comprehensive test coverage across all platforms.
 
 ## Contributing
 
-Contribution guidelines will be provided as the project matures.
-
-For development:
-1. Clone the repository
-2. Open in IntelliJ IDEA or Android Studio
-3. Run tests: `./gradlew test`
-4. See [CLAUDE.md](CLAUDE.md) for detailed development guidelines
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting issues, proposing features, and submitting pull requests.
 
 ## License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.
-
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.
 
 ## Acknowledgments
 

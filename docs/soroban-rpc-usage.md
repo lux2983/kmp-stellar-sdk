@@ -22,8 +22,8 @@ This guide demonstrates how to use the Soroban RPC client in the Kotlin Multipla
 ## Quick Start
 
 ```kotlin
-import com.stellar.sdk.*
-import com.stellar.sdk.rpc.*
+import com.soneso.stellar.sdk.*
+import com.soneso.stellar.sdk.rpc.*
 import kotlinx.coroutines.runBlocking
 
 fun main() = runBlocking {
@@ -545,9 +545,9 @@ suspend fun queryContractData() {
 The SDK provides specific exception types for different error scenarios:
 
 ```kotlin
-import com.stellar.sdk.exception.PrepareTransactionException
-import com.stellar.sdk.exception.SorobanRpcException
-import com.stellar.sdk.horizon.exceptions.NetworkException
+import com.soneso.stellar.sdk.exception.PrepareTransactionException
+import com.soneso.stellar.sdk.exception.SorobanRpcException
+import com.soneso.stellar.sdk.horizon.exceptions.NetworkException
 
 suspend fun handleErrors() {
     val server = SorobanServer("https://soroban-testnet.stellar.org")

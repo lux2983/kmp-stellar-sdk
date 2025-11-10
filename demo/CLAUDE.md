@@ -145,7 +145,7 @@ Create `shared/src/commonMain/kotlin/com/soneso/demo/stellar/NewFeature.kt`:
 ```kotlin
 package com.soneso.demo.stellar
 
-import com.stellar.sdk.* // Import SDK classes
+import com.soneso.stellar.sdk.* // Import SDK classes
 
 /**
  * Demonstrates [SDK Feature Name] functionality.
