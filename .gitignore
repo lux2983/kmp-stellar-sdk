@@ -24,6 +24,9 @@ replay_pid*
 *.tar.gz
 *.rar
 
+# But keep gradle wrapper
+!gradle/wrapper/gradle-wrapper.jar
+
 # IDE
 .idea/
 *.iml
