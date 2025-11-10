@@ -8,6 +8,7 @@ This guide will help you get up and running with the Stellar KMP SDK on your pla
   - [Gradle Setup](#gradle-setup)
   - [Platform-Specific Requirements](#platform-specific-requirements)
 - [Basic Concepts](#basic-concepts)
+- [Demo Applications](#demo-applications)
 - [Your First KeyPair](#your-first-keypair)
 - [Creating Accounts](#creating-accounts)
 - [Building Your First Transaction](#building-your-first-transaction)
@@ -124,7 +125,7 @@ dependencies {
 
 #### JavaScript/Web
 
-No additional setup required. The SDK bundles libsodium-wrappers-sumo automatically (sumo build includes SHA-256 support required for transaction hashing).
+No additional setup required. The SDK bundles libsodium-wrappers-sumo (0.7.13) automatically (sumo build includes SHA-256 support required for transaction hashing).
 
 For Kotlin/JS projects:
 
@@ -182,6 +183,18 @@ fun main() = runBlocking {
     val keypair = KeyPair.random()
 }
 ```
+
+## Demo Applications
+
+The SDK includes comprehensive demo applications showcasing real-world usage patterns across all platforms. These are excellent learning resources:
+
+- **Android**: Jetpack Compose UI with 11 feature demonstrations
+- **iOS**: SwiftUI wrapper around shared Compose UI
+- **macOS**: Native SwiftUI implementation
+- **Desktop**: JVM Compose application
+- **Web**: Kotlin/JS browser application
+
+See the [Demo Apps Guide](sample-apps.md) for setup instructions and detailed walkthroughs.
 
 ## Your First KeyPair
 
@@ -384,7 +397,6 @@ suspend fun complexTransaction() {
         .addOperation(
             SetOptionsOperation()
                 .setHomeDomain("example.com")
-                .setInflationDestination("GINF...")
         )
         .setBaseFee(100)
         .setTimeout(300)
@@ -393,6 +405,36 @@ suspend fun complexTransaction() {
     // Sign and submit...
 }
 ```
+
+### Deploying Smart Contracts
+
+```kotlin
+import com.soneso.stellar.sdk.contract.ContractClient
+import java.io.File
+
+suspend fun deployContract() {
+    // Deploy a smart contract
+    val client = ContractClient(
+        rpcUrl = "https://soroban-testnet.stellar.org",
+        network = Network.TESTNET
+    )
+
+    // Read WASM file
+    val wasmBytes = File("path/to/contract.wasm").readBytes()
+
+    // Deploy contract with constructor arguments
+    val contractId = client.deploy(
+        wasmBytes = wasmBytes,
+        constructorArgs = mapOf("admin" to "GABC..."),
+        source = sourceKeypair.getAccountId(),
+        signer = sourceKeypair
+    )
+
+    println("Contract deployed: $contractId")
+}
+```
+
+**Authorization**: Write operations on Soroban contracts require authorization. The SDK handles auto-authorization for the invoker. For complex authorization scenarios, see the [Soroban RPC Usage Guide](soroban-rpc-usage.md#authorization).
 
 ## Connecting to Stellar Networks
 
@@ -421,45 +463,92 @@ val transactions = testServer.getTransactions()
 testServer.close()
 ```
 
-### Soroban RPC (Smart Contracts)
+### Soroban RPC Server
+
+```kotlin
+import com.soneso.stellar.sdk.rpc.SorobanServer
+
+// Connect to testnet
+val sorobanTestnet = SorobanServer("https://soroban-testnet.stellar.org")
+
+// Connect to mainnet
+val sorobanMainnet = SorobanServer("https://soroban.stellar.org")
+
+// Get network health
+val health = sorobanTestnet.getHealth()
+println("Status: ${health.status}")
+
+// Get latest ledger info
+val latestLedger = sorobanTestnet.getLatestLedger()
+println("Latest ledger: ${latestLedger.sequence}")
+
+// Get network information
+val network = sorobanTestnet.getNetwork()
+println("Network passphrase: ${network.passphrase}")
+
+// Don't forget to close when done
+sorobanTestnet.close()
+```
+
+For advanced operations like querying ledger entries or contract data, use the [Soroban RPC Usage Guide](soroban-rpc-usage.md).
+
+### Smart Contract Interaction
+
+Interact with Soroban smart contracts using the high-level ContractClient API:
 
 ```kotlin
 import com.soneso.stellar.sdk.rpc.SorobanServer
 import com.soneso.stellar.sdk.contract.ContractClient
 
-// High-level contract interaction (recommended)
+// Create contract client (automatically loads contract spec)
 val client = ContractClient.forContract(
     contractId = "CCXX...",
     rpcUrl = "https://soroban-testnet.stellar.org",
     network = Network.TESTNET
 )
 
-// Invoke contract method with native types
+// Invoke read-only function (auto-executes and returns result)
 val balance = client.invoke<Long>(
     functionName = "balance",
     arguments = mapOf("account" to "GABC..."),
     source = "GABC...",
-    signer = null,
-    parseResultXdrFn = { Scv.fromInt128(it).toLong() }
+    signer = null,  // Read-only, no signing needed
+    parseResultXdrFn = { Scval.fromInt128(it).toLong() }
 )
+println("Balance: $balance")
 
-// Alternative: Using automatic type conversion (when spec is loaded)
+// Invoke write function (requires signing and submission)
+val txHash = client.invoke<String>(
+    functionName = "transfer",
+    arguments = mapOf(
+        "from" to "GABC...",
+        "to" to "GXYZ...",
+        "amount" to 1000L
+    ),
+    source = sourceKeypair.getAccountId(),
+    signer = sourceKeypair,  // Signs and submits transaction
+    parseResultXdrFn = { it.toString() }  // Return transaction hash
+)
+println("Transfer transaction: $txHash")
+
+// Alternative: Use automatic type conversion
 val balanceXdr = client.invoke<SCValXdr>(
     functionName = "balance",
     arguments = mapOf("account" to "GABC..."),
     source = "GABC...",
     signer = null
 )
+// Convert XDR result to native type using contract spec
 val balanceNative = client.funcResToNative("balance", balanceXdr) as BigInteger
-
-// For advanced usage, see the Soroban RPC Usage Guide
 ```
 
 **Helper Methods:**
 - `funcArgsToXdrSCValues()` - Convert native arguments to XDR
-- `funcResToNative()` - Convert XDR results back to native types (requires loaded spec)
+- `funcResToNative()` - Convert XDR results back to native types (inverse of nativeToXdrSCVal)
 
-For detailed smart contract operations, deployment, and advanced patterns, see the [Soroban RPC Usage Guide](soroban-rpc-usage.md).
+#### Low-Level RPC Server
+
+For advanced use cases requiring direct RPC server access, use `SorobanServer`. See the [Soroban RPC Usage Guide](soroban-rpc-usage.md) for detailed smart contract operations, deployment patterns, and low-level API usage.
 
 ## Platform-Specific Examples
 
