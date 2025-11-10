@@ -8,6 +8,54 @@ This demo app demonstrates real-world usage of the Stellar SDK, including key ge
 
 **Note for External Developers**: This demo uses project dependencies (`api(project(":stellar-sdk"))`) to showcase advanced native Swift interop in the macOS app. Most developers should use Maven artifacts (`implementation("com.soneso.stellar:stellar-sdk:0.3.0")`) which work perfectly for Compose Multiplatform and standard KMP apps. See [docs/platforms/](../docs/platforms/) for platform-specific setup instructions.
 
+## Screenshots
+
+The demo app runs on all major platforms with a consistent celestial-themed UI:
+
+### Mobile
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/android-demo.png" height="500" alt="Android Demo"><br>
+      <b>Android</b>
+    </td>
+    <td width="100"></td>
+    <td align="center">
+      <img src="screenshots/ios-demo.png" height="500" alt="iOS Demo"><br>
+      <b>iOS</b>
+    </td>
+  </tr>
+</table>
+
+### Web
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/web-demo.png" width="600" alt="Web Demo"><br>
+      <b>Web (JavaScript)</b>
+    </td>
+  </tr>
+</table>
+
+### Desktop
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/jvm-desktop-demo.png" width="600" alt="Desktop Demo"><br>
+      <b>Desktop (JVM)</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="screenshots/macos-native-demo.png" width="600" alt="macOS Native Demo"><br>
+      <b>macOS (Native SwiftUI)</b>
+    </td>
+  </tr>
+</table>
+
 ## Architecture
 
 The demo app uses a **Compose Multiplatform** architecture with maximum code sharing:
