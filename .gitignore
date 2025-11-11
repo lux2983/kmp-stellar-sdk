@@ -123,3 +123,9 @@ compatibility/rpc/data/
 
 # Vite build cache (demo web app)
 demo/webApp/.vite/
+
+# Kotlin/JS build artifacts
+kotlin-js-store/
+
+# XCFramework build outputs (root level)
+stellar_sdk.xcframework/
