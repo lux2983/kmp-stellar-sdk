@@ -11,7 +11,7 @@ This is a Kotlin Multiplatform (KMP) project for building a Stellar SDK. The SDK
 
 ## Current State
 
-The SDK is in **alpha development** with comprehensive functionality implemented:
+The SDK is **production-ready** with comprehensive functionality implemented:
 
 ### Platform Support
 - **JVM**: Android API 24+, Server applications (Java 11+)

@@ -9,6 +9,12 @@ gradle-app.setting
 .kotlin/
 *.kotlin_module
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
 # Java/JVM
 *.class
 *.log
@@ -116,8 +122,10 @@ stellar-sdk/native-libs/libsodium-macos/
 # Backup files
 *.bak
 
-# Compatibility analysis tools and data
+# Compatibility analysis (keep local for now)
 tools/sdk-analysis/
+
+# Compatibility analysis generated data (keep source code)
 compatibility/horizon/data/
 compatibility/rpc/data/
 

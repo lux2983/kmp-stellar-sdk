@@ -1,8 +1,8 @@
 # Horizon API vs KMP Stellar SDK Compatibility Matrix
 
-**Generated:** 2025-10-23 14:58:10
+**Generated:** 2025-11-11 23:15:47
 
-**SDK Version:** unknown
+**SDK Version:** 0.3.0
 
 **Horizon Endpoints Discovered:** 52
 **Public API Endpoints (in matrix):** 50
@@ -197,8 +197,6 @@
 | Endpoint | Method | Status | SDK Method | Streaming | Notes |
 |----------|--------|--------|------------|-----------|-------|
 | `/transactions_async` | POST | ✅ | `submitTransactionAsync` |  | Full implementation with all features supported. Implemented via submitTransactionAsync() method. Parameter transactionEnvelopeXdr is mapped to tx internally |
-
-## Implementation Gaps
 
 ## Legend
 

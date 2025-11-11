@@ -697,6 +697,7 @@ class SorobanServer(
      *
      * @param transaction The transaction to simulate
      * @param resourceConfig Optional resource configuration for additional headroom
+     * @param authMode Optional authorization mode (ENFORCE, RECORD, RECORD_ALLOW_NONROOT)
      * @return Simulation results including costs, footprint, and results
      * @throws SorobanRpcException If the RPC request fails
      *
@@ -704,12 +705,14 @@ class SorobanServer(
      */
     suspend fun simulateTransaction(
         transaction: Transaction,
-        resourceConfig: SimulateTransactionRequest.ResourceConfig? = null
+        resourceConfig: SimulateTransactionRequest.ResourceConfig? = null,
+        authMode: SimulateTransactionRequest.AuthMode? = null
     ): SimulateTransactionResponse {
         val transactionXdr = transaction.toEnvelopeXdr().toXdrBase64()
         val request = SimulateTransactionRequest(
             transaction = transactionXdr,
-            resourceConfig = resourceConfig
+            resourceConfig = resourceConfig,
+            authMode = authMode
         )
         return sendRequest("simulateTransaction", request)
     }
