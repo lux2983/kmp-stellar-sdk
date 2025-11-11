@@ -135,9 +135,9 @@ Features:
 # - app.js: 8.5 KB (2.4 KB gzipped)
 # - bccfa839aa4b38489c76.wasm: 8 MB Compose resources (not compressible)
 # - skiko.wasm: 8 MB Compose rendering engine (not compressible, in dist/ only)
-# - wasm/: ~10 KB total smart contract WASM files (4 contracts)
+# - wasm/: ~8 KB total smart contract WASM files (3 contracts)
 # Total uncompressed: 36 MB (20 MB JS + 16 MB WASM + compose resources)
-# Total download: ~28 MB (2.9 MB JS gzipped + 16 MB WASM + 10 KB contracts)
+# Total download: ~28 MB (2.9 MB JS gzipped + 16 MB WASM + 8 KB contracts)
 ```
 
 **What Changed**: Webpack configuration disables minification and module concatenation (which caused the hang) while enabling code splitting. See [webpack.config.d/production-optimization.js](webpack.config.d/production-optimization.js) for the configuration.
@@ -359,7 +359,6 @@ Contains:
   - `soroban_hello_world_contract.wasm` (538 bytes)
   - `soroban_auth_contract.wasm` (910 bytes)
   - `soroban_token_contract.wasm` (7.1 KB)
-  - `soroban_atomic_swap_contract.wasm` (2 KB)
 - Source maps (optional, for debugging): `*.js.map` files
 
 **Alternative: Complete Deployment Bundle**

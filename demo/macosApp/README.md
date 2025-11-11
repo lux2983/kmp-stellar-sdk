@@ -1,6 +1,6 @@
 # Stellar SDK Demo - macOS Native App
 
-Native macOS application demonstrating the Stellar SDK with **SwiftUI** and complete integration with all 12 demo features.
+Native macOS application demonstrating the Stellar SDK with **SwiftUI** and complete integration with all 11 SDK feature demonstrations.
 
 ## Overview
 
@@ -12,7 +12,9 @@ This is a **native macOS app** built with SwiftUI (not Compose), showcasing the 
 - **Transaction Details**: View transaction operations and events
 - **Smart Contracts**: Fetch and parse Soroban contract details
 - **Contract Deployment**: Upload and deploy WASM contracts to testnet
-- **Info**: App version, GitHub repository, and feedback contact
+- **Contract Invocation**: Invoke hello world, auth, and token contracts with full authorization
+
+The app also includes an Info screen with app version, GitHub repository link, and contact information. The Info screen is not an SDK feature demonstration - it provides app metadata and support information.
 
 The app demonstrates how to integrate the Kotlin Multiplatform Stellar SDK into a pure SwiftUI macOS application.
 
@@ -191,7 +193,7 @@ In Xcode:
 
 ## Features
 
-All 12 demo features are fully implemented in SwiftUI:
+All 11 SDK feature demonstrations are fully implemented in SwiftUI:
 
 ### 1. Key Generation
 - **View**: `KeyGenerationView.swift`
@@ -278,7 +280,9 @@ All 12 demo features are fully implemented in SwiftUI:
 - Automatic type conversion for token operations
 - Uses: `ContractClient.buildInvoke()`, token interface support
 
-### 12. Info
+### Info Screen (Not an SDK Feature)
+
+The app includes an Info screen that provides app information (not an SDK feature demonstration):
 - **View**: `InfoView.swift`
 - Display app version (from demo.version in gradle.properties)
 - About the KMP Stellar SDK
@@ -409,17 +413,22 @@ To change networks, modify the SDK initialization in the Kotlin framework.
 
 1. **Build**: ⌘B
 2. **Run**: ⌘R
-3. **Test all features**: Navigate through all 12 demo feature screens
+3. **Test all features**: Navigate through all 11 SDK feature demonstration screens
 
 ### Manual Testing Checklist
 
+Test all 11 SDK feature demonstrations:
 - [ ] Key Generation: Generate keypair, copy to clipboard
 - [ ] Fund Account: Fund a testnet account
 - [ ] Account Details: Fetch and display account info
 - [ ] Trust Asset: Establish a trustline
 - [ ] Send Payment: Send XLM to another account
+- [ ] Fetch Transaction Details: View transaction operations and events
 - [ ] Contract Details: Fetch contract metadata
-- [ ] Info: View app version, GitHub link, contact email
+- [ ] Deploy Contract: Upload and deploy WASM contract
+- [ ] Invoke Hello World: Invoke hello world contract
+- [ ] Invoke Auth: Test authorization scenarios
+- [ ] Invoke Token: Interact with token contract
 
 ### Network Testing
 

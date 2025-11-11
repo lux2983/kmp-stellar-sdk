@@ -243,8 +243,6 @@ suspend fun multiSigContractCall() {
 }
 ```
 
-See [Advanced Topics](docs/advanced.md) for complete multi-signature examples and patterns.
-
 For deployment examples, authorization patterns, and advanced usage, see the [Getting Started Guide](docs/getting-started.md) and [Demo App](demo/README.md).
 
 ## Demo Application
@@ -268,17 +266,7 @@ See [demo/README.md](demo/README.md) for screenshots and platform-specific build
 ## Documentation
 
 ### SDK Documentation
-- [Getting Started](docs/getting-started.md) - Installation, setup, and first steps
-- [Platform Guides](docs/platforms/) - Platform-specific setup and requirements
-- [Architecture Guide](CLAUDE.md) - Technical implementation details
-
-### Demo App
-- [Demo App Overview](demo/README.md) - Multi-platform sample application
-- [Android Demo](demo/androidApp/README.md)
-- [iOS Demo](demo/iosApp/README.md)
-- [macOS Demo](demo/macosApp/README.md)
-- [Desktop Demo](demo/desktopApp/README.md)
-- [Web Demo](demo/webApp/README.md)
+- [Docs folder](docs/README.md) - containing getting started guide, many sdk usage examples, advanced topics, api documentation and more.
 
 ### External Resources
 - [Stellar Documentation](https://developers.stellar.org/)
@@ -293,7 +281,7 @@ This SDK uses **production-ready, audited cryptographic libraries** on all platf
 - **iOS/macOS**: libsodium (native C interop)
 - **JavaScript**: libsodium-wrappers-sumo (WebAssembly)
 
-All implementations provide constant-time operations, proper memory safety, and comprehensive input validation. No experimental or custom cryptography. See the [Platform Guides](docs/platforms/) for detailed implementation information.
+All implementations provide constant-time operations, proper memory safety, and comprehensive input validation. No experimental or custom cryptography.
 
 ## Testing
 

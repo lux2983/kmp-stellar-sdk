@@ -7,8 +7,9 @@ Welcome to the comprehensive documentation for the Stellar SDK for Kotlin Multip
 ## Documentation Structure
 
 ### Quick Start
-- **[Getting Started Guide](getting-started.md)** - Installation, setup, and your first transaction
-- **[API Reference](api-reference.md)** - Complete API documentation with examples
+- **[Quick Start Guide](quick-start.md)** - Get running in 30 minutes
+- **[Getting Started Guide](getting-started.md)** - Platform details and best practices
+- **[SDK Usage Examples](sdk-usage-examples.md)** - Complete SDK documentation with examples
 
 ### Architecture & Design
 - **[Architecture Guide](architecture.md)** - System architecture, design decisions, and security principles
@@ -19,12 +20,10 @@ Welcome to the comprehensive documentation for the Stellar SDK for Kotlin Multip
   - [macOS](platforms/macos.md)
 
 ### Development
-- **[Demo Apps Guide](sample-apps.md)** - Learn from complete example applications
-- **[Soroban RPC Usage](soroban-rpc-usage.md)** - Using Soroban smart contracts
-- **[Testing Guide](testing.md)** - Testing strategies and best practices
+- **[Demo App Guide](demo-app.md)** - Learn from complete example application
 
 ### Advanced Topics
-- **[Advanced Topics](advanced.md)** - Hardware wallets, multi-sig, performance optimization
+- **[Advanced Topics](advanced.md)** - Hardware wallets, multi-sig, performance optimization, advanced network operations
 
 ## Key Features
 
@@ -42,24 +41,24 @@ This SDK provides a complete implementation of the Stellar protocol with:
 ### By Use Case
 
 **Building Transactions**
-- [Transaction Building](api-reference.md#transaction-building)
-- [Operation Types](api-reference.md#operations)
-- [Signing Transactions](api-reference.md#signing-transactions)
+- [Transaction Building](sdk-usage-examples.md#transaction-building)
+- [Operation Types](sdk-usage-examples.md#operations)
+- [Signing Transactions](sdk-usage-examples.md#signing-transactions)
 
 **Account Management**
-- [KeyPair Generation](api-reference.md#keypair)
+- [KeyPair Generation](sdk-usage-examples.md#keypair)
 - [Account Creation](getting-started.md#creating-accounts)
 - [Multi-signature Accounts](advanced.md#multi-signature-accounts)
 
 **Smart Contracts**
-- [ContractClient](api-reference.md#contractclient)
-- [AssembledTransaction](api-reference.md#assembledtransaction)
-- [Soroban Authorization](api-reference.md#auth)
+- [ContractClient](sdk-usage-examples.md#contractclient)
+- [AssembledTransaction](sdk-usage-examples.md#assembledtransaction)
+- [Soroban Authorization](sdk-usage-examples.md#auth)
 
 **Network Communication**
-- [Horizon API](api-reference.md#horizon-server)
-- [Soroban RPC](api-reference.md#soroban-server)
-- [Server-Sent Events](api-reference.md#server-sent-events)
+- [Horizon API](sdk-usage-examples.md#horizon-server)
+- [Soroban RPC](sdk-usage-examples.md#soroban-server)
+- [Server-Sent Events](sdk-usage-examples.md#server-sent-events)
 
 ### By Platform
 
@@ -67,22 +66,22 @@ This SDK provides a complete implementation of the Stellar protocol with:
 - [Android Setup](platforms/jvm.md#android-setup)
 - [iOS Setup](platforms/ios.md)
 - [macOS Setup](platforms/macos.md)
-- [Demo Android App](sample-apps.md#android)
-- [Demo iOS App](sample-apps.md#ios)
-- [Demo macOS App](sample-apps.md#macos-native)
+- [Demo Android App](demo-app.md#android)
+- [Demo iOS App](demo-app.md#ios)
+- [Demo macOS App](demo-app.md#macos-native)
 
 **Desktop Development**
 - [JVM/Desktop Setup](platforms/jvm.md)
-- [Demo Desktop App](sample-apps.md#desktop-jvm)
+- [Demo Desktop App](demo-app.md#desktop-jvm)
 
 **Web Development**
 - [Browser Setup](platforms/javascript.md#browser-setup)
 - [Node.js Setup](platforms/javascript.md#nodejs-setup)
-- [Demo Web App](sample-apps.md#web-javascript)
+- [Demo Web App](demo-app.md#web-javascript)
 
 **Server Development**
 - [JVM Server Setup](platforms/jvm.md#server-setup)
-- [Transaction Submission](api-reference.md#submitting-transactions)
+- [Transaction Submission](sdk-usage-examples.md#submitting-transactions)
 
 ## Current Implementation Status
 
@@ -141,4 +140,4 @@ This SDK is licensed under the Apache License 2.0. See [LICENSE](../LICENSE) for
 
 ---
 
-**Navigation**: [Getting Started →](getting-started.md)
+**Navigation**: [Quick Start →](quick-start.md)

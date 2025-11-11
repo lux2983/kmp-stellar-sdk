@@ -652,4 +652,4 @@ class StellarLogger {
 
 ---
 
-**Navigation**: [← API Reference](../api-reference.md) | [JavaScript Platform →](javascript.md)
+**Navigation**: [← SDK Usage Examples](../sdk-usage-examples.md) | [JavaScript Platform →](javascript.md)

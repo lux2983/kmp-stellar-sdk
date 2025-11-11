@@ -1185,4 +1185,4 @@ xcrun stapler staple YourApp.app
 
 ---
 
-**Navigation**: [← iOS Platform](ios.md) | [Sample Apps Guide →](../sample-apps.md)
+**Navigation**: [← iOS Platform](ios.md) | [Demo App Guide →](../demo-app.md)

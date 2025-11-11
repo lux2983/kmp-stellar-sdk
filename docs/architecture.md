@@ -7,12 +7,12 @@ This document provides a comprehensive overview of the Stellar KMP SDK's archite
 - [Project Structure](#project-structure)
 - [Multiplatform Architecture](#multiplatform-architecture)
 - [Cryptographic Implementation](#cryptographic-implementation)
-- [Security Architecture](#security-architecture)
 - [Async API Design](#async-api-design)
 - [Module Organization](#module-organization)
 - [Data Flow Architecture](#data-flow-architecture)
+  - [Data Querying Architecture](#data-querying-architecture)
 - [Design Patterns](#design-patterns)
-- [Performance Considerations](#performance-considerations)
+- [Security Architecture](#security-architecture)
 
 ## Project Structure
 
@@ -34,12 +34,13 @@ kmp-stellar-sdk/
 │   │   ├── iosMain/               # iOS-specific
 │   │   └── macosMain/             # macOS-specific
 │   └── build.gradle.kts
-└── stellarSample/                 # Sample applications
-    ├── shared/                    # Shared business logic
-    ├── androidApp/                # Android UI
-    ├── iosApp/                   # iOS UI
-    ├── macosApp/                 # macOS UI
-    └── webApp/                   # Web UI
+└── demo/                          # Demo applications
+    ├── shared/                    # Compose Multiplatform UI
+    ├── androidApp/                # Android entry point
+    ├── iosApp/                   # iOS wrapper
+    ├── macosApp/                 # macOS native UI
+    ├── desktopApp/               # Desktop JVM
+    └── webApp/                   # Web with Vite
 ```
 
 ## Multiplatform Architecture
@@ -152,95 +153,6 @@ sequenceDiagram
     KeyPair-->>App: signature bytes
 ```
 
-### Key Generation Security
-
-#### JVM (BouncyCastle)
-```kotlin
-// Uses java.security.SecureRandom
-val keyParams = Ed25519PrivateKeyParameters(SecureRandom())
-```
-
-#### JavaScript (libsodium.js)
-```kotlin
-// Uses crypto.getRandomValues() or Node.js crypto
-await sodium.ready
-const privateKey = sodium.crypto_sign_keypair().privateKey
-```
-
-#### Native (iOS/macOS)
-```kotlin
-// Uses arc4random_buf() system CSPRNG
-val privateKey = ByteArray(32)
-randombytes_buf(privateKey.refTo(0), 32)
-```
-
-## Security Architecture
-
-### Defense in Depth
-
-1. **Input Validation Layer**
-   - All inputs validated before processing
-   - Length checks, format validation
-   - Type safety through Kotlin's type system
-
-2. **Cryptographic Layer**
-   - Only audited, production-ready libraries
-   - No custom crypto implementations
-   - Constant-time operations
-
-3. **Memory Management Layer**
-   - Defensive copies of sensitive data
-   - CharArray for secrets (can be zeroed)
-   - Immutable public APIs
-
-4. **Network Security Layer**
-   - HTTPS only for Horizon/RPC
-   - Certificate pinning support (platform-specific)
-   - Retry logic with exponential backoff
-
-### Threat Model and Mitigations
-
-| Threat | Mitigation |
-|--------|------------|
-| Private key exposure | CharArray usage, defensive copies, immutable KeyPair |
-| Timing attacks | Constant-time crypto operations |
-| Memory dumps | Minimize secret lifetime, zero arrays after use |
-| Network MITM | HTTPS enforcement, optional cert pinning |
-| Replay attacks | Network-specific signatures, nonces |
-| Invalid crypto params | Comprehensive input validation |
-
-### Security Boundaries
-
-**Trust Zones** (if diagram doesn't render, see text below):
-- **Untrusted**: Network I/O, User Input
-- **SDK Boundary**: Input Validation, Crypto Operations, State Management (validates all untrusted input before processing)
-- **Trusted**: Key Storage, Platform Crypto Libraries (only accessed through validated SDK operations)
-
-```mermaid
-graph LR
-    subgraph "Untrusted"
-        Network[Network I/O]
-        UserInput[User Input]
-    end
-
-    subgraph "SDK Boundary"
-        Validation[Input Validation]
-        Crypto[Crypto Operations]
-        State[State Management]
-    end
-
-    subgraph "Trusted"
-        Keys[Key Storage]
-        Platform[Platform Crypto]
-    end
-
-    UserInput --> Validation
-    Network --> Validation
-    Validation --> Crypto
-    Crypto --> Platform
-    State --> Keys
-```
-
 ## Async API Design
 
 ### Why Suspend Functions?
@@ -333,7 +245,7 @@ Smart contract interaction:
 
 #### `com.soneso.stellar.sdk.xdr`
 XDR serialization:
-- 470+ XDR type definitions
+- 424 XDR type definitions
 - Encoding/decoding logic
 - Binary serialization
 
@@ -430,6 +342,92 @@ sequenceDiagram
     AssembledTx-->>App: final result
 ```
 
+### Data Querying Architecture
+
+The SDK provides sophisticated data querying capabilities through two primary mechanisms: the Request Builder pattern for Horizon API queries and Server-Sent Events (SSE) for real-time streaming.
+
+#### Request Builder Pattern
+
+The SDK employs a fluent builder pattern for constructing type-safe queries against the Horizon API. This architectural choice provides:
+
+- **Type Safety**: Each endpoint has its own builder with appropriate filter methods
+- **Composability**: Filters can be chained to create complex queries
+- **Pagination Control**: Built-in cursor-based pagination support
+- **Query Optimization**: Automatic parameter validation before requests
+
+Architectural flow:
+```kotlin
+// Builder constructs query parameters progressively
+server.accounts()
+    .forSigner(signerKey)      // Add signer filter
+    .cursor("token")           // Set pagination cursor
+    .limit(20)                 // Set page size
+    .order(Order.DESC)         // Set result ordering
+    .execute()                 // Transform to HTTP request
+```
+
+#### Data Query Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant RequestBuilder
+    participant HorizonServer
+    participant HorizonAPI
+
+    User->>RequestBuilder: Create query
+    RequestBuilder->>RequestBuilder: Add filters
+    RequestBuilder->>HorizonServer: execute()
+    HorizonServer->>HorizonServer: Build URL params
+    HorizonServer->>HorizonAPI: HTTP GET
+    HorizonAPI-->>HorizonServer: JSON response
+    HorizonServer->>HorizonServer: Deserialize
+    HorizonServer-->>User: Typed response
+```
+
+#### SSE Streaming Architecture
+
+For real-time updates, the SDK implements Server-Sent Events streaming, which differs fundamentally from request-response queries:
+
+**Architectural Characteristics**:
+- **Long-Lived Connections**: Single HTTP connection maintained for event stream
+- **Push-Based Updates**: Server pushes events as they occur on the network
+- **Cursor Persistence**: Each event includes a cursor for resumption after disconnection
+- **Resource Efficiency**: No polling overhead, events delivered immediately
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant StreamBuilder
+    participant SSEClient
+    participant HorizonAPI
+
+    App->>StreamBuilder: stream().cursor(last)
+    StreamBuilder->>SSEClient: Open SSE connection
+    SSEClient->>HorizonAPI: GET /stream?cursor=X
+    Note over SSEClient,HorizonAPI: Long-lived connection
+
+    loop Event Stream
+        HorizonAPI-->>SSEClient: data: {event}
+        SSEClient-->>App: onNext(event)
+        SSEClient->>SSEClient: Update cursor
+    end
+
+    App->>SSEClient: close()
+    SSEClient->>HorizonAPI: Close connection
+```
+
+#### Soroban RPC Query Architecture
+
+Soroban RPC queries follow a different pattern optimized for smart contract data:
+
+- **Event Filtering**: Complex filters for contract events (topic, contract ID, time range)
+- **Direct Ledger Access**: Query specific ledger entries by key
+- **Batch Operations**: Multiple queries in single RPC call for efficiency
+- **State Proofs**: Optional inclusion of Merkle proofs for verification
+
+The architecture separates concerns between Horizon (account/transaction data) and Soroban RPC (contract state/events), allowing optimal query patterns for each data type.
+
 ## Design Patterns
 
 ### Builder Pattern
@@ -473,90 +471,38 @@ class KeyPair private constructor(
 }
 ```
 
-### Result Pattern
+## Security Architecture
 
-Used for error handling without exceptions:
+The SDK implements multiple layers of security to protect sensitive operations and data.
 
-```kotlin
-sealed class Result<T> {
-    data class Success<T>(val value: T) : Result<T>()
-    data class Error<T>(val error: Exception) : Result<T>()
-}
+### Security Principles
 
-fun parseAsset(input: String): Result<Asset> {
-    return try {
-        Result.Success(Asset.fromCanonical(input))
-    } catch (e: Exception) {
-        Result.Error(e)
-    }
-}
-```
+1. **No Custom Cryptography**: Only audited, production-ready libraries (BouncyCastle, libsodium)
+2. **Defense in Depth**: Multiple security layers from input validation to memory management
+3. **Secure by Default**: Safe defaults, explicit opt-in for potentially dangerous operations
+4. **Memory Safety**: Minimize exposure of sensitive data in memory
 
-## Performance Considerations
+### Key Management Security
 
-### Platform-Specific Optimizations
+- **Private keys** are stored as `ByteArray?` and never logged or serialized unintentionally
+- **CharArray** used for secret seeds (can be zeroed after use)
+- **Defensive copies** returned for all key material
+- **Immutable KeyPair** prevents accidental modification
 
-#### JVM
-- Direct ByteBuffer usage for large data
-- Efficient array operations
-- JIT compilation benefits
+### Cryptographic Security
 
-#### JavaScript
-- WebAssembly for crypto (near-native speed)
-- Efficient typed arrays
-- Worker support for heavy operations
+All platforms use battle-tested libraries with:
+- **Constant-time operations** to prevent timing attacks
+- **Secure random number generation** from system CSPRNG
+- **Validated parameters** before any crypto operation
+- **No experimental algorithms** - only Ed25519 as specified by Stellar
 
-#### Native (iOS/macOS)
-- Direct C interop (zero overhead)
-- Memory-mapped I/O for large files
-- Objective-C runtime optimizations
+### Network Security
 
-### Caching Strategies
-
-```kotlin
-class HorizonServer {
-    private val accountCache = LRUCache<String, AccountResponse>(100)
-
-    suspend fun loadAccount(accountId: String): AccountResponse {
-        return accountCache.getOrPut(accountId) {
-            fetchAccountFromNetwork(accountId)
-        }
-    }
-}
-```
-
-### Lazy Initialization
-
-```kotlin
-class Transaction {
-    private val _hash: Lazy<ByteArray> = lazy {
-        // Expensive hash calculation
-        sha256(getEnvelopeBytes())
-    }
-
-    val hash: ByteArray
-        get() = _hash.value
-}
-```
-
-### Resource Management
-
-```kotlin
-class SorobanServer : Closeable {
-    private val httpClient = HttpClient()
-
-    override fun close() {
-        httpClient.close()
-        // Clean up resources
-    }
-}
-
-// Usage with use block
-SorobanServer(url).use { server ->
-    // Server is automatically closed
-    server.simulateTransaction(tx)
-}
-```
+- **HTTPS only** for all Horizon and Soroban RPC connections
+- **Certificate validation** by platform networking libraries
+- **Request signing** for sensitive operations
+- **Automatic retries** with exponential backoff to handle transient failures
 
 ## Architecture Decision Records (ADRs)
 
@@ -604,4 +550,4 @@ SorobanServer(url).use { server ->
 
 ---
 
-**Navigation**: [← Getting Started](getting-started.md) | [API Reference →](api-reference.md)
+**Navigation**: [← Demo App](demo-app.md) | [SDK Usage Examples →](sdk-usage-examples.md)

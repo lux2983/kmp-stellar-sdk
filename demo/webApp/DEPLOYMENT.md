@@ -21,7 +21,6 @@ This creates an optimized build in `demo/webApp/dist/` containing:
   - `soroban_hello_world_contract.wasm`
   - `soroban_auth_contract.wasm`
   - `soroban_token_contract.wasm`
-  - `soroban_atomic_swap_contract.wasm`
 - Source maps (.js.map files)
 
 ## Deployment Requirements
@@ -238,7 +237,7 @@ Production bundle breakdown:
 
 **WebAssembly Files** (not compressible):
 - Skiko WASM: 8 MB (Compose rendering engine)
-- Contract WASMs: ~11 KB total (Stellar smart contracts)
+- Contract WASMs: ~8 KB total (3 Stellar smart contracts: Hello World, Auth, Token)
 - **WASM Total**: 8 MB (always uncompressed)
 
 **Total Bundle**:

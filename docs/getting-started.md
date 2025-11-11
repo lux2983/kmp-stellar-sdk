@@ -1,6 +1,8 @@
 # Getting Started Guide
 
-This guide will help you get up and running with the Stellar KMP SDK on your platform of choice.
+**Looking for a quick start? See [Quick Start](quick-start.md) to get running in 30 minutes.**
+
+This comprehensive guide covers platform-specific details, best practices, and advanced usage patterns for the Stellar KMP SDK.
 
 ## Table of Contents
 
@@ -9,10 +11,13 @@ This guide will help you get up and running with the Stellar KMP SDK on your pla
   - [Platform-Specific Requirements](#platform-specific-requirements)
 - [Basic Concepts](#basic-concepts)
 - [Demo Applications](#demo-applications)
-- [Your First KeyPair](#your-first-keypair)
-- [Creating Accounts](#creating-accounts)
-- [Building Your First Transaction](#building-your-first-transaction)
+- [Advanced KeyPair Usage](#advanced-keypair-usage)
+- [Account Management](#account-management)
+- [Transaction Building](#transaction-building)
 - [Connecting to Stellar Networks](#connecting-to-stellar-networks)
+- [Platform-Specific Examples](#platform-specific-examples)
+- [Error Handling](#error-handling)
+- [Best Practices](#best-practices)
 - [Next Steps](#next-steps)
 
 ## Installation
@@ -194,30 +199,9 @@ The SDK includes comprehensive demo applications showcasing real-world usage pat
 - **Desktop**: JVM Compose application
 - **Web**: Kotlin/JS browser application
 
-See the [Demo Apps Guide](sample-apps.md) for setup instructions and detailed walkthroughs.
+See the [Demo App Guide](demo-app.md) for setup instructions and detailed walkthroughs.
 
-## Your First KeyPair
-
-### Generate a Random KeyPair
-
-```kotlin
-import com.soneso.stellar.sdk.KeyPair
-import kotlinx.coroutines.runBlocking
-
-fun main() = runBlocking {
-    // Generate a random keypair
-    val keypair = KeyPair.random()
-
-    println("Account ID: ${keypair.getAccountId()}")
-    println("Secret Seed: ${keypair.getSecretSeed()?.concatToString()}")
-    println("Can Sign: ${keypair.canSign()}")
-
-    // Example output:
-    // Account ID: GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D
-    // Secret Seed: SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE
-    // Can Sign: true
-}
-```
+## Advanced KeyPair Usage
 
 ### Import Existing KeyPair
 
@@ -255,37 +239,9 @@ suspend fun secureHandling() {
 }
 ```
 
-## Creating Accounts
+## Account Management
 
-Stellar accounts must be created with a minimum balance (currently 1 XLM on mainnet).
-
-### Testnet: Using Friendbot
-
-```kotlin
-import com.soneso.stellar.sdk.FriendBot
-import com.soneso.stellar.sdk.Network
-
-suspend fun createTestAccount() {
-    // Generate a new keypair
-    val keypair = KeyPair.random()
-    println("New account: ${keypair.getAccountId()}")
-
-    // Fund it on testnet (10,000 test XLM)
-    val success = FriendBot.fundAccount(
-        accountId = keypair.getAccountId(),
-        network = Network.TESTNET
-    )
-
-    if (success) {
-        println("Account funded successfully!")
-        // Account is now active on testnet
-    } else {
-        println("Failed to fund account")
-    }
-}
-```
-
-### Mainnet: Create Account Operation
+### Account Creation on Mainnet
 
 ```kotlin
 import com.soneso.stellar.sdk.*
@@ -321,54 +277,7 @@ suspend fun createMainnetAccount(
 }
 ```
 
-## Building Your First Transaction
-
-### Simple Payment
-
-```kotlin
-import com.soneso.stellar.sdk.*
-import com.soneso.stellar.sdk.horizon.HorizonServer
-
-suspend fun sendPayment() {
-    val server = HorizonServer("https://horizon-testnet.stellar.org")
-
-    // Your account (sender)
-    val sourceKeypair = KeyPair.fromSecretSeed("SXXX...")
-
-    // Load current account state
-    val sourceAccount = server.loadAccount(sourceKeypair.getAccountId())
-
-    // Build payment transaction
-    val transaction = TransactionBuilder(sourceAccount, Network.TESTNET)
-        .addOperation(
-            PaymentOperation(
-                destination = "GYYY...",  // Recipient
-                amount = "10",             // Amount
-                asset = Asset.NATIVE       // XLM
-            )
-        )
-        .addMemo(Memo.text("Pizza payment"))
-        .setBaseFee(100)
-        .setTimeout(180)
-        .build()
-
-    // Sign the transaction
-    transaction.sign(sourceKeypair)
-
-    // Submit to network
-    val response = server.submitTransaction(transaction)
-
-    when {
-        response.isSuccess -> {
-            println("Payment successful!")
-            println("Transaction: ${response.hash}")
-        }
-        else -> {
-            println("Payment failed: ${response.extras?.resultCodes}")
-        }
-    }
-}
-```
+## Transaction Building
 
 ### Multiple Operations
 
@@ -434,7 +343,7 @@ suspend fun deployContract() {
 }
 ```
 
-**Authorization**: Write operations on Soroban contracts require authorization. The SDK handles auto-authorization for the invoker. For complex authorization scenarios, see the [Soroban RPC Usage Guide](soroban-rpc-usage.md#authorization).
+**Authorization**: Write operations on Soroban contracts require authorization. The SDK handles auto-authorization for the invoker. For complex authorization scenarios, see the [Advanced Topics Guide](advanced.md#custom-authorization-with-authsigner).
 
 ## Connecting to Stellar Networks
 
@@ -490,7 +399,7 @@ println("Network passphrase: ${network.passphrase}")
 sorobanTestnet.close()
 ```
 
-For advanced operations like querying ledger entries or contract data, use the [Soroban RPC Usage Guide](soroban-rpc-usage.md).
+For advanced operations like querying ledger entries, contract data, or custom event filtering, see the [Advanced Topics Guide](advanced.md#advanced-network-operations).
 
 ### Smart Contract Interaction
 
@@ -548,7 +457,7 @@ val balanceNative = client.funcResToNative("balance", balanceXdr) as BigInteger
 
 #### Low-Level RPC Server
 
-For advanced use cases requiring direct RPC server access, use `SorobanServer`. See the [Soroban RPC Usage Guide](soroban-rpc-usage.md) for detailed smart contract operations, deployment patterns, and low-level API usage.
+For advanced use cases requiring direct RPC server access, custom HTTP clients, or advanced polling strategies, see the [Advanced Topics Guide](advanced.md#advanced-network-operations).
 
 ## Platform-Specific Examples
 
@@ -731,12 +640,12 @@ suspend fun robustExample() {
 
 Now that you understand the basics:
 
+- **[Demo App](demo-app.md)** - See complete example application
 - **[Architecture Guide](architecture.md)** - Learn about the SDK's design and security
-- **[API Reference](api-reference.md)** - Explore all available APIs
-- **[Sample Apps](sample-apps.md)** - See complete example applications
+- **[SDK Usage Examples](sdk-usage-examples.md)** - Explore all available APIs
 - **[Platform Guides](platforms/)** - Platform-specific details and optimizations
 - **[Advanced Topics](advanced.md)** - Multi-sig, hardware wallets, and more
 
 ---
 
-**Navigation**: [← Documentation Home](README.md) | [Architecture Guide →](architecture.md)
+**Navigation**: [← Quick Start](quick-start.md) | [Demo App →](demo-app.md)
