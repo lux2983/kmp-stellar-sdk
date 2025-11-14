@@ -2,8 +2,10 @@ name: Deploy Documentation to GitHub Pages
 
 on:
   push:
+    branches:
+      - main  # Deploy on every push to main
     tags:
-      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v0.3.0
+      - 'v*.*.*'  # Also deploy on version tags
   workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
 
 permissions:
