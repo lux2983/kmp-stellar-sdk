@@ -29,6 +29,7 @@ The SDK is **production-ready** with comprehensive functionality implemented:
 - **Soroban RPC**: Contract calls, simulation, state restoration, polling
 - **High-Level API**: ContractClient, AssembledTransaction with full lifecycle
 - **XDR**: Complete XDR type system and serialization
+- **SEP Support**: SEP-1 (Stellar TOML) for domain discovery and service configuration
 
 ### Demo Application
 - **Platforms**: Android, iOS, macOS, Desktop (JVM), Web
@@ -88,6 +89,24 @@ The SDK uses **production-ready, audited cryptographic libraries** - no custom/e
    - Proper cleanup in native code
 4. **Input Validation**: All inputs validated before crypto operations
 5. **Error Handling**: Comprehensive validation with clear error messages
+
+## Documentation Standards
+
+All SDK documentation must follow the guidelines defined in `docs/documentation-strategy.md`. Key requirements:
+
+- **Target Audience**: SDK users (developers integrating the SDK), not contributors
+- **SDK Code Only**: No app architecture code, no internal implementation details, no hypothetical code
+- **Examples Over Theory**: Complete, runnable code examples with all variables defined
+- **Accuracy**: Use actual SDK classes, methods, and properties
+- **Conciseness**: Professional tone, no filler words, no unnecessary superlatives
+- **Platform Compatibility**: Examples work across all KMP targets
+- **One Framework Per Platform**: Avoid decision paralysis with multiple options
+
+Before adding or modifying documentation:
+1. Read `docs/documentation-strategy.md` completely
+2. Verify all code examples against SDK source
+3. Test code examples compile and run
+4. Review against quality checklist in documentation-strategy.md
 
 ### Async API Design
 

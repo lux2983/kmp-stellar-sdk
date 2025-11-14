@@ -20,6 +20,9 @@ Welcome to the documentation for the Stellar SDK for Kotlin Multiplatform. This 
 - **[Advanced Topics](advanced.md)** - Complex patterns and optimizations
 - **[Testing Guide](testing.md)** - SDK testing (for contributors)
 
+### Protocols & Standards
+- **[SEP Implementations](sep-implementations.md)** - Stellar Ecosystem Proposal support
+
 ## Key Features
 
 This SDK provides an implementation of the Stellar protocol with:
@@ -49,6 +52,10 @@ This SDK provides an implementation of the Stellar protocol with:
 - Order Books, Path Payments
 - Fee Statistics, Health Monitoring
 - Server-Sent Events (SSE) streaming
+
+### SEP Support
+- SEP-1 (Stellar TOML) - Domain discovery and service configuration
+- More SEP implementations coming soon
 
 ### Soroban RPC API
 - Transaction simulation and resource estimation
