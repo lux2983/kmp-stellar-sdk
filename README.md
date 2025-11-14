@@ -2,7 +2,7 @@
 
 A comprehensive Kotlin Multiplatform SDK for building applications on the Stellar Network. Write your Stellar integration once in Kotlin and deploy it across JVM (Android, Server), iOS, macOS, and Web (Browser/Node.js) platforms.
 
-**Version:** 0.3.0
+**Version:** 0.4.0
 
 ## Platform Support
 
@@ -67,7 +67,7 @@ Add the SDK as a Maven dependency (recommended for most projects):
 ```kotlin
 // In your module's build.gradle.kts
 dependencies {
-    implementation("com.soneso.stellar:stellar-sdk:0.3.0")
+    implementation("com.soneso.stellar:stellar-sdk:0.4.0")
 }
 ```
 

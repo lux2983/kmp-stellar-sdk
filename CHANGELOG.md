@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-11-14
+
+### Added
+- **SEP-1 (Stellar TOML)**: Complete implementation with 71 fields across 5 data classes (GeneralInformation, Documentation, PointOfContact, Currency, Validator)
+  - `StellarToml.fromDomain()` - Fetch stellar.toml from domains
+  - `StellarToml.parse()` - Parse stellar.toml from string
+  - `StellarToml.currencyFromUrl()` - Load external currency TOML files
+  - Custom TOML parser with error correction
+  - 33 tests including integration tests with real-world stellar.toml files (stellar.org, testanchor.stellar.org, circle.com, stellar.moneygram.com)
+  - Documentation in `docs/sep-implementations.md` with 7 usage examples
+- **Infrastructure**: GitHub Pages deployment with automated Dokka API documentation generation
+
+### Changed
+- **Demo App**: Performance improvements with memoized form validation and smart auto-scroll (v1.3.0)
+- **Documentation**: Major accuracy improvements across all platform guides and getting started materials
+  - Fixed SDK class/property names and removed hypothetical code examples
+  - Consolidated duplicate content and improved navigation structure
+  - Added documentation strategy guide defining core principles and guidelines
+
+### Fixed
+- **GitHub Pages**: Fixed landing page redirect and Dokka V2 workflow configuration
+- **Build**: Resolved Gradle wrapper jar tracking and gitignore rule ordering issues
+
+### Documentation
+- Complete documentation overhaul with enhanced accuracy and organization
+- Added `docs/documentation-strategy.md` with core principles and quality guidelines
+- Enhanced compatibility reports with conditional gaps section
+- Updated demo app documentation with screenshots for all platforms
+
+### Infrastructure
+- Automated API documentation deployment via GitHub Pages
+- Removed build artifacts from repository and updated gitignore rules
+
 ## [0.3.0] - 2025-11-08
 
 ### Added
