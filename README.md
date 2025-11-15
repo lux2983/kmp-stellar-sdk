@@ -22,6 +22,7 @@ A comprehensive Kotlin Multiplatform SDK for building applications on the Stella
 - [Horizon API Compatibility](compatibility/horizon/HORIZON_COMPATIBILITY_MATRIX.md) - Supported Horizon endpoints
 - [Soroban RPC Compatibility](compatibility/rpc/RPC_COMPATIBILITY_MATRIX.md) - Supported Soroban RPC methods
 - [SEP Implementations](docs/sep-implementations.md) - Stellar Ecosystem Proposals support
+  - [SEP-0001 Compatibility Matrix](compatibility/sep/SEP-0001_COMPATIBILITY_MATRIX.md) - stellar.toml implementation coverage
 
 ## What Is This?
 

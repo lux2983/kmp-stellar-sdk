@@ -1,6 +1,6 @@
 # SEP Implementations
 
-The SDK implements several Stellar Ecosystem Proposals (SEPs) for interoperability with the Stellar ecosystem.
+The SDK provides support for Stellar Ecosystem Proposals (SEPs) to enable interoperability with the Stellar ecosystem.
 
 ## What are SEPs?
 
@@ -9,6 +9,8 @@ Stellar Ecosystem Proposals (SEPs) are standards that define how services, appli
 ## Implemented SEPs
 
 ### SEP-1: Stellar TOML
+
+**[SEP-0001 Compatibility Matrix](../compatibility/sep/SEP-0001_COMPATIBILITY_MATRIX.md)** - Full implementation coverage details
 
 Stellar TOML allows organizations to publish information about their Stellar integration at `.well-known/stellar.toml`. Use this to discover service endpoints, verify accounts, and find supported currencies.
 
