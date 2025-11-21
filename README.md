@@ -1,8 +1,11 @@
 # Stellar SDK for Kotlin Multiplatform
 
-A comprehensive Kotlin Multiplatform SDK for building applications on the Stellar Network. Write your Stellar integration once in Kotlin and deploy it across JVM (Android, Server), iOS, macOS, and Web (Browser/Node.js) platforms.
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/Soneso/kmp-stellar-sdk/releases)
+[![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blueviolet?logo=kotlin)](https://kotlinlang.org/docs/multiplatform.html)
+[![Maven Central](https://img.shields.io/maven-central/v/com.soneso.stellar/stellar-sdk)](https://search.maven.org/artifact/com.soneso.stellar/stellar-sdk)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Soneso/kmp-stellar-sdk)
 
-**Version:** 0.4.0
+A comprehensive Kotlin Multiplatform SDK for building applications on the Stellar Network. Write your Stellar integration once in Kotlin and deploy it across JVM (Android, Server), iOS, macOS, and Web (Browser/Node.js) platforms.
 
 ## Platform Support
 
