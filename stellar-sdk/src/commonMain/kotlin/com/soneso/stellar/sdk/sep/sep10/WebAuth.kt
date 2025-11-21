@@ -118,10 +118,6 @@ import kotlin.time.ExperimentalTime
  * }
  * ```
  *
- * @param transactionXdr The base64-encoded transaction envelope XDR to sign
- * @return Base64-encoded signed transaction envelope XDR with one or more client domain signatures added
- * @throws Exception If signing fails (network error, HSM unavailable, permission denied, etc.)
- *
  * @see <a href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md">SEP-10 Specification</a>
  */
 fun interface ClientDomainSigningDelegate {

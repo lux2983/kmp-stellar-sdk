@@ -120,28 +120,28 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
-                implementation("io.ktor:ktor-client-core:2.3.8")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.8")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
+                implementation("io.ktor:ktor-client-core:3.3.2")
+                implementation("io.ktor:ktor-client-content-negotiation:3.3.2")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.2")
                 // BigInteger support for multiplatform
-                implementation("com.ionspin.kotlin:bignum:0.3.9")
+                implementation("com.ionspin.kotlin:bignum:0.3.10")
             }
         }
 
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
-                implementation("io.ktor:ktor-client-mock:2.3.8")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+                implementation("io.ktor:ktor-client-mock:3.3.2")
             }
         }
 
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-cio:2.3.8")
+                implementation("io.ktor:ktor-client-cio:3.3.2")
                 implementation("org.bouncycastle:bcprov-jdk18on:1.78")
                 implementation("commons-codec:commons-codec:1.16.1")
             }
@@ -158,7 +158,7 @@ kotlin {
 
         val jsMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-client-js:2.3.8")
+                implementation("io.ktor:ktor-client-js:3.3.2")
                 // Use libsodium-wrappers-sumo instead of standard build
                 // The sumo build includes all functions including crypto_hash_sha256
                 // which is needed for SHA-256 hashing (used in contract deployment)
@@ -187,7 +187,7 @@ kotlin {
         val iosMain by creating {
             dependsOn(nativeMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:2.3.8")
+                implementation("io.ktor:ktor-client-darwin:3.3.2")
             }
         }
 
@@ -208,7 +208,7 @@ kotlin {
         val macosMain by creating {
             dependsOn(nativeMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:2.3.8")
+                implementation("io.ktor:ktor-client-darwin:3.3.2")
             }
         }
 
@@ -302,7 +302,7 @@ signing {
     }
 }
 
-// Fix Gradle 9.0 task dependency validation
+// Fix Gradle 9.0.0 task dependency validation
 // All signing tasks share the javadocJar, so they must run sequentially
 afterEvaluate {
     val signTasks = tasks.matching { it.name.startsWith("sign") && it.name.endsWith("Publication") }

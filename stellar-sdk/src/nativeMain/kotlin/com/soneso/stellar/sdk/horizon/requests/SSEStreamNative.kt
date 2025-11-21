@@ -43,9 +43,9 @@ internal actual suspend fun <T : Response> sseRequest(
                 }
             }
             timeout {
-                requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                requestTimeoutMillis = null  // Infinite timeout for SSE streams
                 connectTimeoutMillis = 30_000
-                socketTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                socketTimeoutMillis = null  // Infinite timeout for SSE streams
             }
         }.execute { response ->
             val statusCode = response.status.value

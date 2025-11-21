@@ -122,14 +122,14 @@ kotlin {
                 // (e.g., KeyPair.random(), FriendBot.fundTestnetAccount())
                 // Note: Also provided transitively by stellar-sdk, but explicitly
                 // declared here since it's used directly in UI layer
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
             }
         }
 
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
             }
         }
 
