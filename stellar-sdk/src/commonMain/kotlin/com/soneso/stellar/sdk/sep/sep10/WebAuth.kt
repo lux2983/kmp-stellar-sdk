@@ -23,8 +23,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.time.ExperimentalTime
 
 /**
@@ -43,19 +41,30 @@ import kotlin.time.ExperimentalTime
  * - Organizations requiring hardware-backed key security
  * - Multi-signature setups with distributed key management
  *
+ * Multi-Signature Support:
+ * - Client domain accounts can have multiple signers with threshold requirements
+ * - The delegate can add multiple signatures to meet the account's signing threshold
+ * - Common for enterprise accounts where master key is disabled (weight = 0)
+ * - Supports regulatory compliance requiring multi-custody signatures
+ *
  * Security Considerations:
  * - The delegate receives the full transaction XDR (not just a hash) for transparency
  * - External service can verify transaction contents before signing
- * - Signature includes hint (last 4 bytes of public key) for key identification
+ * - Returned transaction must not be modified (only signatures added)
  * - Network passphrase is embedded in transaction hash to prevent replay attacks
  * - Only use with trusted signing services that validate transaction safety
  *
  * Example - HSM integration:
  * ```kotlin
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
- *     // Send to HSM for signing
- *     val response = hsmClient.signTransaction(transactionXdr)
- *     response.decoratedSignatureXdr
+ *     // Parse transaction
+ *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
+ *
+ *     // Sign with HSM
+ *     tx.sign(hsmKeyPair)
+ *
+ *     // Return signed transaction
+ *     tx.toEnvelopeXdrBase64()
  * }
  *
  * val token = webAuth.jwtToken(
@@ -66,51 +75,69 @@ import kotlin.time.ExperimentalTime
  * )
  * ```
  *
- * Example - AWS KMS integration:
+ * Example - Multi-signature threshold account:
  * ```kotlin
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
- *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network)
- *     val txHash = tx.hash()
+ *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
  *
- *     // Sign with AWS KMS
- *     val kmsResponse = kmsClient.sign(SignRequest.builder()
- *         .keyId(keyId)
- *         .message(SdkBytes.fromByteArray(txHash))
- *         .signingAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256)
- *         .build())
+ *     // Add multiple signatures to meet threshold
+ *     tx.sign(signer1KeyPair)
+ *     tx.sign(signer2KeyPair)
  *
- *     // Build decorated signature
- *     val publicKey = getPublicKeyFromKMS(keyId)
- *     val hint = publicKey.takeLast(4).toByteArray()
- *     val signature = kmsResponse.signature().asByteArray()
+ *     tx.toEnvelopeXdrBase64()
+ * }
+ * ```
  *
- *     val decoratedSig = DecoratedSignature(hint, signature)
- *     val writer = XdrWriter()
- *     decoratedSig.toXdr().encode(writer)
- *     Base64.encode(writer.toByteArray())
+ * Example - Remote signing service:
+ * ```kotlin
+ * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
+ *     // Send to remote signing service
+ *     val response = httpClient.post("https://signer.example.com/sign") {
+ *         setBody(SigningRequest(transactionXdr, network.networkPassphrase))
+ *     }
+ *
+ *     // Return signed transaction from service
+ *     response.body<SigningResponse>().transaction
  * }
  * ```
  *
  * Example - Mobile Secure Enclave (iOS):
  * ```kotlin
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
+ *     // Parse transaction
+ *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
+ *
  *     // Sign using iOS Keychain with Secure Enclave
- *     secureEnclaveManager.signTransaction(transactionXdr)
+ *     val signature = secureEnclaveManager.sign(tx.hash())
+ *
+ *     // Add signature to transaction
+ *     tx.signatures.add(DecoratedSignature.fromSignature(signature))
+ *
+ *     // Return signed transaction
+ *     tx.toEnvelopeXdrBase64()
  * }
  * ```
  *
  * @param transactionXdr The base64-encoded transaction envelope XDR to sign
- * @return The decorated signature in base64-encoded XDR format
+ * @return Base64-encoded signed transaction envelope XDR with one or more client domain signatures added
  * @throws Exception If signing fails (network error, HSM unavailable, permission denied, etc.)
  *
  * @see <a href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md">SEP-10 Specification</a>
  */
 fun interface ClientDomainSigningDelegate {
     /**
-     * Signs a transaction using an external signing service.
+     * Signs a transaction with the client domain signing key(s).
      *
-     * @param transactionXdr The base64-encoded transaction envelope XDR
-     * @return Base64-encoded DecoratedSignature XDR
+     * This delegate is called when client domain verification is required but the
+     * client domain signing key is not directly available (e.g., managed by HSM,
+     * custody service, or remote signing service).
+     *
+     * For multi-signature threshold accounts, the delegate should add all required
+     * signatures to meet the account's signing threshold.
+     *
+     * @param transactionXdr Base64-encoded transaction envelope XDR to sign
+     * @return Base64-encoded signed transaction envelope XDR with one or more
+     *         client domain signatures added
      */
     suspend fun signTransaction(transactionXdr: String): String
 }
@@ -222,8 +249,10 @@ fun interface ClientDomainSigningDelegate {
  * ```kotlin
  * // When client domain key is in HSM or custody service
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
- *     // Delegate to HSM or custody service
- *     hsmService.signTransaction(transactionXdr)
+ *     // Parse and sign transaction
+ *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
+ *     tx.sign(hsmKeyPair)
+ *     tx.toEnvelopeXdrBase64()
  * }
  *
  * val authToken = webAuth.jwtToken(
@@ -609,7 +638,7 @@ class WebAuth(
      * ```
      *
      * Security note: Always validate the returned challenge with [validateChallenge]
-     * before signing it. Never sign an unvalidated challenge.
+     * before signing it. Never sign an unvalidiated challenge.
      *
      * @param clientAccountId Stellar account ID to authenticate (G... or M... address)
      * @param memo Optional ID memo for sub-account identification
@@ -817,21 +846,28 @@ class WebAuth(
      * @param expectedMemo Optional expected memo value (must match transaction memo if provided)
      * @throws com.soneso.stellar.sdk.sep.sep10.exceptions.ChallengeValidationException If any validation check fails
      */
-    @OptIn(ExperimentalEncodingApi::class)
     suspend fun validateChallenge(
         challengeXdr: String,
         clientAccountId: String,
         clientDomainAccountId: String? = null,
         expectedMemo: Long? = null
     ) {
-        // Parse the envelope XDR
-        val envelopeXdr = try {
-            val bytes = Base64.decode(challengeXdr)
-            val reader = XdrReader(bytes)
-            TransactionEnvelopeXdr.decode(reader)
+        // Parse the envelope XDR using SDK method (no @OptIn needed)
+        val transaction = try {
+            AbstractTransaction.fromEnvelopeXdr(challengeXdr, network)
         } catch (e: Exception) {
             throw GenericChallengeValidationException("Invalid transaction XDR: ${e.message}")
         }
+
+        // Must be standard Transaction (not FeeBumpTransaction)
+        if (transaction !is Transaction) {
+            throw GenericChallengeValidationException(
+                "Challenge must be a standard Transaction, not FeeBumpTransaction"
+            )
+        }
+
+        // Get envelope for validation
+        val envelopeXdr = transaction.toEnvelopeXdr()
 
         // Check #1: Transaction type must be ENVELOPE_TYPE_TX
         if (envelopeXdr !is TransactionEnvelopeXdr.V1) {
@@ -841,15 +877,15 @@ class WebAuth(
         }
 
         val envelope = envelopeXdr.value
-        val transaction = envelope.tx
+        val tx = envelope.tx
 
         // Check #2: Sequence number must be exactly 0
-        if (transaction.seqNum.value.value != 0L) {
-            throw InvalidSequenceNumberException(transaction.seqNum.value.value)
+        if (tx.seqNum.value.value != 0L) {
+            throw InvalidSequenceNumberException(tx.seqNum.value.value)
         }
 
         // Extract memo if present
-        val memo = transaction.memo
+        val memo = tx.memo
         val memoId = when (memo) {
             is MemoXdr.Id -> memo.value.value.toLong()
             else -> null
@@ -878,10 +914,10 @@ class WebAuth(
         }
 
         // Validate operations (checks #6-10)
-        validateOperations(transaction.operations, clientAccountId, clientDomainAccountId)
+        validateOperations(tx.operations, clientAccountId, clientDomainAccountId)
 
         // Check #11: Time bounds validation
-        validateTimeBounds(transaction.cond)
+        validateTimeBounds(tx.cond)
 
         // Check #12: Signature count must be exactly 1
         val signatures = envelope.signatures
@@ -890,7 +926,7 @@ class WebAuth(
         }
 
         // Check #13: Server signature must be valid
-        validateServerSignature(challengeXdr, signatures[0])
+        validateServerSignature(transaction, signatures[0])
     }
 
     /**
@@ -1019,16 +1055,9 @@ class WebAuth(
      * - Server signature must be valid
      */
     private suspend fun validateServerSignature(
-        challengeXdr: String,
+        transaction: AbstractTransaction,
         signature: DecoratedSignatureXdr
     ) {
-        // Parse transaction to get hash
-        val transaction = try {
-            AbstractTransaction.fromEnvelopeXdr(challengeXdr, network)
-        } catch (e: Exception) {
-            throw InvalidSignatureException(serverSigningKey)
-        }
-
         // Get transaction hash
         val transactionHash = transaction.hash()
 
@@ -1064,10 +1093,14 @@ class WebAuth(
      * 1. Parse challenge XDR to transaction envelope
      * 2. Compute transaction hash for the network
      * 3. Preserve existing signatures (server's signature)
-     * 4. Sign transaction hash with each provided keypair
-     * 5. Optionally sign with client domain keypair or delegate
+     * 4. Optionally sign with client domain keypair or delegate FIRST (if provided)
+     * 5. Then sign transaction hash with each provided user keypair
      * 6. Append new signatures to the envelope
      * 7. Return updated envelope as base64 XDR
+     *
+     * Signing order: Client domain signing happens BEFORE user keypair signing.
+     * This ensures user signatures are not exposed to the delegate and follows
+     * the principle of least privilege (domain verification before user signing).
      *
      * Example - Single signature:
      * ```kotlin
@@ -1114,7 +1147,6 @@ class WebAuth(
      * @throws IllegalArgumentException If parsing fails or transaction is invalid, or both signing methods provided
      * @throws GenericChallengeValidationException If transaction type is invalid
      */
-    @OptIn(ExperimentalEncodingApi::class)
     suspend fun signTransaction(
         challengeXdr: String,
         signers: List<KeyPair>,
@@ -1129,7 +1161,7 @@ class WebAuth(
             )
         }
 
-        // Parse transaction from base64 XDR
+        // Parse transaction from base64 XDR (no @OptIn needed - AbstractTransaction handles it)
         val transaction = try {
             AbstractTransaction.fromEnvelopeXdr(challengeXdr, network)
         } catch (e: Exception) {
@@ -1154,42 +1186,63 @@ class WebAuth(
             )
         }
 
-        // Calculate transaction hash for signing
-        val txHash = transaction.hash()
-
-        // Sign with each provided keypair and add signatures
-        // Note: transaction.signatures already contains the server signature
-        // We append client signatures to preserve the server signature
-        for (signer in signers) {
-            val decoratedSignature = signer.signDecorated(txHash)
-            transaction.signatures.add(decoratedSignature)
-        }
-
-        // Add client domain signature if provided
+        // Add client domain signature FIRST if provided (before user signatures)
+        // This ensures user signatures are not exposed to the delegate
         if (clientDomainKeyPair != null) {
-            val clientDomainSignature = clientDomainKeyPair.signDecorated(txHash)
-            transaction.signatures.add(clientDomainSignature)
+            transaction.sign(clientDomainKeyPair)
         } else if (clientDomainSigningDelegate != null) {
             // Delegate signing to external service
-            val transactionXdr = transaction.toEnvelopeXdrBase64()
-            val decoratedSignatureXdr = clientDomainSigningDelegate.signTransaction(transactionXdr)
+            val currentTxXdr = transaction.toEnvelopeXdrBase64()
 
-            // Parse and add the decorated signature
-            try {
-                val sigBytes = Base64.decode(decoratedSignatureXdr)
-                val reader = XdrReader(sigBytes)
-                val decoratedSigXdr = DecoratedSignatureXdr.decode(reader)
-                val decoratedSignature = DecoratedSignature.fromXdr(decoratedSigXdr)
-                transaction.signatures.add(decoratedSignature)
+            // Capture existing signatures BEFORE delegate call
+            val signaturesBefore = transaction.signatures.map { sig ->
+                sig.signature to sig.hint
+            }.toSet()
+
+            // Call delegate to get signed transaction
+            val signedTxXdr = clientDomainSigningDelegate.signTransaction(currentTxXdr)
+
+            // Parse signed transaction returned by delegate
+            val signedTx = try {
+                AbstractTransaction.fromEnvelopeXdr(signedTxXdr, network) as Transaction
             } catch (e: Exception) {
                 throw IllegalArgumentException(
-                    "Failed to parse decorated signature from delegate: ${e.message}",
+                    "Failed to parse signed transaction from delegate: ${e.message}",
                     e
                 )
             }
+
+            // Validate transaction wasn't modified (compare hashes)
+            if (!transaction.hash().contentEquals(signedTx.hash())) {
+                throw IllegalStateException(
+                    "Transaction was modified by client domain signing delegate. " +
+                    "The delegate must only add signatures, not modify the transaction."
+                )
+            }
+
+            // Extract NEW signatures by comparing with existing signatures
+            val newSignatures = signedTx.signatures.filterNot { newSig ->
+                signaturesBefore.any { (signature, hint) ->
+                    newSig.signature.contentEquals(signature) && newSig.hint.contentEquals(hint)
+                }
+            }
+
+            // Validate at least one signature was added
+            if (newSignatures.isEmpty()) {
+                throw IllegalStateException(
+                    "Client domain signing delegate must add at least one signature. " +
+                    "No new signatures were found."
+                )
+            }
+
+            // Add all new signatures
+            transaction.signatures.addAll(newSignatures)
         }
 
-        // Convert back to base64 XDR
+        // Sign with user keypairs
+        signers.forEach { transaction.sign(it) }
+
+        // Convert back to base64 XDR (no @OptIn needed - AbstractTransaction handles it)
         return transaction.toEnvelopeXdrBase64()
     }
 

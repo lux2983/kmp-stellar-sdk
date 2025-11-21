@@ -185,7 +185,6 @@ data class AuthToken(
          *
          * @see isExpired
          */
-        @OptIn(ExperimentalEncodingApi::class)
         fun parse(jwtToken: String): AuthToken {
             try {
                 val parts = jwtToken.split(".")
@@ -193,14 +192,9 @@ data class AuthToken(
                     return AuthToken(token = jwtToken)
                 }
 
-                // JWT base64 encoding omits padding, but Kotlin's Base64.UrlSafe.decode() requires it
+                // Decode JWT payload (Base64 URL-safe encoding)
                 val payload = parts[1]
-                val paddedPayload = when (payload.length % 4) {
-                    2 -> payload + "=="
-                    3 -> payload + "="
-                    else -> payload
-                }
-                val decodedBytes = Base64.UrlSafe.decode(paddedPayload)
+                val decodedBytes = decodeBase64UrlSafe(payload)
                 val payloadJson = decodedBytes.decodeToString()
 
                 val json = Json { ignoreUnknownKeys = true }
@@ -218,6 +212,25 @@ data class AuthToken(
             } catch (e: Exception) {
                 return AuthToken(token = jwtToken)
             }
+        }
+
+        /**
+         * Decodes a Base64 URL-safe encoded string with automatic padding.
+         *
+         * JWT base64 encoding omits padding, but Kotlin's Base64.UrlSafe.decode() requires it.
+         * This private helper adds the necessary padding before decoding.
+         *
+         * @param encoded Base64 URL-safe encoded string (without padding)
+         * @return Decoded bytes
+         */
+        @OptIn(ExperimentalEncodingApi::class)
+        private fun decodeBase64UrlSafe(encoded: String): ByteArray {
+            val paddedPayload = when (encoded.length % 4) {
+                2 -> encoded + "=="
+                3 -> encoded + "="
+                else -> encoded
+            }
+            return Base64.UrlSafe.decode(paddedPayload)
         }
     }
 }
