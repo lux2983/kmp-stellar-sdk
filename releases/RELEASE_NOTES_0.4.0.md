@@ -55,7 +55,7 @@ val isVerified = stellarToml.generalInformation.accounts.contains("GXYZ...")
 - 33 tests including integration tests with real-world stellar.toml files from stellar.org, testanchor.stellar.org, circle.com, and stellar.moneygram.com
 - Network error handling and malformed TOML edge cases
 
-**Documentation**: See `docs/sep-implementations.md` for 7 complete usage examples
+**Documentation**: See `docs/sep/sep-01.md` for 7 complete usage examples
 
 **Specification**: [SEP-1: stellar.toml](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0001.md)
 
@@ -151,7 +151,7 @@ Version 0.4.0 is fully compatible with 0.3.0. All APIs remain unchanged, with on
 If you encounter any issues:
 
 1. Check the [documentation](https://github.com/Soneso/kmp-stellar-sdk)
-2. Review the [SEP implementations guide](docs/sep-implementations.md)
+2. Review the [SEP implementations guide](docs/sep/README.md)
 3. Browse the [API reference](https://soneso.github.io/kmp-stellar-sdk/)
 4. Explore the [demo app](demo/README.md)
 5. Open an issue on [GitHub](https://github.com/Soneso/kmp-stellar-sdk/issues)

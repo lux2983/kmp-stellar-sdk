@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2025-11-25
+
+### Added
+- **SEP-10 (Stellar Web Authentication)**: Production-ready client-side implementation for secure authentication with Stellar anchors and services
+  - `WebAuth` class with high-level `jwtToken()` API and low-level methods
+  - `AuthToken` class for JWT parsing with property-style API (account, memo, jti, isExpired, etc.)
+  - All 13 SEP-10 validation checks implemented correctly
+  - Support for standard accounts (G...), muxed accounts (M...), and memo IDs
+  - Client domain verification with `ClientDomainSigningDelegate` support
+  - Multi-signature transaction signing with signature preservation
+  - 115+ test cases (108 unit tests + 4 integration tests + 3 signature reordering tests)
+  - 18 exception types with security warnings
+  - Integration tests against live Stellar testnet anchor
+  - Documentation in `docs/sep/sep-10.md` with usage examples
+  - SEP-10 compatibility matrix showing 100% implementation coverage
+
+### Changed
+- **Dependencies**: Major version upgrades for improved performance and modern features
+  - Ktor 2.3.8 → 3.3.2 (90%+ I/O performance improvement)
+  - kotlinx-coroutines 1.8.0 → 1.10.2
+  - kotlinx-serialization 1.6.3 → 1.9.0
+  - bignum 0.3.9 → 0.3.10
+
+### Fixed
+- Ktor HttpTimeout deprecation warnings (INFINITE_TIMEOUT_MS in SSE streams)
+- SEP compatibility matrix formatting (metadata fields now appear on separate lines on GitHub)
+
+### Documentation
+- Added SEP-10 Web Authentication guide with authentication examples
+- Added SEP-0010 compatibility matrix
+- Updated all compatibility matrices to version 0.5.1
+
 ## [0.4.0] - 2025-11-14
 
 ### Added
@@ -14,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `StellarToml.currencyFromUrl()` - Load external currency TOML files
   - Custom TOML parser with error correction
   - 33 tests including integration tests with real-world stellar.toml files (stellar.org, testanchor.stellar.org, circle.com, stellar.moneygram.com)
-  - Documentation in `docs/sep-implementations.md` with 7 usage examples
+  - Documentation in `docs/sep/sep-01.md` with 7 usage examples
 - **Infrastructure**: GitHub Pages deployment with automated Dokka API documentation generation
 
 ### Changed

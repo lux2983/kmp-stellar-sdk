@@ -21,7 +21,7 @@ Welcome to the documentation for the Stellar SDK for Kotlin Multiplatform. This 
 - **[Testing Guide](testing.md)** - SDK testing (for contributors)
 
 ### Protocols & Standards
-- **[SEP Implementations](sep-implementations.md)** - Stellar Ecosystem Proposal support
+- **[SEP Implementations](sep/)** - Stellar Ecosystem Proposal support
 
 ## Key Features
 
@@ -55,6 +55,7 @@ This SDK provides an implementation of the Stellar protocol with:
 
 ### SEP Support
 - SEP-1 (Stellar TOML) - Domain discovery and service configuration
+- SEP-10 (Web Authentication) - Secure challenge-response authentication
 - More SEP implementations coming soon
 
 ### Soroban RPC API

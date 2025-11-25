@@ -1,8 +1,8 @@
 # Soroban RPC vs KMP Stellar SDK Compatibility Matrix
 
-**Generated:** 2025-11-14 19:57:06
+**Generated:** 2025-11-25 16:24:23
 
-**SDK Version:** 0.4.0
+**SDK Version:** 0.5.1
 
 ## Overall Coverage
 

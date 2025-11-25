@@ -1,16 +1,6 @@
-# SEP Implementations
+# SEP-1: Stellar TOML
 
-The SDK provides support for Stellar Ecosystem Proposals (SEPs) to enable interoperability with the Stellar ecosystem.
-
-## What are SEPs?
-
-Stellar Ecosystem Proposals (SEPs) are standards that define how services, applications, and organizations interact with the Stellar network. They ensure consistent implementation of common patterns like domain verification, authentication, and asset anchoring.
-
-## Implemented SEPs
-
-### SEP-1: Stellar TOML
-
-**[SEP-0001 Compatibility Matrix](../compatibility/sep/SEP-0001_COMPATIBILITY_MATRIX.md)** - Full implementation coverage details
+**[SEP-0001 Compatibility Matrix](../../compatibility/sep/SEP-0001_COMPATIBILITY_MATRIX.md)** - Full implementation coverage details
 
 Stellar TOML allows organizations to publish information about their Stellar integration at `.well-known/stellar.toml`. Use this to discover service endpoints, verify accounts, and find supported currencies.
 
@@ -20,7 +10,7 @@ Stellar TOML allows organizations to publish information about their Stellar int
 - Find supported currencies and their properties
 - Locate service endpoints for authentication, transfers, and quotes
 
-#### Fetching stellar.toml from a Domain
+## Fetching stellar.toml from a Domain
 
 ```kotlin
 // Fetch stellar.toml from a domain
@@ -37,7 +27,7 @@ stellarToml.documentation?.let { doc ->
 }
 ```
 
-#### Discovering Service Capabilities
+## Discovering Service Capabilities
 
 ```kotlin
 // Check which SEP services an anchor supports
@@ -49,7 +39,7 @@ val supportsSEP24 = stellarToml.generalInformation.transferServerSep24 != null
 val supportsSEP38 = stellarToml.generalInformation.anchorQuoteServer != null
 ```
 
-#### Finding Supported Currencies
+## Finding Supported Currencies
 
 ```kotlin
 // List all currencies supported by an anchor
@@ -65,7 +55,7 @@ stellarToml.currencies?.forEach { currency ->
 val usd = stellarToml.currencies?.find { it.code == "USD" }
 ```
 
-#### Loading External Currency Information
+## Loading External Currency Information
 
 ```kotlin
 // Some currencies reference external TOML files for detailed information
@@ -81,7 +71,7 @@ stellarToml.currencies?.forEach { currency ->
 }
 ```
 
-#### Verifying Account Ownership
+## Verifying Account Ownership
 
 ```kotlin
 // Verify an account belongs to a domain
@@ -94,7 +84,7 @@ if (isVerified) {
 }
 ```
 
-#### Discovering Validators
+## Discovering Validators
 
 ```kotlin
 // Find validators operated by an organization
@@ -107,7 +97,7 @@ stellarToml.validators?.forEach { validator ->
 }
 ```
 
-#### Parsing from String
+## Parsing from String
 
 ```kotlin
 // Parse stellar.toml content from a string (useful for testing or caching)
@@ -123,7 +113,9 @@ val tomlContent = """
 val stellarToml = StellarToml.parse(tomlContent)
 ```
 
-**API Reference**:
+## API Reference
+
+**Main Methods**:
 - `StellarToml.fromDomain(domain: String): StellarToml` - Fetch stellar.toml from domain
 - `StellarToml.parse(toml: String): StellarToml` - Parse stellar.toml from string
 - `StellarToml.currencyFromUrl(url: String): Currency` - Load external currency TOML
@@ -139,19 +131,3 @@ val stellarToml = StellarToml.parse(tomlContent)
 **Specification**: [SEP-1: stellar.toml](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0001.md)
 
 **Implementation**: `com.soneso.stellar.sdk.sep.sep01`
-
----
-
-## Future SEP Implementations
-
-Additional SEP implementations will be documented here as they are added to the SDK.
-
-**Planned SEPs**:
-- SEP-10: Stellar Web Authentication
-- SEP-24: Hosted Deposit and Withdrawal
-- SEP-38: Anchor RFQ API
-- And more...
-
----
-
-**Last Updated**: 2025-11-14

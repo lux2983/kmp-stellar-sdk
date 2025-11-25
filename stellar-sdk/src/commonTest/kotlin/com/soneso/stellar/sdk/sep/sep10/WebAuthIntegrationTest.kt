@@ -236,15 +236,15 @@ class WebAuthIntegrationTest {
     /**
      * Tests client domain verification with local signing delegate.
      *
-     * This test demonstrates the HSM simulation pattern where the client domain
-     * signing key is not directly accessible (e.g., stored in an HSM, secure enclave,
-     * or key management service), but signing can be performed through a local
-     * callback/delegate function.
+     * This test demonstrates the HSM simulation pattern where the WALLET COMPANY'S
+     * client domain signing key is not directly accessible (e.g., stored in the
+     * wallet company's HSM or key management service), but signing can be performed
+     * through a local callback/delegate function.
      *
      * Real-World Use Cases:
-     * - Enterprise wallets with HSM-protected signing keys
-     * - Mobile applications using iOS Keychain Secure Enclave or Android Keystore
-     * - Desktop applications with hardware security modules
+     * - Enterprise wallets with wallet company's HSM-protected domain signing keys
+     * - Wallet backend services using hardware security modules
+     * - Desktop wallet applications with HSM integration for domain key signing
      * - Development/testing environments simulating HSM behavior
      * - Airgapped signing setups where keys never leave secure hardware
      *
@@ -339,7 +339,7 @@ class WebAuthIntegrationTest {
      * provides transaction signing via HTTP API.
      *
      * Real-World Use Cases:
-     * - Custodial wallet services (Fireblocks, BitGo, Copper, Ledger Vault)
+     * - Wallet company's backend signing infrastructure (using HSMs, cloud KMS services)
      * - Cloud-based key management (AWS KMS, Google Cloud KMS, Azure Key Vault)
      * - Multi-Party Computation (MPC) signing services
      * - Enterprise signing services with compliance/audit requirements

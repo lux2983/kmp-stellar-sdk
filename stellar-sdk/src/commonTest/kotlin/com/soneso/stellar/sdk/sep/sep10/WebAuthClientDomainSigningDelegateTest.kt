@@ -14,12 +14,11 @@ import kotlin.time.ExperimentalTime
 /**
  * Tests for ClientDomainSigningDelegate functionality.
  *
- * Covers external signing delegation for enterprise use cases:
- * - HSMs (Hardware Security Modules)
- * - Custodial services (Fireblocks, AWS KMS, etc.)
- * - Mobile secure enclaves
- * - Multi-Party Computation (MPC) systems
- * - Multi-signature threshold accounts
+ * Covers external signing delegation for wallet company infrastructure:
+ * - Wallet company's HSMs (Hardware Security Modules)
+ * - Wallet backend key management (AWS KMS, Google Cloud KMS, Azure Key Vault)
+ * - Multi-Party Computation (MPC) systems for wallet domain keys
+ * - Multi-signature threshold accounts for wallet domain signing
  */
 class WebAuthClientDomainSigningDelegateTest {
 

@@ -28,40 +28,43 @@ import kotlin.time.ExperimentalTime
 /**
  * Functional interface for delegating client domain transaction signing to external services.
  *
- * This enables integration with enterprise security solutions that cannot export private keys:
- * - Hardware Security Modules (HSMs) - Secure cryptographic key storage and operations
- * - Custodial services - Fireblocks, Ledger Vault, BitGo, Copper, AWS KMS, Google Cloud KMS
- * - Mobile secure enclaves - iOS Keychain with Secure Enclave, Android Keystore System
- * - Multi-Party Computation (MPC) systems - Distributed key management and signing
+ * This delegate is for signing with your WALLET'S domain key to prove wallet identity during
+ * SEP-10 authentication. This is NOT for user account signing - use the signers parameter for that.
+ *
+ * This enables integration with wallet backend infrastructure that manages the wallet's domain
+ * signing key:
+ * - Wallet backend servers - Your company's authentication server managing the wallet's domain key
+ * - Hardware Security Modules (HSMs) - Secure cryptographic key storage for wallet infrastructure
+ * - Cloud KMS services - AWS KMS, Google Cloud KMS for wallet backend key management
+ * - Multi-Party Computation (MPC) systems - Distributed key management for wallet infrastructure
  *
  * Use Cases:
- * - Enterprise wallets that store keys in HSMs for regulatory compliance
- * - Custodial services where keys are managed by third-party providers
- * - Mobile applications using platform-specific secure key storage
- * - Organizations requiring hardware-backed key security
- * - Multi-signature setups with distributed key management
+ * - Wallet backends where the domain signing key is managed server-side
+ * - Enterprise wallet infrastructure requiring HSM-backed domain keys
+ * - Wallet companies with regulatory requirements for key custody
+ * - Multi-signature wallet domain accounts with threshold requirements
  *
  * Multi-Signature Support:
- * - Client domain accounts can have multiple signers with threshold requirements
- * - The delegate can add multiple signatures to meet the account's signing threshold
- * - Common for enterprise accounts where master key is disabled (weight = 0)
- * - Supports regulatory compliance requiring multi-custody signatures
+ * - Wallet domain accounts can have multiple signers with threshold requirements
+ * - The delegate can add multiple signatures to meet the wallet domain account's signing threshold
+ * - Common for enterprise wallet backends where master key is disabled (weight = 0)
+ * - Supports regulatory compliance requiring multi-custody signatures for wallet identity
  *
  * Security Considerations:
  * - The delegate receives the full transaction XDR (not just a hash) for transparency
- * - External service can verify transaction contents before signing
+ * - Wallet backend can verify transaction contents before signing with domain key
  * - Returned transaction must not be modified (only signatures added)
  * - Network passphrase is embedded in transaction hash to prevent replay attacks
- * - Only use with trusted signing services that validate transaction safety
+ * - Only use with your own trusted wallet backend services
  *
- * Example - HSM integration:
+ * Example - Wallet company HSM:
  * ```kotlin
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
  *     // Parse transaction
  *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
  *
- *     // Sign with HSM
- *     tx.sign(hsmKeyPair)
+ *     // Sign with your wallet company's HSM (not user's HSM)
+ *     tx.sign(walletDomainHsmKeyPair)
  *
  *     // Return signed transaction
  *     tx.toEnvelopeXdrBase64()
@@ -75,46 +78,30 @@ import kotlin.time.ExperimentalTime
  * )
  * ```
  *
- * Example - Multi-signature threshold account:
+ * Example - Multi-signature wallet domain account:
  * ```kotlin
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
  *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
  *
- *     // Add multiple signatures to meet threshold
- *     tx.sign(signer1KeyPair)
- *     tx.sign(signer2KeyPair)
+ *     // Add multiple wallet domain signatures to meet threshold
+ *     tx.sign(walletDomainSigner1KeyPair)
+ *     tx.sign(walletDomainSigner2KeyPair)
  *
  *     tx.toEnvelopeXdrBase64()
  * }
  * ```
  *
- * Example - Remote signing service:
+ * Example - Wallet backend server:
  * ```kotlin
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
- *     // Send to remote signing service
- *     val response = httpClient.post("https://signer.example.com/sign") {
- *         setBody(SigningRequest(transactionXdr, network.networkPassphrase))
+ *     // Send to your wallet's backend server for domain signing
+ *     val response = httpClient.post("https://backend.wallet-company.com/sign-client-domain") {
+ *         contentType(ContentType.Application.Json)
+ *         setBody("""{"transaction": "$transactionXdr"}""")
  *     }
  *
- *     // Return signed transaction from service
- *     response.body<SigningResponse>().transaction
- * }
- * ```
- *
- * Example - Mobile Secure Enclave (iOS):
- * ```kotlin
- * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
- *     // Parse transaction
- *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
- *
- *     // Sign using iOS Keychain with Secure Enclave
- *     val signature = secureEnclaveManager.sign(tx.hash())
- *
- *     // Add signature to transaction
- *     tx.signatures.add(DecoratedSignature.fromSignature(signature))
- *
- *     // Return signed transaction
- *     tx.toEnvelopeXdrBase64()
+ *     // Backend returns signed transaction
+ *     response.body<String>()
  * }
  * ```
  *
@@ -241,14 +228,15 @@ fun interface ClientDomainSigningDelegate {
  * )
  * ```
  *
- * **Client Domain Verification (External Signing - HSM/Custody):**
+ * **Client Domain Verification (Wallet Backend Signing):**
  * ```kotlin
- * // When client domain key is in HSM or custody service
+ * // When your wallet's domain key is managed by your backend server
  * val signingDelegate = ClientDomainSigningDelegate { transactionXdr ->
- *     // Parse and sign transaction
- *     val tx = AbstractTransaction.fromEnvelopeXdr(transactionXdr, network) as Transaction
- *     tx.sign(hsmKeyPair)
- *     tx.toEnvelopeXdrBase64()
+ *     // Send to wallet backend for domain signing
+ *     val response = httpClient.post("https://backend.wallet.com/sign") {
+ *         setBody(SignRequest(transactionXdr))
+ *     }
+ *     response.body<SignResponse>().signedTransaction
  * }
  *
  * val authToken = webAuth.jwtToken(
