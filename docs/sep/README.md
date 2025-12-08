@@ -11,7 +11,9 @@ Stellar Ecosystem Proposals (SEPs) are standards that define how services, appli
 | SEP | Title | Documentation |
 |-----|-------|---------------|
 | SEP-1 | Stellar TOML | [sep-01.md](sep-01.md) |
+| SEP-9 | Standard KYC Fields | [sep-09.md](sep-09.md) |
 | SEP-10 | Web Authentication | [sep-10.md](sep-10.md) |
+| SEP-12 | KYC API | [sep-12.md](sep-12.md) |
 
 ## Future SEP Implementations
 
@@ -24,4 +26,4 @@ Additional SEP implementations will be documented here as they are added to the 
 
 ---
 
-**Last Updated**: 2025-11-25
+**Last Updated**: 2025-12-08
