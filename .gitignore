@@ -138,3 +138,7 @@ kotlin-js-store/
 
 # XCFramework build outputs (root level)
 stellar_sdk.xcframework/
+
+# Session/planning files (local development only)
+session.md
+plan.md
