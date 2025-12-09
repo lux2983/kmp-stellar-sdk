@@ -12,7 +12,9 @@ import io.ktor.client.*
 import io.ktor.client.engine.mock.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.utils.io.core.*
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
@@ -52,6 +54,56 @@ class KYCServiceTest {
                         content = responseContent,
                         status = statusCode,
                         headers = headersOf(HttpHeaders.ContentType, contentType)
+                    )
+                }
+            } else {
+                respond(
+                    content = """{"error": "Not found"}""",
+                    status = HttpStatusCode.NotFound,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        }
+
+        return HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+    }
+
+    private fun createMockClientWithMultipartCapture(
+        responseContent: String,
+        statusCode: HttpStatusCode = HttpStatusCode.OK,
+        expectedPath: String = "/customer",
+        expectedMethod: HttpMethod = HttpMethod.Put,
+        onMultipartCaptured: (List<PartData>) -> Unit
+    ): HttpClient {
+        val mockEngine = MockEngine { request ->
+            if (request.url.encodedPath.contains(expectedPath)) {
+                if (expectedMethod != request.method) {
+                    respond(
+                        content = """{"error": "Method not allowed"}""",
+                        status = HttpStatusCode.MethodNotAllowed,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                } else {
+                    // Capture multipart data
+                    val body = request.body
+                    if (body is OutgoingContent.WriteChannelContent) {
+                        // For multipart data, we need to read the parts
+                        // In this simplified test, we'll just verify the Content-Type header
+                        val contentTypeHeader = body.contentType?.toString() ?: ""
+                        assertTrue(contentTypeHeader.startsWith("multipart/form-data"))
+                    }
+
+                    respond(
+                        content = responseContent,
+                        status = statusCode,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
                     )
                 }
             } else {
@@ -373,6 +425,374 @@ class KYCServiceTest {
         val response = kycService.putCustomerInfo(request)
 
         assertEquals(customerId, response.id)
+    }
+
+    @Test
+    fun testPutCustomerInfoWithBinaryFieldsSendsMultipart() = runTest {
+        val responseJson = """{"id": "$customerId"}"""
+
+        // Sample binary data for photo ID
+        val photoIdFrontBytes = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A) // PNG header
+        val photoIdBackBytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte()) // JPEG header
+
+        var contentTypeVerified = false
+        var authHeaderVerified = false
+
+        val mockEngine = MockEngine { request ->
+            if (request.url.encodedPath.contains("/customer")) {
+                if (request.method == HttpMethod.Put) {
+                    // Verify Authorization header
+                    val authHeader = request.headers["Authorization"]
+                    authHeaderVerified = authHeader?.contains("Bearer $jwtToken") == true
+
+                    // Verify Content-Type is multipart/form-data
+                    val body = request.body
+                    if (body is OutgoingContent.WriteChannelContent) {
+                        val contentTypeHeader = body.contentType?.toString() ?: ""
+                        contentTypeVerified = contentTypeHeader.startsWith("multipart/form-data")
+                    }
+
+                    respond(
+                        content = responseJson,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                } else {
+                    respond(
+                        content = """{"error": "Method not allowed"}""",
+                        status = HttpStatusCode.MethodNotAllowed,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                }
+            } else {
+                respond(
+                    content = """{"error": "Not found"}""",
+                    status = HttpStatusCode.NotFound,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        }
+
+        val mockClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+
+        val kycService = KYCService(serviceAddress, mockClient)
+
+        val request = PutCustomerInfoRequest(
+            jwt = jwtToken,
+            kycFields = StandardKYCFields(
+                naturalPersonKYCFields = NaturalPersonKYCFields(
+                    firstName = "John",
+                    lastName = "Doe",
+                    emailAddress = "john@example.com",
+                    photoIdFront = photoIdFrontBytes,
+                    photoIdBack = photoIdBackBytes
+                )
+            )
+        )
+
+        val response = kycService.putCustomerInfo(request)
+
+        assertEquals(customerId, response.id)
+        assertTrue(contentTypeVerified, "Content-Type should be multipart/form-data")
+        assertTrue(authHeaderVerified, "Authorization header should be present")
+    }
+
+    @Test
+    fun testPutCustomerInfoWithCustomFilesSendsMultipart() = runTest {
+        val responseJson = """{"id": "$customerId"}"""
+
+        // Sample binary data for custom files
+        val customDocumentBytes = byteArrayOf(0x25, 0x50, 0x44, 0x46) // PDF header
+
+        var contentTypeVerified = false
+
+        val mockEngine = MockEngine { request ->
+            if (request.url.encodedPath.contains("/customer")) {
+                if (request.method == HttpMethod.Put) {
+                    // Verify Content-Type is multipart/form-data
+                    val body = request.body
+                    if (body is OutgoingContent.WriteChannelContent) {
+                        val contentTypeHeader = body.contentType?.toString() ?: ""
+                        contentTypeVerified = contentTypeHeader.startsWith("multipart/form-data")
+                    }
+
+                    respond(
+                        content = responseJson,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                } else {
+                    respond(
+                        content = """{"error": "Method not allowed"}""",
+                        status = HttpStatusCode.MethodNotAllowed,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                }
+            } else {
+                respond(
+                    content = """{"error": "Not found"}""",
+                    status = HttpStatusCode.NotFound,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        }
+
+        val mockClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+
+        val kycService = KYCService(serviceAddress, mockClient)
+
+        val request = PutCustomerInfoRequest(
+            jwt = jwtToken,
+            kycFields = StandardKYCFields(
+                naturalPersonKYCFields = NaturalPersonKYCFields(
+                    firstName = "John",
+                    lastName = "Doe"
+                )
+            ),
+            customFiles = mapOf(
+                "custom_document" to customDocumentBytes,
+                "additional_proof" to byteArrayOf(1, 2, 3, 4, 5)
+            )
+        )
+
+        val response = kycService.putCustomerInfo(request)
+
+        assertEquals(customerId, response.id)
+        assertTrue(contentTypeVerified, "Content-Type should be multipart/form-data")
+    }
+
+    @Test
+    fun testPutCustomerInfoMultipartContentType() = runTest {
+        val responseJson = """{"id": "$customerId"}"""
+
+        val photoIdBytes = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47) // PNG header
+
+        var actualContentType: String? = null
+
+        val mockEngine = MockEngine { request ->
+            if (request.url.encodedPath.contains("/customer")) {
+                if (request.method == HttpMethod.Put) {
+                    // Capture the Content-Type header
+                    val body = request.body
+                    if (body is OutgoingContent.WriteChannelContent) {
+                        actualContentType = body.contentType?.toString()
+                    }
+
+                    respond(
+                        content = responseJson,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                } else {
+                    respond(
+                        content = """{"error": "Method not allowed"}""",
+                        status = HttpStatusCode.MethodNotAllowed,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                }
+            } else {
+                respond(
+                    content = """{"error": "Not found"}""",
+                    status = HttpStatusCode.NotFound,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        }
+
+        val mockClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+
+        val kycService = KYCService(serviceAddress, mockClient)
+
+        val request = PutCustomerInfoRequest(
+            jwt = jwtToken,
+            kycFields = StandardKYCFields(
+                naturalPersonKYCFields = NaturalPersonKYCFields(
+                    firstName = "John",
+                    lastName = "Doe",
+                    photoIdFront = photoIdBytes
+                )
+            )
+        )
+
+        val response = kycService.putCustomerInfo(request)
+
+        assertEquals(customerId, response.id)
+        assertNotNull(actualContentType, "Content-Type should be set")
+        assertTrue(
+            actualContentType!!.startsWith("multipart/form-data"),
+            "Content-Type should start with multipart/form-data, but was: $actualContentType"
+        )
+        assertTrue(
+            actualContentType!!.contains("boundary="),
+            "Content-Type should contain boundary parameter, but was: $actualContentType"
+        )
+    }
+
+    @Test
+    fun testPutCustomerInfoWithOnlyTextFieldsStillSendsMultipart() = runTest {
+        val responseJson = """{"id": "$customerId"}"""
+
+        var contentTypeVerified = false
+
+        val mockEngine = MockEngine { request ->
+            if (request.url.encodedPath.contains("/customer")) {
+                if (request.method == HttpMethod.Put) {
+                    // Verify Content-Type is multipart/form-data even without binary files
+                    val body = request.body
+                    if (body is OutgoingContent.WriteChannelContent) {
+                        val contentTypeHeader = body.contentType?.toString() ?: ""
+                        contentTypeVerified = contentTypeHeader.startsWith("multipart/form-data")
+                    }
+
+                    respond(
+                        content = responseJson,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                } else {
+                    respond(
+                        content = """{"error": "Method not allowed"}""",
+                        status = HttpStatusCode.MethodNotAllowed,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                }
+            } else {
+                respond(
+                    content = """{"error": "Not found"}""",
+                    status = HttpStatusCode.NotFound,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        }
+
+        val mockClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+
+        val kycService = KYCService(serviceAddress, mockClient)
+
+        val request = PutCustomerInfoRequest(
+            jwt = jwtToken,
+            kycFields = StandardKYCFields(
+                naturalPersonKYCFields = NaturalPersonKYCFields(
+                    firstName = "John",
+                    lastName = "Doe",
+                    emailAddress = "john@example.com",
+                    birthDate = LocalDate(1990, 1, 15)
+                )
+            )
+        )
+
+        val response = kycService.putCustomerInfo(request)
+
+        assertEquals(customerId, response.id)
+        assertTrue(
+            contentTypeVerified,
+            "Content-Type should be multipart/form-data even for text-only requests"
+        )
+    }
+
+    @Test
+    fun testPutCustomerInfoWithMixedSEP09AndCustomFields() = runTest {
+        val responseJson = """{"id": "$customerId"}"""
+
+        val photoBytes = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47)
+        val documentBytes = byteArrayOf(0x25, 0x50, 0x44, 0x46)
+
+        var contentTypeVerified = false
+
+        val mockEngine = MockEngine { request ->
+            if (request.url.encodedPath.contains("/customer")) {
+                if (request.method == HttpMethod.Put) {
+                    val body = request.body
+                    if (body is OutgoingContent.WriteChannelContent) {
+                        val contentTypeHeader = body.contentType?.toString() ?: ""
+                        contentTypeVerified = contentTypeHeader.startsWith("multipart/form-data")
+                    }
+
+                    respond(
+                        content = responseJson,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                } else {
+                    respond(
+                        content = """{"error": "Method not allowed"}""",
+                        status = HttpStatusCode.MethodNotAllowed,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json")
+                    )
+                }
+            } else {
+                respond(
+                    content = """{"error": "Not found"}""",
+                    status = HttpStatusCode.NotFound,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json")
+                )
+            }
+        }
+
+        val mockClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
+                })
+            }
+        }
+
+        val kycService = KYCService(serviceAddress, mockClient)
+
+        val request = PutCustomerInfoRequest(
+            jwt = jwtToken,
+            id = customerId,
+            type = "sep31-sender",
+            kycFields = StandardKYCFields(
+                naturalPersonKYCFields = NaturalPersonKYCFields(
+                    firstName = "John",
+                    lastName = "Doe",
+                    emailAddress = "john@example.com",
+                    photoIdFront = photoBytes
+                )
+            ),
+            customFields = mapOf(
+                "custom_field_1" to "value1",
+                "custom_field_2" to "value2"
+            ),
+            customFiles = mapOf(
+                "custom_document" to documentBytes
+            )
+        )
+
+        val response = kycService.putCustomerInfo(request)
+
+        assertEquals(customerId, response.id)
+        assertTrue(contentTypeVerified, "Content-Type should be multipart/form-data")
     }
 
     @Test
