@@ -55,19 +55,23 @@ allprojects {
 }
 ```
 
-**Documentation files** (update all version references):
-- `README.md`
-- `docs/getting-started.md`
-- `demo/CLAUDE.md`
-- `demo/README.md`
-- `demo/shared/build.gradle.kts` (in comments)
-- `docs/platforms/ios.md`
-- `docs/platforms/macos.md`
+**Source code**:
+- `stellar-sdk/src/commonMain/kotlin/com/soneso/stellar/sdk/Util.kt` - `getSdkVersion()` return value
+
+**Documentation and compatibility files** (update all version references):
+- `README.md` - badge and dependency
+- `CLAUDE.md` - SEP support list
+- `docs/getting-started.md`, `docs/quick-start.md`
+- `docs/platforms/` - ios.md, macos.md, jvm.md, javascript.md
+- `demo/CLAUDE.md`, `demo/README.md`
+- `compatibility/horizon/HORIZON_COMPATIBILITY_MATRIX.md`
+- `compatibility/rpc/RPC_COMPATIBILITY_MATRIX.md`
+- `compatibility/sep/SEP-*.md` - all SEP compatibility matrices
 
 Search for previous version number and replace:
 ```bash
-# Find all occurrences
-grep -r "0.2.0" --include="*.md" --include="*.kts" .
+# Find all occurrences (exclude build/, node_modules/, releases/RELEASE_NOTES_*)
+grep -rn "X.Y.Z" --include="*.md" --include="*.kts" . | grep -v "build/" | grep -v "node_modules/"
 
 # Use IDE find-and-replace for accuracy
 ```

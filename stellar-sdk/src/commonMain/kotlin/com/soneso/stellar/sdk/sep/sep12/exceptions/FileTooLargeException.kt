@@ -104,7 +104,8 @@ package com.soneso.stellar.sdk.sep.sep12.exceptions
  *         message = buildString {
  *             append("The file '$filename' is too large ")
  *             if (exception.fileSize != null) {
- *                 append("(%.2f MB).\n\n".format(sizeMB))
+ *                 val sizeFormatted = (sizeMB * 100).toInt() / 100.0
+ *                 append("($sizeFormatted MB).\n\n")
  *             } else {
  *                 append(".\n\n")
  *             }
@@ -132,7 +133,8 @@ class FileTooLargeException(
         append("File too large (413 Payload Too Large). ")
         if (fileSize != null) {
             val sizeMB = fileSize / (1024.0 * 1024.0)
-            append("File size: %.2f MB. ".format(sizeMB))
+            val sizeFormatted = (sizeMB * 100).toInt() / 100.0
+            append("File size: $sizeFormatted MB. ")
         }
         append("Please compress the file or reduce its size before uploading.")
     }

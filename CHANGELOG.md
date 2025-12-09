@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-12-09
+
+### Added
+- **SEP-09 (Standard KYC Fields)**: Type-safe data classes for standardized KYC information
+  - `NaturalPersonKYCFields` - 34 fields for individual customer data (name, address, documents, etc.)
+  - `OrganizationKYCFields` - 17 fields for business customer data with automatic field prefixing
+  - `FinancialAccountKYCFields` - 14 fields for bank account information
+  - `CardKYCFields` - 11 fields for payment card data with automatic field prefixing
+  - `StandardKYCFields` - Composite class combining all field types
+  - `LocalDate` for date fields, `ByteArray` for binary data (photos, documents)
+  - 128 unit tests covering all field types and edge cases
+  - Documentation in `docs/sep/sep-09.md` with usage examples
+  - SEP-09 compatibility matrix showing 100% field coverage
+
+- **SEP-12 (KYC API)**: Production-ready client for anchor KYC services
+  - `KYCService` class with seven API endpoints:
+    - `getCustomer()` - Retrieve customer status and required fields
+    - `putCustomer()` - Submit or update customer information
+    - `putCustomerVerification()` - Submit verification codes
+    - `deleteCustomer()` - Request customer data deletion
+    - `getCustomerFiles()` - List uploaded files
+    - `putCustomerCallback()` - Register status change callbacks
+  - SEP-10 JWT authentication integrated across all endpoints
+  - Multipart/form-data support for file uploads (photos, documents)
+  - Text fields sent before binary data per specification
+  - `CallbackSignatureVerifier` for webhook signature validation
+  - Six exception types for granular error handling:
+    - `CustomerNotFoundException` - Customer record not found
+    - `CustomerAlreadyExistsException` - Duplicate customer registration
+    - `InvalidFieldException` - Field validation errors with details
+    - `FileTooLargeException` - File size limit exceeded
+    - `UnauthorizedException` - Authentication failures
+    - `KYCException` - Base exception for other errors
+  - Support for standard accounts (G...) and muxed accounts (M...)
+  - 105 unit tests + 13 integration tests against live Stellar testnet
+  - Documentation in `docs/sep/sep-12.md` with usage examples
+  - SEP-12 compatibility matrix showing 100% API coverage
+
+### Documentation
+- Added SEP-09 Standard KYC Fields guide with data class examples
+- Added SEP-12 KYC API guide with authentication and file upload examples
+- Added SEP-0009 and SEP-0012 compatibility matrices
+- Updated all compatibility matrices to version 0.6.0
+- Updated README with SEP-09 and SEP-12 links
+
 ## [0.5.1] - 2025-11-25
 
 ### Added

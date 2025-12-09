@@ -1,6 +1,6 @@
 # Stellar SDK for Kotlin Multiplatform
 
-[![Version](https://img.shields.io/badge/version-0.5.1-blue)](https://github.com/Soneso/kmp-stellar-sdk/releases)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/Soneso/kmp-stellar-sdk/releases)
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blueviolet?logo=kotlin)](https://kotlinlang.org/docs/multiplatform.html)
 [![Maven Central](https://img.shields.io/maven-central/v/com.soneso.stellar/stellar-sdk)](https://search.maven.org/artifact/com.soneso.stellar/stellar-sdk)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Soneso/kmp-stellar-sdk)
@@ -26,7 +26,9 @@ A comprehensive Kotlin Multiplatform SDK for building applications on the Stella
 - [Soroban RPC Compatibility](compatibility/rpc/RPC_COMPATIBILITY_MATRIX.md) - Supported Soroban RPC methods
 - [SEP Implementations](docs/sep/README.md) - Stellar Ecosystem Proposals support
   - [SEP-0001 Compatibility Matrix](compatibility/sep/SEP-0001_COMPATIBILITY_MATRIX.md) - stellar.toml implementation coverage
-  - [SEP-0010 Compatibility Matrix](compatibility/sep/SEP-0010_COMPATIBILITY_MATRIX.md) - Web Authentication implementation coverage
+  - [SEP-0009 Compatibility Matrix](compatibility/sep/SEP-0009_COMPATIBILITY_MATRIX.md) - Standard KYC Fields coverage
+  - [SEP-0010 Compatibility Matrix](compatibility/sep/SEP-0010_COMPATIBILITY_MATRIX.md) - Web Authentication coverage
+  - [SEP-0012 Compatibility Matrix](compatibility/sep/SEP-0012_COMPATIBILITY_MATRIX.md) - KYC API coverage
 
 ## What Is This?
 
@@ -65,7 +67,7 @@ The SDK provides comprehensive Stellar functionality:
 - **Soroban RPC Client** - Transaction simulation, event queries, ledger data, contract deployment and invocation
 - **Contract Deployment** - One-step deploy() or two-step install/deployFromWasmId for WASM reuse
 - **Authorization** - Automatic and custom auth handling with signature verification
-- **SEP Support** - SEP-1 (stellar.toml), SEP-10 (Web Authentication)
+- **SEP Support** - SEP-1 (stellar.toml), SEP-9/12 (KYC), SEP-10 (Web Authentication)
 
 ## Installation
 
@@ -74,7 +76,7 @@ Add the SDK as a Maven dependency (recommended for most projects):
 ```kotlin
 // In your module's build.gradle.kts
 dependencies {
-    implementation("com.soneso.stellar:stellar-sdk:0.5.1")
+    implementation("com.soneso.stellar:stellar-sdk:0.6.0")
 }
 ```
 

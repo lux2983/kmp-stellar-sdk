@@ -29,7 +29,7 @@ The SDK is **production-ready** with comprehensive functionality implemented:
 - **Soroban RPC**: Contract calls, simulation, state restoration, polling
 - **High-Level API**: ContractClient, AssembledTransaction with full lifecycle
 - **XDR**: Complete XDR type system and serialization
-- **SEP Support**: SEP-1 (Stellar TOML) for domain discovery and service configuration
+- **SEP Support**: SEP-1 (Stellar TOML), SEP-9/12 (KYC), SEP-10 (Web Authentication)
 
 ### Demo Application
 - **Platforms**: Android, iOS, macOS, Desktop (JVM), Web
