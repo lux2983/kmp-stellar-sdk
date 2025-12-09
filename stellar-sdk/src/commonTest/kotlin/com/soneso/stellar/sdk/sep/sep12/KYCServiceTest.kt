@@ -75,56 +75,6 @@ class KYCServiceTest {
         }
     }
 
-    private fun createMockClientWithMultipartCapture(
-        responseContent: String,
-        statusCode: HttpStatusCode = HttpStatusCode.OK,
-        expectedPath: String = "/customer",
-        expectedMethod: HttpMethod = HttpMethod.Put,
-        onMultipartCaptured: (List<PartData>) -> Unit
-    ): HttpClient {
-        val mockEngine = MockEngine { request ->
-            if (request.url.encodedPath.contains(expectedPath)) {
-                if (expectedMethod != request.method) {
-                    respond(
-                        content = """{"error": "Method not allowed"}""",
-                        status = HttpStatusCode.MethodNotAllowed,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                } else {
-                    // Capture multipart data
-                    val body = request.body
-                    if (body is OutgoingContent.WriteChannelContent) {
-                        // For multipart data, we need to read the parts
-                        // In this simplified test, we'll just verify the Content-Type header
-                        val contentTypeHeader = body.contentType?.toString() ?: ""
-                        assertTrue(contentTypeHeader.startsWith("multipart/form-data"))
-                    }
-
-                    respond(
-                        content = responseContent,
-                        status = statusCode,
-                        headers = headersOf(HttpHeaders.ContentType, "application/json")
-                    )
-                }
-            } else {
-                respond(
-                    content = """{"error": "Not found"}""",
-                    status = HttpStatusCode.NotFound,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json")
-                )
-            }
-        }
-
-        return HttpClient(mockEngine) {
-            install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                })
-            }
-        }
-    }
-
     @Test
     fun testFromDomainDiscoversKYCServer() = runTest {
         val stellarToml = """
