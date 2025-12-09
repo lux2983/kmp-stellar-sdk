@@ -30,6 +30,7 @@ The SDK is **production-ready** with comprehensive functionality implemented:
 - **High-Level API**: ContractClient, AssembledTransaction with full lifecycle
 - **XDR**: Complete XDR type system and serialization
 - **SEP Support**: SEP-1 (Stellar TOML), SEP-9/12 (KYC), SEP-10 (Web Authentication)
+- **Data Lake**: Historical ledger access via AWS/Stellargate (SEP-54), transaction/event extraction
 
 ### Demo Application
 - **Platforms**: Android, iOS, macOS, Desktop (JVM), Web
@@ -353,6 +354,7 @@ The `demo` directory demonstrates **comprehensive SDK usage** with a Compose Mul
 - **ktor-client-cio**: HTTP client for JVM
 - **BouncyCastle** (`org.bouncycastle:bcprov-jdk18on:1.78`): Ed25519 cryptography
 - **Apache Commons Codec** (`commons-codec:commons-codec:1.16.1`): Base32 encoding
+- **zstd-jni** (`com.github.luben:zstd-jni:1.5.5-11`): Zstandard decompression for Data Lake
 
 ### JavaScript (Browser & Node.js)
 - **ktor-client-js**: HTTP client for JavaScript
@@ -360,6 +362,7 @@ The `demo` directory demonstrates **comprehensive SDK usage** with a Compose Mul
   - Sumo build required for SHA-256 support (crypto_hash_sha256)
   - Standard build does not include SHA-256 functions
 - **kotlinx-coroutines-core**: Required for async crypto operations
+- **fflate** (0.8.2 via npm): Zstandard decompression for Data Lake
 
 ### Native (iOS/macOS)
 - **ktor-client-darwin**: HTTP client for Apple platforms
@@ -367,6 +370,7 @@ The `demo` directory demonstrates **comprehensive SDK usage** with a Compose Mul
   - Framework build: Uses static libsodium from `native-libs/libsodium-ios/`
   - User apps: Add libsodium via Swift Package Manager (Clibsodium package)
   - No Homebrew installation required for iOS apps
+- **zstd-kmp** (`com.squareup.zstd:zstd-kmp:0.4.0`): Zstandard decompression for Data Lake
 
 ## Implemented Features
 
@@ -572,6 +576,51 @@ The `demo` directory demonstrates **comprehensive SDK usage** with a Compose Mul
 - ✅ Support for all Soroban types
 - ✅ Address, symbol, bytes, numbers, vectors, maps
 - ✅ Type validation and error handling
+
+### Data Lake (`com.soneso.stellar.sdk.datalake`)
+
+Historical ledger data access via AWS S3 (mainnet) and Stellargate (testnet), following SEP-54 standard.
+
+#### DataLakeClient
+- ✅ Factory methods: `mainnet()`, `testnet()`, `custom(url)`
+- ✅ Schema discovery from `.config.json`
+- ✅ SEP-54 path calculation (reversed hex tokens)
+- ✅ Single ledger fetching: `fetchLedgerBatch(ledgerSequence)`
+- ✅ Range fetching with Flow: `fetchLedgerRange(range)`
+- ✅ Transaction querying: `queryTransactions(range, filter)`
+- ✅ Event querying: `queryEvents(range, filter)`
+- ✅ Retry logic with exponential backoff
+- ✅ Concurrent download limiting (Semaphore)
+- ✅ Schema caching
+- ✅ Optional LRU caching: `InMemoryDataLakeCache`
+
+#### Caching
+- ✅ `DataLakeCache` interface with `get()`, `put()`, `remove()`, `clear()`
+- ✅ `InMemoryDataLakeCache` LRU implementation with configurable size
+- ✅ Thread-safe via Mutex
+- ✅ Cache keys normalized to batch start sequence
+- ✅ Automatic removal of corrupted cache entries
+
+#### Filters
+- ✅ TransactionFilter: byContract, byAccount, operationType, includeFailedTransactions
+- ✅ EventFilter: byContract, byTopic, eventType (CONTRACT, SYSTEM, DIAGNOSTIC)
+
+#### Cross-Platform Zstd Decompression
+- ✅ JVM: zstd-jni with streaming fallback for frames without content size
+- ✅ Native: Square's zstd-kmp with streaming API
+- ✅ JS: fflate npm package
+- ✅ 100 MB safety limit on all platforms
+
+#### XDR Support
+- ✅ LedgerCloseMetaBatch parsing
+- ✅ All LedgerCloseMeta versions (V0, V1, V2)
+- ✅ Transaction extraction from TransactionSet and GeneralizedTransactionSet
+- ✅ ParallelTxsComponent extraction (Protocol 20+)
+- ✅ Soroban event extraction from SorobanTransactionMeta
+
+#### Data Lake URLs
+- **Mainnet**: `https://aws-public-blockchain.s3.us-east-2.amazonaws.com/v1.1/stellar/ledgers/pubnet/`
+- **Testnet**: `https://datalake-testnet.stellargate.com/ledgers/`
 
 ## Testing
 

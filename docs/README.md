@@ -18,6 +18,7 @@ Welcome to the documentation for the Stellar SDK for Kotlin Multiplatform. This 
 
 ### Advanced Topics
 - **[Advanced Topics](advanced.md)** - Complex patterns and optimizations
+- **[Data Lake Access](datalake.md)** - Query historical ledger data
 - **[Testing Guide](testing.md)** - SDK testing (for contributors)
 
 ### Protocols & Standards
@@ -73,6 +74,12 @@ This SDK provides an implementation of the Stellar protocol with:
 - State restoration
 - Transaction simulation
 - Result parsing with type safety
+
+### Data Lake
+- Historical ledger data access (beyond RPC retention)
+- Transaction and event querying with filters
+- Cross-platform Zstd decompression
+- AWS (mainnet) and Stellargate (testnet) support
 
 ### Security Features
 - Production-ready crypto libraries

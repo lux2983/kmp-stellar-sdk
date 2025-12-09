@@ -176,7 +176,17 @@ package com.soneso.stellar.sdk.xdr
  *     // Cost of performing BN254 pairing operation
  *     Bn254Pairing = 78,
  *     // Cost of converting a BN254 scalar element from U256
- *     Bn254FrFromU256 = 79
+ *     Bn254FrFromU256 = 79,
+ *     // Cost of converting a BN254 scalar element to U256
+ *     Bn254FrToU256 = 80,
+ *     // // Cost of performing BN254 scalar element addition/subtraction
+ *     Bn254FrAddSub = 81,
+ *     // Cost of performing BN254 scalar element multiplication
+ *     Bn254FrMul = 82,
+ *     // Cost of performing BN254 scalar element exponentiation
+ *     Bn254FrPow = 83,
+ *      // Cost of performing BN254 scalar element inversion
+ *     Bn254FrInv = 84
  * };
  */
 enum class ContractCostTypeXdr(val value: Int) {
@@ -355,7 +365,17 @@ enum class ContractCostTypeXdr(val value: Int) {
   /** Cost of performing BN254 pairing operation */
   Bn254Pairing(78),
   /** Cost of converting a BN254 scalar element from U256 */
-  Bn254FrFromU256(79);
+  Bn254FrFromU256(79),
+  /** Cost of converting a BN254 scalar element to U256 */
+  Bn254FrToU256(80),
+  /** // Cost of performing BN254 scalar element addition/subtraction */
+  Bn254FrAddSub(81),
+  /** Cost of performing BN254 scalar element multiplication */
+  Bn254FrMul(82),
+  /** Cost of performing BN254 scalar element exponentiation */
+  Bn254FrPow(83),
+  /** Cost of performing BN254 scalar element inversion */
+  Bn254FrInv(84);
 
   companion object {
 

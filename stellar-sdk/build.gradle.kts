@@ -144,6 +144,8 @@ kotlin {
                 implementation("io.ktor:ktor-client-cio:3.3.2")
                 implementation("org.bouncycastle:bcprov-jdk18on:1.78")
                 implementation("commons-codec:commons-codec:1.16.1")
+                // Zstandard decompression for Data Lake
+                implementation("com.github.luben:zstd-jni:1.5.7-6")
             }
         }
 
@@ -163,6 +165,8 @@ kotlin {
                 // The sumo build includes all functions including crypto_hash_sha256
                 // which is needed for SHA-256 hashing (used in contract deployment)
                 implementation(npm("libsodium-wrappers-sumo", "0.7.13"))
+                // Zstandard decompression for Data Lake
+                implementation(npm("fflate", "0.8.2"))
             }
         }
 
@@ -174,6 +178,11 @@ kotlin {
 
         val nativeMain by creating {
             dependsOn(commonMain)
+
+            dependencies {
+                // Zstandard decompression for Data Lake (Square's zstd-kmp)
+                implementation("com.squareup.zstd:zstd-kmp:0.4.0")
+            }
 
             // Using libsodium for all native platforms
             kotlin.srcDir("src/nativeMain/kotlin")

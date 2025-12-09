@@ -16,11 +16,9 @@ end
 # Files to exclude from generation
 # Note: Stellar-SCP.x CANNOT be excluded as it's referenced by Stellar-ledger.x (LedgerSCPMessages uses SCPEnvelope)
 # Only excluding files with truly internal types not needed for SDK usage:
-# - Stellar-exporter.x: LedgerCloseMetaBatch (batch export format)
 # - Stellar-internal.x: StoredTransactionSet, PersistedSCPState (Core internal storage)
 # - Stellar-overlay.x: Network protocol messages (Hello, Auth, PeerAddress, etc.)
 excluded_files = [
-  'Stellar-exporter.x',
   'Stellar-internal.x',
   'Stellar-overlay.x'
 ]
