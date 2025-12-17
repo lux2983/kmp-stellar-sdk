@@ -55,8 +55,8 @@ allprojects {
 }
 ```
 
-**Source code**:
-- `stellar-sdk/src/commonMain/kotlin/com/soneso/stellar/sdk/Util.kt` - `getSdkVersion()` return value
+**Source code** (IMPORTANT - must match version in build.gradle.kts):
+- `stellar-sdk/src/commonMain/kotlin/com/soneso/stellar/sdk/Util.kt` - Update `getSdkVersion()` return value
 
 **Documentation and compatibility files** (update all version references):
 - `README.md` - badge and dependency

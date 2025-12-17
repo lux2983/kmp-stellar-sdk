@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-12-17
+
+### Added
+- **SEP-38 (Anchor RFQ API)**: Production-ready client for anchor price quotes and exchange rate discovery
+  - `QuoteService` class with five API endpoints:
+    - `info()` - Discover supported assets and delivery methods
+    - `prices()` - Get all available exchange prices for an asset
+    - `price()` - Get indicative price for a specific asset pair
+    - `postQuote()` - Request a firm quote with guaranteed rate
+    - `getQuote()` - Retrieve an existing quote by ID
+  - 12 data model classes for requests and responses:
+    - `Sep38InfoResponse`, `Sep38PricesResponse`, `Sep38PriceResponse`
+    - `Sep38QuoteRequest`, `Sep38QuoteResponse`
+    - `Sep38Asset`, `Sep38BuyAsset`, `Sep38SellAsset`
+    - `Sep38DeliveryMethod`, `Sep38Fee`, `Sep38FeeDetail`
+  - 5 exception types for error handling:
+    - `Sep38BadRequestException` - Invalid request parameters (400)
+    - `Sep38PermissionDeniedException` - Authentication failure (403)
+    - `Sep38NotFoundException` - Quote not found (404)
+    - `Sep38UnknownResponseException` - Unexpected response codes
+    - `Sep38Exception` - Base exception for general errors
+  - SEP-10 JWT authentication for firm quotes
+  - Service discovery via stellar.toml (ANCHOR_QUOTE_SERVER)
+  - Support for multiple asset identification formats (stellar, iso4217, etc.)
+  - Context-aware quoting for SEP-6, SEP-24, and SEP-31 integrations
+  - Delivery method filtering for buy/sell operations
+  - Detailed fee breakdowns with individual fee components
+  - 48 unit tests + 9 integration tests against live testnet
+  - Documentation in `docs/sep/sep-38.md` with usage examples
+  - SEP-38 compatibility matrix showing 100% API coverage (63/63 fields)
+
+### Documentation
+- Added SEP-38 Anchor RFQ API guide with price discovery and firm quote examples
+- Added SEP-0038 compatibility matrix
+
 ## [0.6.0] - 2025-12-09
 
 ### Added

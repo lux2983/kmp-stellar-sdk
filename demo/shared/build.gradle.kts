@@ -59,7 +59,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "shared"
             isStatic = true
-            // Export stellar-sdk for iOS (demo app uses project dependency)
+            // Export stellar-sdk for iOS
             export(project(":stellar-sdk"))
         }
     }
@@ -71,7 +71,7 @@ kotlin {
         macosTarget.binaries.framework {
             baseName = "shared"
             isStatic = true
-            // Export stellar-sdk for macOS (demo app uses project dependency)
+            // Export stellar-sdk for macOS
             export(project(":stellar-sdk"))
         }
     }
@@ -113,7 +113,7 @@ kotlin {
                 api(project(":stellar-sdk"))
 
                 // Users consuming from Maven should use:
-                // api("com.soneso.stellar:stellar-sdk:0.6.0")
+                // api("com.soneso.stellar:stellar-sdk:0.7.0")
 
                 // ============================================================
                 // Coroutines

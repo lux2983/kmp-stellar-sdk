@@ -1,8 +1,8 @@
 # Horizon API vs KMP Stellar SDK Compatibility Matrix
 
-**Generated:** 2025-12-09 11:51:39
+**Generated:** 2025-12-17 13:55:08
 
-**SDK Version:** 0.6.0
+**SDK Version:** 0.7.0
 
 **Horizon Endpoints Discovered:** 52
 **Public API Endpoints (in matrix):** 50
