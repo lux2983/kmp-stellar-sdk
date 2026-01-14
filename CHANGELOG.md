@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-01-14
+
+### Added
+- **SEP-24 (Hosted Deposit and Withdrawal)**: Production-ready client for interactive anchor transfers
+  - `Sep24Service` class with seven API endpoints:
+    - `info()` - Discover anchor capabilities and supported assets
+    - `deposit()` - Initiate interactive deposit flow
+    - `withdraw()` - Initiate interactive withdrawal flow
+    - `fee()` - Query deposit/withdrawal fees (deprecated endpoint)
+    - `transactions()` - Retrieve transaction history
+    - `transaction()` - Get single transaction details
+    - `pollTransaction()` - Poll transaction until terminal status with configurable intervals
+  - 5 request data classes:
+    - `Sep24DepositRequest`, `Sep24WithdrawRequest`
+    - `Sep24FeeRequest`, `Sep24TransactionsRequest`, `Sep24TransactionRequest`
+  - 13 response/data classes:
+    - `Sep24InfoResponse`, `Sep24AssetInfo`, `Sep24FeeEndpointInfo`, `Sep24Features`
+    - `Sep24InteractiveResponse`, `Sep24FeeResponse`
+    - `Sep24TransactionResponse`, `Sep24TransactionsResponse`, `Sep24Transaction`
+    - `Sep24FeeDetails`, `Sep24FeeDetail`, `Sep24Refunds`, `Sep24RefundPayment`
+  - `Sep24TransactionStatus` enum with 16 statuses including terminal states
+  - 5 exception types for error handling:
+    - `Sep24AuthenticationRequiredException` - JWT token required (403)
+    - `Sep24InvalidRequestException` - Invalid request parameters (400)
+    - `Sep24ServerErrorException` - Server-side errors (500+)
+    - `Sep24TransactionNotFoundException` - Transaction not found (404)
+    - `Sep24Exception` - Base exception for general errors
+  - SEP-10 JWT authentication for all endpoints
+  - SEP-38 quote integration for cross-asset transfers
+  - Support for KYC fields (SEP-9) in deposit/withdraw requests
+  - Transaction polling with callbacks for status changes
+  - Claimable balance support for deposits
+  - Refund tracking with payment breakdowns
+  - 38 unit tests + 9 integration tests against live testnet
+  - Documentation in `docs/sep/sep-24.md` with usage examples
+  - SEP-24 compatibility matrix showing 100% API coverage (128/128 fields)
+
+### Documentation
+- Added SEP-24 Hosted Deposit and Withdrawal guide
+- Added SEP-0024 compatibility matrix
+- Updated SEP README with SEP-24 entry
+
 ## [0.7.0] - 2025-12-17
 
 ### Added

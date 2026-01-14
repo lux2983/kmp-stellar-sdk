@@ -1,6 +1,6 @@
 # Horizon API vs KMP Stellar SDK Compatibility Matrix
 
-**Generated:** 2025-12-17 13:55:08
+**Generated:** 2026-01-14 16:21:08
 
 **SDK Version:** 0.7.0
 

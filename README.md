@@ -1,6 +1,6 @@
 # Stellar SDK for Kotlin Multiplatform
 
-[![Version](https://img.shields.io/badge/version-0.7.0-blue)](https://github.com/Soneso/kmp-stellar-sdk/releases)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue)](https://github.com/Soneso/kmp-stellar-sdk/releases)
 [![Kotlin Multiplatform](https://img.shields.io/badge/Kotlin-Multiplatform-blueviolet?logo=kotlin)](https://kotlinlang.org/docs/multiplatform.html)
 [![Maven Central](https://img.shields.io/maven-central/v/com.soneso.stellar/stellar-sdk)](https://search.maven.org/artifact/com.soneso.stellar/stellar-sdk)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Soneso/kmp-stellar-sdk)
@@ -72,7 +72,7 @@ Add the SDK as a Maven dependency (recommended for most projects):
 ```kotlin
 // In your module's build.gradle.kts
 dependencies {
-    implementation("com.soneso.stellar:stellar-sdk:0.7.0")
+    implementation("com.soneso.stellar:stellar-sdk:0.8.0")
 }
 ```
 
