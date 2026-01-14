@@ -55,8 +55,11 @@ This SDK provides an implementation of the Stellar protocol with:
 
 ### SEP Support
 - SEP-1 (Stellar TOML) - Domain discovery and service configuration
+- SEP-9 (Standard KYC Fields) - Standardized customer data fields
 - SEP-10 (Web Authentication) - Secure challenge-response authentication
-- More SEP implementations coming soon
+- SEP-12 (KYC API) - Customer information management
+- SEP-24 (Hosted Deposit/Withdrawal) - Interactive anchor transfers
+- SEP-38 (Anchor RFQ API) - Quote service for asset exchanges
 
 ### Soroban RPC API
 - Transaction simulation and resource estimation

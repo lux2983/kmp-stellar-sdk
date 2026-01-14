@@ -63,7 +63,7 @@ The SDK provides comprehensive Stellar functionality:
 - **Soroban RPC Client** - Transaction simulation, event queries, ledger data, contract deployment and invocation
 - **Contract Deployment** - One-step deploy() or two-step install/deployFromWasmId for WASM reuse
 - **Authorization** - Automatic and custom auth handling with signature verification
-- **SEP Support** - SEP-1 (stellar.toml), SEP-9/12 (KYC), SEP-10 (Web Authentication)
+- **SEP Support** - SEP-1 (stellar.toml), SEP-9/12 (KYC), SEP-10 (Web Authentication), SEP-24 (Hosted Deposit/Withdrawal), SEP-38 (Anchor RFQ)
 
 ## Installation
 
