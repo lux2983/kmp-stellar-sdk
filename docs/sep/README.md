@@ -11,10 +11,11 @@ Stellar Ecosystem Proposals (SEPs) are standards that define how services, appli
 | SEP | Title | Documentation |
 |-----|-------|---------------|
 | SEP-1 | Stellar TOML | [sep-01.md](sep-01.md) |
+| SEP-6 | Programmatic Deposit and Withdrawal | [sep-06-transfer-service.md](sep-06-transfer-service.md) |
 | SEP-9 | Standard KYC Fields | [sep-09.md](sep-09.md) |
 | SEP-10 | Web Authentication | [sep-10.md](sep-10.md) |
 | SEP-12 | KYC API | [sep-12.md](sep-12.md) |
-| SEP-24 | Hosted Deposit and Withdrawal | [sep-24.md](sep-24.md) |
+| SEP-24 | Interactive Deposit and Withdrawal | [sep-24.md](sep-24.md) |
 | SEP-38 | Anchor RFQ API | [sep-38.md](sep-38.md) |
 
 ## Compatibility Matrices
@@ -24,6 +25,7 @@ Detailed field-by-field coverage for each SEP implementation:
 | SEP | Coverage | Matrix |
 |-----|----------|--------|
 | SEP-1 | 100% (71/71 fields) | [SEP-0001 Compatibility Matrix](../../compatibility/sep/SEP-0001_COMPATIBILITY_MATRIX.md) |
+| SEP-6 | 100% (95/95 fields) | [SEP-0006 Compatibility Matrix](../../compatibility/sep/SEP-0006_COMPATIBILITY_MATRIX.md) |
 | SEP-9 | 100% (76/76 fields) | [SEP-0009 Compatibility Matrix](../../compatibility/sep/SEP-0009_COMPATIBILITY_MATRIX.md) |
 | SEP-10 | 100% (31/31 features) | [SEP-0010 Compatibility Matrix](../../compatibility/sep/SEP-0010_COMPATIBILITY_MATRIX.md) |
 | SEP-12 | 100% (28/28 fields) | [SEP-0012 Compatibility Matrix](../../compatibility/sep/SEP-0012_COMPATIBILITY_MATRIX.md) |
@@ -36,8 +38,7 @@ Additional SEP implementations will be documented here as they are added to the 
 
 **Planned SEPs**:
 - SEP-5: Key Derivation Methods for Stellar Accounts
-- SEP-6: Deposit and Withdrawal API
 
 ---
 
-**Last Updated**: 2026-01-12
+**Last Updated**: 2026-01-14

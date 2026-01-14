@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-01-14
+
+### Added
+- **SEP-6 (Deposit and Withdrawal API)**: Production-ready client for programmatic anchor transfers
+  - `Sep06Service` class with nine API endpoints:
+    - `info()` - Discover anchor capabilities and supported assets
+    - `deposit()` - Initiate programmatic deposit
+    - `depositExchange()` - Deposit with SEP-38 asset conversion
+    - `withdraw()` - Initiate programmatic withdrawal
+    - `withdrawExchange()` - Withdrawal with SEP-38 asset conversion
+    - `fee()` - Query deposit/withdrawal fees (deprecated endpoint)
+    - `transactions()` - Retrieve transaction history with pagination
+    - `transaction()` - Get single transaction by ID
+    - `patchTransaction()` - Update transaction with additional info
+  - 8 request data classes:
+    - `Sep06DepositRequest`, `Sep06DepositExchangeRequest`
+    - `Sep06WithdrawRequest`, `Sep06WithdrawExchangeRequest`
+    - `Sep06TransactionsRequest`, `Sep06TransactionRequest`
+    - `Sep06FeeRequest`, `Sep06PatchTransactionRequest`
+  - 23 response/data classes including:
+    - `Sep06InfoResponse`, `Sep06DepositResponse`, `Sep06WithdrawResponse`
+    - `Sep06Transaction` with all 35 SEP-6 fields
+    - `Sep06FeeDetails`, `Sep06Refunds`, `Sep06FeatureFlags`
+  - `Sep06TransactionStatus` enum with 17 statuses and helper methods (`isTerminal()`, `isError()`, `isPending()`)
+  - `Sep06TransactionKind` enum with 4 kinds and helper methods (`isDeposit()`, `isWithdrawal()`, `isExchange()`)
+  - 7 exception types for error handling:
+    - `Sep06AuthenticationRequiredException` - JWT token required (403)
+    - `Sep06CustomerInformationNeededException` - SEP-12 KYC required (403)
+    - `Sep06CustomerInformationStatusException` - KYC pending/denied (403)
+    - `Sep06InvalidRequestException` - Invalid request parameters (400)
+    - `Sep06TransactionNotFoundException` - Transaction not found (404)
+    - `Sep06ServerErrorException` - Server-side errors (500+)
+    - `Sep06Exception` - Base exception for general errors
+  - SEP-10 JWT authentication for all endpoints
+  - SEP-38 quote integration for exchange operations
+  - SEP-12 KYC integration via customer info exceptions
+  - Claimable balance support for deposits
+  - Callback notification support via `onChangeCallback` parameter
+  - Refund tracking with payment breakdowns
+  - 93 unit tests + 12 integration tests against live testnet
+  - Documentation in `docs/sep/sep-06-transfer-service.md` with usage examples
+  - SEP-6 compatibility matrix showing 100% API coverage (95/95 fields)
+
+### Documentation
+- Added SEP-6 Deposit and Withdrawal API guide
+- Added SEP-0006 compatibility matrix
+- Updated README and CLAUDE.md with SEP-6 support
+
 ## [0.8.0] - 2026-01-14
 
 ### Added

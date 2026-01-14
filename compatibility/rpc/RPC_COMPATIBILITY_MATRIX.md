@@ -2,7 +2,7 @@
 
 **Generated:** 2026-01-14 16:21:12
 
-**SDK Version:** 0.8.0
+**SDK Version:** 0.9.0
 
 ## Overall Coverage
 
