@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-01-15
+
+### Added
+- **SEP-45 (Web Authentication for Contract Accounts)**: Production-ready client for authenticating Soroban smart contract accounts
+  - `WebAuthForContracts` class with challenge-response authentication flow:
+    - `fromDomain()` - Initialize from stellar.toml SEP-45 configuration
+    - `jwtToken()` - Complete authentication flow and receive JWT token
+    - `getChallenge()` - Request authorization entries from server
+    - `validateChallenge()` - Validate server challenge (13 security checks)
+    - `signAuthorizationEntries()` - Sign entries with keypair(s)
+    - `sendSignedChallenge()` - Submit signed entries for JWT
+    - `decodeAuthorizationEntries()` / `encodeAuthorizationEntries()` - XDR utilities
+  - `Sep45AuthToken` class with JWT parsing and claim extraction:
+    - Extracts `account`, `issuedAt`, `expiresAt`, `issuer`, `clientDomain`
+    - `isExpired()` method for token validation
+  - `Sep45ClientDomainSigningDelegate` interface for remote signing:
+    - String-based API (base64 XDR) optimized for HTTP remote signing
+  - `Sep45ChallengeResponse` and `Sep45TokenResponse` data classes
+  - 22 exception types with sealed hierarchy:
+    - `Sep45Exception` base class
+    - `Sep45ChallengeValidationException` sealed class with 12 specific validation exceptions
+    - Request/response exceptions for HTTP errors
+  - 13 security validation checks matching SEP-45 specification
+  - Server signature verification using authorization preimage hash
+  - Multi-signature support for contract authentication
+  - Client domain verification with remote signing delegate
+  - 161 unit tests + 2 integration tests against live testnet
+  - Documentation in `docs/sep/sep-45.md` with usage examples
+  - SEP-45 compatibility matrix showing 100% feature coverage (35/35 features)
+
+### Documentation
+- Added SEP-45 Web Authentication for Contract Accounts guide
+- Added SEP-0045 compatibility matrix
+- Updated README and CLAUDE.md with SEP-45 support
+- Updated SEP README with SEP-45 entry
+
 ## [0.9.0] - 2026-01-14
 
 ### Added

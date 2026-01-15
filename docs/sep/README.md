@@ -17,6 +17,7 @@ Stellar Ecosystem Proposals (SEPs) are standards that define how services, appli
 | SEP-12 | KYC API | [sep-12.md](sep-12.md) |
 | SEP-24 | Interactive Deposit and Withdrawal | [sep-24.md](sep-24.md) |
 | SEP-38 | Anchor RFQ API | [sep-38.md](sep-38.md) |
+| SEP-45 | Web Authentication for Contract Accounts | [sep-45.md](sep-45.md) |
 
 ## Compatibility Matrices
 
@@ -31,6 +32,7 @@ Detailed field-by-field coverage for each SEP implementation:
 | SEP-12 | 100% (28/28 fields) | [SEP-0012 Compatibility Matrix](../../compatibility/sep/SEP-0012_COMPATIBILITY_MATRIX.md) |
 | SEP-24 | 100% (128/128 fields) | [SEP-0024 Compatibility Matrix](../../compatibility/sep/SEP-0024_COMPATIBILITY_MATRIX.md) |
 | SEP-38 | 100% (63/63 fields) | [SEP-0038 Compatibility Matrix](../../compatibility/sep/SEP-0038_COMPATIBILITY_MATRIX.md) |
+| SEP-45 | 100% (35/35 features) | [SEP-0045 Compatibility Matrix](../../compatibility/sep/SEP-0045_COMPATIBILITY_MATRIX.md) |
 
 ## Future SEP Implementations
 

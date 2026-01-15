@@ -20,10 +20,10 @@ object Util {
      * Note: Currently hardcoded to match the version in build.gradle.kts.
      * In future versions, this could be generated at build time from gradle.properties.
      *
-     * @return The SDK version string (e.g., "0.9.0")
+     * @return The SDK version string (e.g., "1.0.0")
      */
     fun getSdkVersion(): String {
-        return "0.9.0"
+        return "1.0.0"
     }
 
     /**

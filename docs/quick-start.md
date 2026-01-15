@@ -16,7 +16,7 @@ Add the SDK to your Gradle project:
 ```kotlin
 // In your module's build.gradle.kts
 dependencies {
-    implementation("com.soneso.stellar:stellar-sdk:0.9.0")
+    implementation("com.soneso.stellar:stellar-sdk:1.0.0")
 }
 ```
 

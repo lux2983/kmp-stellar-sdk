@@ -4,7 +4,7 @@
 
 **SEP Version:** 1.15.0<br>
 **SEP Status:** Active<br>
-**SDK Version:** 0.9.0<br>
+**SDK Version:** 1.0.0<br>
 **SEP URL:** https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0012.md
 
 ## SEP Summary
