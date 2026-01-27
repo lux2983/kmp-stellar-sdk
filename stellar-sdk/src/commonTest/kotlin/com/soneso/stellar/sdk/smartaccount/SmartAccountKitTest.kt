@@ -1566,6 +1566,243 @@ class SmartAccountKitTest {
         assertEquals(0, countConnectedAfter)
         assertEquals(0, countDisconnectedAfter)
     }
+
+    // MARK: - Fix 1: fundWallet with relayer support
+
+    @Test
+    fun testFundWallet_checkRelayerInKit() = runTest {
+        val configWithRelayer = createTestConfig(relayerUrl = "https://relayer.example.com")
+        val kitWithRelayer = OZSmartAccountKit.create(configWithRelayer)
+        assertNotNull(kitWithRelayer.relayerClient)
+
+        val configWithoutRelayer = createTestConfig(relayerUrl = null)
+        val kitWithoutRelayer = OZSmartAccountKit.create(configWithoutRelayer)
+        assertNull(kitWithoutRelayer.relayerClient)
+    }
+
+    @Test
+    fun testFundWallet_requiresWalletConnected() = runTest {
+        val config = createTestConfig()
+        val kit = OZSmartAccountKit.create(config)
+
+        assertFailsWith<WalletException.NotConnected> {
+            kit.transactionOperations.fundWallet(nativeTokenContract = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC")
+        }
+    }
+
+    @Test
+    fun testFundWallet_validateNativeTokenContractFormat() = runTest {
+        val config = createTestConfig()
+        val kit = OZSmartAccountKit.create(config)
+
+        kit.setConnectedState("test-credential", "CBCD1234" + "A".repeat(48))
+
+        assertFailsWith<ValidationException.InvalidAddress> {
+            kit.transactionOperations.fundWallet(nativeTokenContract = "")
+        }
+
+        assertFailsWith<ValidationException.InvalidAddress> {
+            kit.transactionOperations.fundWallet(nativeTokenContract = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF")
+        }
+    }
+
+    // MARK: - Fix 2: Conditional deployer signing
+
+    @Test
+    fun testSubmit_conditionalSigningLogicRelayerPresence() = runTest {
+        val configWithoutRelayer = createTestConfig()
+        val kitWithoutRelayer = OZSmartAccountKit.create(configWithoutRelayer)
+        assertNull(kitWithoutRelayer.relayerClient)
+
+        val configWithRelayer = createTestConfig(relayerUrl = "https://relayer.example.com")
+        val kitWithRelayer = OZSmartAccountKit.create(configWithRelayer)
+        assertNotNull(kitWithRelayer.relayerClient)
+    }
+
+    @Test
+    fun testSubmit_withRelayerConfigured() = runTest {
+        val config = createTestConfig(relayerUrl = "https://relayer.example.com")
+        val kit = OZSmartAccountKit.create(config)
+
+        assertNotNull(kit.relayerClient)
+        assertEquals("https://relayer.example.com", config.relayerUrl)
+    }
+
+    @Test
+    fun testSubmit_withoutRelayerConfigured() = runTest {
+        val config = createTestConfig(relayerUrl = null)
+        val kit = OZSmartAccountKit.create(config)
+
+        assertNull(kit.relayerClient)
+        assertNull(config.relayerUrl)
+    }
+
+    // MARK: - Fix 3: createWallet with autoFund
+
+    @Test
+    fun testCreateWallet_autoFundWithoutNativeTokenContract_throws() = runTest {
+        val mockProvider = MockWebAuthnProvider()
+        val deployer = KeyPair.random()
+        val config = createTestConfig(webauthnProvider = mockProvider, deployer = deployer)
+        val kit = OZSmartAccountKit.create(config)
+
+        assertFailsWith<SmartAccountException> {
+            kit.walletOperations.createWallet(
+                userName = "Test User",
+                autoSubmit = true,
+                autoFund = true,
+                nativeTokenContract = null
+            )
+        }
+    }
+
+    @Test
+    fun testCreateWallet_autoFundRequiresAutoSubmit() = runTest {
+        val mockProvider = MockWebAuthnProvider()
+        val config = createTestConfig(webauthnProvider = mockProvider)
+        val kit = OZSmartAccountKit.create(config)
+
+        val result = kit.walletOperations.createWallet(
+            userName = "Test User",
+            autoSubmit = false,
+            autoFund = false,
+            nativeTokenContract = null
+        )
+
+        assertNotNull(result)
+        assertNull(result.transactionHash)
+    }
+
+    @Test
+    fun testCreateWallet_signatureWithAutoFundParameters() = runTest {
+        val mockProvider = MockWebAuthnProvider()
+        val config = createTestConfig(webauthnProvider = mockProvider)
+        val kit = OZSmartAccountKit.create(config)
+
+        val result = kit.walletOperations.createWallet(
+            userName = "Test User",
+            autoSubmit = false,
+            autoFund = false,
+            nativeTokenContract = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
+        )
+
+        assertNotNull(result)
+        assertNotNull(result.credentialId)
+        assertNotNull(result.contractId)
+        assertNotNull(result.publicKey)
+    }
+
+    @Test
+    fun testCreateWallet_autoFundParameterAccepted() = runTest {
+        val mockProvider = MockWebAuthnProvider()
+        val config = createTestConfig(webauthnProvider = mockProvider)
+        val kit = OZSmartAccountKit.create(config)
+
+        val result = kit.walletOperations.createWallet(
+            userName = "Test User",
+            autoSubmit = false,
+            autoFund = false
+        )
+
+        assertNotNull(result)
+    }
+
+    // MARK: - Fix 4: connectWallet with options
+
+    @Test
+    fun testConnectWalletOptions_defaultValues() = runTest {
+        val options = OZWalletOperations.ConnectWalletOptions()
+        assertNull(options.credentialId)
+        assertNull(options.contractId)
+        assertFalse(options.fresh)
+    }
+
+    @Test
+    fun testConnectWalletOptions_withCredentialId() = runTest {
+        val options = OZWalletOperations.ConnectWalletOptions(credentialId = "test-credential")
+        assertEquals("test-credential", options.credentialId)
+        assertNull(options.contractId)
+        assertFalse(options.fresh)
+    }
+
+    @Test
+    fun testConnectWalletOptions_withFresh() = runTest {
+        val options = OZWalletOperations.ConnectWalletOptions(fresh = true)
+        assertNull(options.credentialId)
+        assertNull(options.contractId)
+        assertTrue(options.fresh)
+    }
+
+    @Test
+    fun testConnectWalletOptions_withContractId() = runTest {
+        val options = OZWalletOperations.ConnectWalletOptions(
+            credentialId = "test-credential",
+            contractId = "CBCD1234" + "A".repeat(48)
+        )
+        assertEquals("test-credential", options.credentialId)
+        assertEquals("CBCD1234" + "A".repeat(48), options.contractId)
+        assertFalse(options.fresh)
+    }
+
+    @Test
+    fun testConnectWallet_contractIdRequiresCredentialId() = runTest {
+        val config = createTestConfig()
+        val kit = OZSmartAccountKit.create(config)
+
+        assertFailsWith<ValidationException.InvalidInput> {
+            kit.walletOperations.connectWallet(
+                options = OZWalletOperations.ConnectWalletOptions(
+                    contractId = "CBCD1234" + "A".repeat(48)
+                )
+            )
+        }
+    }
+
+    @Test
+    fun testConnectWallet_withOptionsAcceptsParameter() = runTest {
+        val mockProvider = MockWebAuthnProvider()
+        val config = createTestConfig(webauthnProvider = mockProvider)
+        val storage = InMemoryStorageAdapter()
+        val kit = OZSmartAccountKit.create(config, storage = storage)
+
+        val session = StoredSession(
+            credentialId = "test-credential-1",
+            contractId = "CBCD1234" + "A".repeat(48),
+            connectedAt = kotlin.time.Clock.System.now().toEpochMilliseconds(),
+            expiresAt = kotlin.time.Clock.System.now().toEpochMilliseconds() + 60000
+        )
+        storage.saveSession(session)
+
+        val result = kit.walletOperations.connectWallet(
+            options = OZWalletOperations.ConnectWalletOptions()
+        )
+
+        assertNotNull(result)
+        assertEquals("test-credential-1", result.credentialId)
+        assertTrue(result.restoredFromSession)
+    }
+
+    @Test
+    fun testConnectWallet_freshOptionSkipsSession() = runTest {
+        val mockProvider = MockWebAuthnProvider()
+        val config = createTestConfig(webauthnProvider = mockProvider)
+        val storage = InMemoryStorageAdapter()
+        val kit = OZSmartAccountKit.create(config, storage = storage)
+
+        val session = StoredSession(
+            credentialId = "test-credential-1",
+            contractId = "CBCD1234" + "A".repeat(48),
+            connectedAt = kotlin.time.Clock.System.now().toEpochMilliseconds(),
+            expiresAt = kotlin.time.Clock.System.now().toEpochMilliseconds() + 60000
+        )
+        storage.saveSession(session)
+
+        assertFailsWith<WalletException.NotFound> {
+            kit.walletOperations.connectWallet(
+                options = OZWalletOperations.ConnectWalletOptions(fresh = true)
+            )
+        }
+    }
 }
 
 // MARK: - Mock WebAuthn Provider

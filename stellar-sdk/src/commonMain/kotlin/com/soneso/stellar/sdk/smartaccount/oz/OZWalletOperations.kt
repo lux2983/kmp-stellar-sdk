@@ -181,17 +181,32 @@ class OZWalletOperations internal constructor(
      * 4. Derive deterministic contract address from credential ID
      * 5. Save credential as pending in storage
      * 6. Build deploy transaction (if autoSubmit, submit and delete credential on success)
-     * 7. Return result
+     * 7. Fund wallet if autoFund is enabled
+     * 8. Return result
+     *
+     * ## Auto-Fund Feature
+     *
+     * When `autoFund = true`, the wallet is automatically funded after deployment using
+     * Friendbot (testnet only). This is useful for onboarding flows where users need
+     * immediate access to a funded wallet.
+     *
+     * Requirements for autoFund:
+     * - `autoSubmit` must be true (wallet must be deployed first)
+     * - `nativeTokenContract` must be provided (the native token contract address)
+     * - Must be on testnet (Friendbot is testnet-only)
+     * - Relayer may be used for fee sponsoring if configured
      *
      * IMPORTANT: Requires a WebAuthnProvider to be configured in the kit config.
      * Throws WEBAUTHN_NOT_SUPPORTED if no provider is configured.
      *
      * @param userName Display name for the user (default: "Smart Account User")
      * @param autoSubmit Whether to automatically submit the deploy transaction (default: false)
+     * @param autoFund Whether to automatically fund the wallet after deployment (default: false)
+     * @param nativeTokenContract Contract address for the native token (required if autoFund is true)
      * @return CreateWalletResult containing credential ID, contract address, and transaction hash
      * @throws WebAuthnException if WebAuthn registration fails or no provider configured
-     * @throws ValidationException if public key extraction fails
-     * @throws TransactionException if deployment fails
+     * @throws ValidationException if public key extraction fails or nativeTokenContract is missing when autoFund is true
+     * @throws TransactionException if deployment or funding fails
      *
      * Example:
      * ```kotlin
@@ -203,11 +218,24 @@ class OZWalletOperations internal constructor(
      * // Create and deploy immediately
      * val deployedWallet = walletOps.createWallet(userName = "Bob", autoSubmit = true)
      * println("Deployed at: ${deployedWallet.transactionHash ?: "unknown"}")
+     *
+     * // Create, deploy, and fund with native token (testnet)
+     * val fundedWallet = walletOps.createWallet(
+     *     userName = "Charlie",
+     *     autoSubmit = true,
+     *     autoFund = true,
+     *     nativeTokenContract = "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
+     * )
+     * println("Funded wallet at: ${fundedWallet.contractId}")
      * ```
+     *
+     * @see OZTransactionOperations.fundWallet for manual funding after deployment
      */
     suspend fun createWallet(
         userName: String = "Smart Account User",
-        autoSubmit: Boolean = false
+        autoSubmit: Boolean = false,
+        autoFund: Boolean = false,
+        nativeTokenContract: String? = null
     ): CreateWalletResult {
         // STEP 1: Check for WebAuthn provider
         val webauthnProvider = kit.config.webauthnProvider
@@ -307,6 +335,16 @@ class OZWalletOperations internal constructor(
                     )
                 )
 
+                // Fund wallet if requested
+                if (autoFund) {
+                    val tokenContract = nativeTokenContract
+                        ?: throw ValidationException.invalidInput(
+                            "nativeTokenContract",
+                            "nativeTokenContract is required when autoFund is true"
+                        )
+                    kit.transactionOperations.fundWallet(nativeTokenContract = tokenContract)
+                }
+
                 // Delete credential on successful deployment
                 try {
                     credentialManager.deleteCredential(credentialId = credentialIdBase64url)
@@ -344,6 +382,59 @@ class OZWalletOperations internal constructor(
     // MARK: - Connect Wallet
 
     /**
+     * Options for connecting to a wallet.
+     *
+     * These options control how wallet connection is performed, allowing for different
+     * connection flows based on your application's needs.
+     *
+     * ## Option Patterns
+     *
+     * **Session Restoration (default)**
+     * ```kotlin
+     * // Uses saved session if valid, otherwise prompts for WebAuthn
+     * connectWallet(ConnectWalletOptions())
+     * ```
+     *
+     * **Direct Connection with Known Credentials**
+     * ```kotlin
+     * // Connect to specific contract using known credential ID
+     * connectWallet(ConnectWalletOptions(
+     *     credentialId = "abc123...",
+     *     contractId = "CABC..."
+     * ))
+     * ```
+     *
+     * **Force Fresh Authentication**
+     * ```kotlin
+     * // Require WebAuthn authentication even if session exists
+     * connectWallet(ConnectWalletOptions(fresh = true))
+     * ```
+     *
+     * **Credential-Only Connection**
+     * ```kotlin
+     * // Provide credential ID, look up contract from storage/indexer
+     * connectWallet(ConnectWalletOptions(credentialId = "abc123..."))
+     * ```
+     *
+     * @property credentialId Connect directly using this credential ID (Base64URL-encoded).
+     *                        When provided alone, contract address is looked up from storage,
+     *                        indexer, or derived from deployer. Skips WebAuthn authentication.
+     *
+     * @property contractId Connect directly to this contract address (C-address).
+     *                      Must be used with credentialId. Cannot be used alone.
+     *                      Useful when you already know both the credential and contract.
+     *
+     * @property fresh Force fresh WebAuthn authentication, skipping session restore.
+     *                 Use this to require re-authentication even if a valid session exists.
+     *                 Useful for sensitive operations or after session timeout warnings.
+     */
+    data class ConnectWalletOptions(
+        val credentialId: String? = null,
+        val contractId: String? = null,
+        val fresh: Boolean = false
+    )
+
+    /**
      * Connects to an existing smart account wallet.
      *
      * Attempts to connect to a wallet by:
@@ -368,12 +459,51 @@ class OZWalletOperations internal constructor(
      * 8. Set kit connected state
      * 9. Return result
      *
+     * ## Connection Options
+     *
+     * Use `ConnectWalletOptions` to customize the connection flow:
+     *
+     * **Session Restoration (default)**
+     * ```kotlin
+     * val result = walletOps.connectWallet()
+     * // Silently reconnects if session is valid, otherwise prompts WebAuthn
+     * ```
+     *
+     * **Direct Connection**
+     * ```kotlin
+     * val result = walletOps.connectWallet(
+     *     ConnectWalletOptions(
+     *         credentialId = "abc123...",
+     *         contractId = "CABC..."
+     *     )
+     * )
+     * // Connects directly without WebAuthn or session check
+     * ```
+     *
+     * **Force Fresh Authentication**
+     * ```kotlin
+     * val result = walletOps.connectWallet(
+     *     ConnectWalletOptions(fresh = true)
+     * )
+     * // Always prompts WebAuthn, ignoring any saved session
+     * ```
+     *
+     * **Credential Lookup**
+     * ```kotlin
+     * val result = walletOps.connectWallet(
+     *     ConnectWalletOptions(credentialId = "abc123...")
+     * )
+     * // Uses credential ID, looks up contract from storage/indexer/derivation
+     * ```
+     *
      * IMPORTANT: Requires a WebAuthnProvider to be configured in the kit config
      * for non-session reconnection.
      *
+     * @param options Connection options controlling the flow behavior
      * @return ConnectWalletResult containing credential ID, contract ID, and session flag
      * @throws WebAuthnException if authentication fails or no provider configured
      * @throws WalletException if wallet not found
+     * @throws ValidationException if options are invalid (e.g., contractId without credentialId)
      *
      * Example:
      * ```kotlin
@@ -393,55 +523,69 @@ class OZWalletOperations internal constructor(
      *     }
      * }
      * ```
+     *
+     * @see ConnectWalletOptions for detailed option descriptions and use cases
      */
-    suspend fun connectWallet(): ConnectWalletResult {
-        // STEP 1: Check for valid session
-        val session = try {
-            kit.getStorage().getSession()
-        } catch (e: Exception) {
-            null
-        }
-
-        if (session != null && !session.isExpired) {
-            // Valid session exists - silently reconnect
-            kit.setConnectedState(
-                credentialId = session.credentialId,
-                contractId = session.contractId
-            )
-
-            // Emit wallet connected event
-            kit.events.emit(
-                SmartAccountEvent.WalletConnected(
-                    contractId = session.contractId,
-                    credentialId = session.credentialId
-                )
-            )
-
-            return ConnectWalletResult(
-                credentialId = session.credentialId,
-                contractId = session.contractId,
-                restoredFromSession = true
+    suspend fun connectWallet(
+        options: ConnectWalletOptions = ConnectWalletOptions()
+    ): ConnectWalletResult {
+        // STEP 1: If credentialId or contractId provided, connect directly
+        if (options.credentialId != null || options.contractId != null) {
+            return connectWithCredentials(
+                credentialId = options.credentialId,
+                contractId = options.contractId
             )
         }
 
-        // STEP 2: If expired session, delete silently
-        if (session != null && session.isExpired) {
-            // Emit session expired event
-            kit.events.emit(
-                SmartAccountEvent.SessionExpired(
-                    contractId = session.contractId,
-                    credentialId = session.credentialId
-                )
-            )
-
-            try {
-                kit.getStorage().clearSession()
+        // STEP 2: If fresh = false, check for valid session
+        if (!options.fresh) {
+            val session = try {
+                kit.getStorage().getSession()
             } catch (e: Exception) {
-                // Non-critical - continue
+                null
+            }
+
+            if (session != null && !session.isExpired) {
+                // Valid session exists - silently reconnect
+                kit.setConnectedState(
+                    credentialId = session.credentialId,
+                    contractId = session.contractId
+                )
+
+                // Emit wallet connected event
+                kit.events.emit(
+                    SmartAccountEvent.WalletConnected(
+                        contractId = session.contractId,
+                        credentialId = session.credentialId
+                    )
+                )
+
+                return ConnectWalletResult(
+                    credentialId = session.credentialId,
+                    contractId = session.contractId,
+                    restoredFromSession = true
+                )
+            }
+
+            // If expired session, delete silently
+            if (session != null && session.isExpired) {
+                // Emit session expired event
+                kit.events.emit(
+                    SmartAccountEvent.SessionExpired(
+                        contractId = session.contractId,
+                        credentialId = session.credentialId
+                    )
+                )
+
+                try {
+                    kit.getStorage().clearSession()
+                } catch (e: Exception) {
+                    // Non-critical - continue
+                }
             }
         }
 
-        // STEP 3: No valid session - require WebAuthn authentication
+        // STEP 3: No valid session or fresh = true - require WebAuthn authentication
         val webauthnProvider = kit.config.webauthnProvider
             ?: throw WebAuthnException.notSupported(
                 "No WebAuthnProvider configured. Set webauthnProvider in config before calling connectWallet()."
@@ -721,6 +865,169 @@ class OZWalletOperations internal constructor(
             credentialId = credentialIdBase64url,
             signature = webAuthnSignature,
             publicKey = publicKey
+        )
+    }
+
+
+    /**
+     * Connects to a wallet using explicit credential ID and contract ID.
+     *
+     * This is a helper function used by connectWallet when credentialId
+     * or contractId options are provided. It skips session restoration
+     * and WebAuthn authentication, directly connecting to the specified
+     * credential/contract.
+     *
+     * Flow:
+     * 1. If credentialId provided, look up contract ID from storage or derive it
+     * 2. If contractId provided without credentialId, throw validation error
+     * 3. Verify contract exists on-chain
+     * 4. Save new session
+     * 5. Set kit connected state
+     * 6. Return result
+     *
+     * @param credentialId The credential ID (Base64URL-encoded), optional
+     * @param contractId The contract ID (C-address), optional
+     * @return ConnectWalletResult with restoredFromSession = false
+     * @throws ValidationException if contractId provided without credentialId
+     * @throws WalletException if wallet not found or contract doesn't exist
+     */
+    private suspend fun connectWithCredentials(
+        credentialId: String?,
+        contractId: String?
+    ): ConnectWalletResult {
+        // Validate: contractId requires credentialId
+        if (contractId != null && credentialId == null) {
+            throw ValidationException.invalidInput(
+                "contractId",
+                "contractId option requires credentialId to be provided"
+            )
+        }
+
+        var finalCredentialId = credentialId
+        var finalContractId = contractId
+
+        // If credentialId provided, look up contract ID if not provided
+        if (finalCredentialId != null) {
+            // Look up in storage first
+            if (finalContractId == null) {
+                try {
+                    val storedCredential = credentialManager.getCredential(credentialId = finalCredentialId)
+                    if (storedCredential != null) {
+                        finalContractId = storedCredential.contractId
+                    }
+                } catch (e: Exception) {
+                    // Storage lookup failed - continue to indexer
+                }
+            }
+
+            // If not found, try indexer
+            if (finalContractId == null) {
+                val indexer = kit.indexerClient
+                if (indexer != null) {
+                    try {
+                        val lookupResponse = indexer.lookupByCredentialId(finalCredentialId)
+                        if (lookupResponse.contracts.isNotEmpty()) {
+                            finalContractId = lookupResponse.contracts.first().contractId
+                        }
+                    } catch (e: Exception) {
+                        // Indexer lookup failed - continue to derivation
+                    }
+                }
+            }
+
+            // If still not found, derive contract address
+            if (finalContractId == null) {
+                val deployer = kit.getDeployer()
+
+                // Decode Base64URL credential ID to raw bytes
+                val credentialIdBytes = SmartAccountSharedUtils.base64urlDecode(finalCredentialId)
+                    ?: throw ValidationException.invalidInput(
+                        "credentialId",
+                        "Invalid Base64URL-encoded credential ID"
+                    )
+
+                finalContractId = try {
+                    SmartAccountUtils.deriveContractAddress(
+                        credentialId = credentialIdBytes,
+                        deployerPublicKey = deployer.getAccountId(),
+                        networkPassphrase = kit.config.networkPassphrase
+                    )
+                } catch (e: Exception) {
+                    throw WalletException.notFound(
+                        "Failed to derive contract address: ${e.message}"
+                    )
+                }
+            }
+        }
+
+        // At this point, we must have both credentialId and contractId
+        if (finalCredentialId == null || finalContractId == null) {
+            throw WalletException.notFound(
+                "Could not determine credential ID or contract ID"
+            )
+        }
+
+        // Verify contract exists on-chain
+        val contractAddress = try {
+            Address(finalContractId).toSCAddress()
+        } catch (e: Exception) {
+            throw WalletException.notFound(
+                "Invalid contract address: $finalContractId"
+            )
+        }
+
+        val verifyArgs = InvokeContractArgsXdr(
+            contractAddress = contractAddress,
+            functionName = SCSymbolXdr("get_context_rules_count"),
+            args = emptyList()
+        )
+        val verifyFunction = HostFunctionXdr.InvokeContract(verifyArgs)
+
+        try {
+            SmartAccountSharedUtils.simulateAndExtractResult(
+                hostFunction = verifyFunction,
+                kit = kit
+            )
+        } catch (e: Exception) {
+            throw WalletException.notFound(
+                "Contract not found at address: $finalContractId. The wallet may not be deployed yet."
+            )
+        }
+
+        // Save new session
+        val expiresAt = System.currentTimeMillis() + kit.config.sessionExpiryMs
+        val newSession = StoredSession(
+            credentialId = finalCredentialId,
+            contractId = finalContractId,
+            connectedAt = System.currentTimeMillis(),
+            expiresAt = expiresAt
+        )
+
+        try {
+            kit.getStorage().saveSession(session = newSession)
+        } catch (e: Exception) {
+            // Session save failed - not critical, continue
+        }
+
+        // Set kit connected state
+        kit.setConnectedState(
+            credentialId = finalCredentialId,
+            contractId = finalContractId
+        )
+
+        // Emit wallet connected event
+        kit.events.emit(
+            SmartAccountEvent.WalletConnected(
+                contractId = finalContractId,
+                credentialId = finalCredentialId
+            )
+        )
+
+        // Return result
+        return ConnectWalletResult(
+            credentialId = finalCredentialId,
+            contractId = finalContractId,
+            restoredFromSession = false
         )
     }
 

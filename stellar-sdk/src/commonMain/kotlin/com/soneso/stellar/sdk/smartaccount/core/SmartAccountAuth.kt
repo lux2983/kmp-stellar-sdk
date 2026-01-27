@@ -136,6 +136,67 @@ object SmartAccountAuth {
         return getSha256Crypto().hash(encodedPreimage)
     }
 
+    /**
+     * Builds the authorization payload hash for source_account credentials.
+     *
+     * This is used when converting source_account credentials to Address credentials,
+     * typically for relayer fee sponsoring. The payload is constructed similarly to
+     * buildAuthPayloadHash but uses the provided nonce and expiration since there are
+     * no existing credentials yet.
+     *
+     * The payload is constructed as:
+     * ```
+     * HashIdPreimage::SorobanAuthorization {
+     *   networkId: SHA256(networkPassphrase as UTF-8),
+     *   nonce: provided nonce,
+     *   signatureExpirationLedger: expirationLedger,
+     *   invocation: entry.rootInvocation
+     * }
+     * hash = SHA256(XDR_encode(payload))
+     * ```
+     *
+     * @param entry The authorization entry with source_account credentials
+     * @param nonce The nonce to use for the new Address credentials
+     * @param expirationLedger The ledger number at which the signature expires
+     * @param networkPassphrase The network passphrase
+     * @return The 32-byte SHA-256 hash of the authorization payload
+     * @throws TransactionException.SigningFailed if XDR encoding fails
+     */
+    suspend fun buildSourceAccountAuthPayloadHash(
+        entry: SorobanAuthorizationEntryXdr,
+        nonce: Int64Xdr,
+        expirationLedger: UInt,
+        networkPassphrase: String
+    ): ByteArray {
+        // Step 1: Compute network ID (SHA-256 of network passphrase)
+        val networkId = getSha256Crypto().hash(networkPassphrase.encodeToByteArray())
+
+        // Step 2: Build HashIDPreimage::SorobanAuthorization
+        val authPreimage = HashIDPreimageSorobanAuthorizationXdr(
+            networkId = HashXdr(networkId),
+            nonce = nonce,
+            signatureExpirationLedger = Uint32Xdr(expirationLedger),
+            invocation = entry.rootInvocation
+        )
+
+        val preimage = HashIDPreimageXdr.SorobanAuthorization(authPreimage)
+
+        // Step 3: XDR encode the preimage
+        val encodedPreimage: ByteArray = try {
+            val writer = XdrWriter()
+            preimage.encode(writer)
+            writer.toByteArray()
+        } catch (e: Exception) {
+            throw TransactionException.signingFailed(
+                "Failed to XDR encode source account auth payload preimage",
+                e
+            )
+        }
+
+        // Step 4: Hash the encoded preimage
+        return getSha256Crypto().hash(encodedPreimage)
+    }
+
     // MARK: - Entry Signing
 
     /**

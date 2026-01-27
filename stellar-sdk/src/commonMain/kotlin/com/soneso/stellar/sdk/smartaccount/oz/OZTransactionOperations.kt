@@ -22,12 +22,14 @@ import com.soneso.stellar.sdk.xdr.HostFunctionXdr
 import com.soneso.stellar.sdk.xdr.Int64Xdr
 import com.soneso.stellar.sdk.xdr.InvokeContractArgsXdr
 import com.soneso.stellar.sdk.xdr.SCAddressXdr
+import com.soneso.stellar.sdk.xdr.SCMapEntryXdr
 import com.soneso.stellar.sdk.xdr.SCSymbolXdr
 import com.soneso.stellar.sdk.xdr.SCValXdr
 import com.soneso.stellar.sdk.xdr.SorobanAuthorizationEntryXdr
 import com.soneso.stellar.sdk.xdr.SorobanCredentialsXdr
 import com.soneso.stellar.sdk.xdr.Uint64Xdr
 import com.soneso.stellar.sdk.xdr.Uint32Xdr
+import com.soneso.stellar.sdk.scval.Scv
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -82,6 +84,20 @@ data class TransactionResult(
  * - Transaction polling and confirmation
  * - Testnet wallet funding via Friendbot
  *
+ * ## Fee Sponsoring
+ *
+ * When `kit.relayerClient` is configured, transactions can be fee-sponsored by the relayer.
+ * Two modes are used depending on authorization entry types:
+ *
+ * - **Mode 1 (Host Function + Auth)**: Used when no source_account auth exists.
+ *   Sends host function and signed auth entries. Transaction is not signed by source account.
+ *
+ * - **Mode 2 (Signed Transaction XDR)**: Used when source_account auth exists.
+ *   Sends fully signed transaction XDR. Required for operations that need source account signature.
+ *
+ * The mode is automatically selected based on the presence of source_account (Void) credentials
+ * in the authorization entries.
+ *
  * This class works in tandem with OZSmartAccountKit and should be accessed via
  * the kit instance rather than instantiated directly.
  *
@@ -102,6 +118,9 @@ data class TransactionResult(
  * val fundedAmount = txOps.fundWallet(nativeTokenContract = nativeTokenAddress)
  * println("Funded with $fundedAmount XLM")
  * ```
+ *
+ * @see submit for fee sponsoring mode selection logic
+ * @see fundWallet for testnet funding with relayer support
  */
 class OZTransactionOperations internal constructor(
     private val kit: OZSmartAccountKit
@@ -320,9 +339,27 @@ class OZTransactionOperations internal constructor(
      * 7. Update transaction with signed auth entries
      * 8. Re-simulate to get correct resource fees
      * 9. Assemble transaction from re-simulation
-     * 10. Sign envelope with deployer keypair
+     * 10. Conditionally sign envelope with deployer keypair
      * 11. Determine submission mode (relayer vs RPC)
      * 12. Submit and poll for confirmation
+     *
+     * ## Fee Sponsoring and Deployer Signing
+     *
+     * The transaction is signed by the deployer keypair in these cases:
+     * - When no relayer is configured (always sign for direct RPC submission)
+     * - When using relayer Mode 2 (has source_account auth entries)
+     *
+     * The transaction is NOT signed when using relayer Mode 1 (no source_account auth).
+     * This allows the relayer to wrap the host function with its own channel account
+     * for fee sponsoring.
+     *
+     * ## Relayer Mode Selection
+     *
+     * - **Mode 1**: Used when auth entries contain only Address credentials.
+     *   Submits host function + signed auth entries via `relayerClient.send()`.
+     *
+     * - **Mode 2**: Used when any auth entry has source_account (Void) credentials.
+     *   Submits fully signed transaction XDR via `relayerClient.sendXdr()`.
      *
      * IMPORTANT: This method requires WebAuthn interaction to sign auth entries.
      * The user will be prompted for biometric authentication for each auth entry
@@ -332,6 +369,8 @@ class OZTransactionOperations internal constructor(
      * @param auth Authorization entries for the transaction (typically empty; simulation provides them)
      * @return TransactionResult indicating success or failure
      * @throws SmartAccountException if submission, simulation, signing, or polling fails
+     *
+     * @see shouldUseRelayerMode2 for mode selection logic
      */
     suspend fun submit(
         hostFunction: HostFunctionXdr,
@@ -501,8 +540,14 @@ class OZTransactionOperations internal constructor(
             .setSorobanData(transactionData)
             .build()
 
-        // STEP 12: Sign envelope with deployer keypair
-        finalTransaction.sign(deployer)
+        // STEP 12: Conditionally sign with deployer keypair
+        // Only sign when NOT using fee sponsoring OR when has source_account auth
+        val shouldUseFeeSponsoring = kit.relayerClient != null
+        val hasSourceAuth = shouldUseRelayerMode2(signedAuthEntries)
+
+        if (!shouldUseFeeSponsoring || hasSourceAuth) {
+            finalTransaction.sign(deployer)
+        }
 
         // STEP 13: Determine submission method using SIGNED auth entries (not original input)
         return if (kit.relayerClient != null) {
@@ -646,8 +691,8 @@ class OZTransactionOperations internal constructor(
      * Funds the smart account wallet using Friendbot (testnet only).
      *
      * Creates a temporary keypair, funds it via Friendbot, then transfers the balance
-     * (minus reserve) to the smart account contract. This enables testing without
-     * requiring pre-funded wallets.
+     * (minus reserve) to the smart account contract. Supports relayer fee sponsoring
+     * by converting source_account auth entries to Address credentials.
      *
      * Flow:
      * 1. Generate random temporary keypair
@@ -656,8 +701,29 @@ class OZTransactionOperations internal constructor(
      * 4. Query temp account balance via native token contract simulation
      * 5. Calculate transfer amount (balance - reserve)
      * 6. Build transfer from temp to smart account
-     * 7. Simulate, sign with temp keypair, submit via RPC
-     * 8. Return funded amount in XLM
+     * 7. Simulate to get auth entries
+     * 8. Convert source_account auth entries to Address credentials (for relayer)
+     * 9. Sign auth entries with temp keypair
+     * 10. Re-simulate with signed auth entries
+     * 11. Decide fee sponsoring mode and submit
+     * 12. Return funded amount in XLM
+     *
+     * ## Fee Sponsoring
+     *
+     * When `kit.relayerClient` is configured:
+     * - **Mode 1**: Used when no source_account auth exists after conversion.
+     *   Sends host function + signed auth entries without signing the transaction envelope.
+     *
+     * - **Mode 2**: Used when source_account auth still exists (not converted).
+     *   Sends fully signed transaction XDR with temp keypair signature.
+     *
+     * When no relayer is configured, submits directly via RPC with temp keypair signature.
+     *
+     * ## Source Account Auth Conversion
+     *
+     * The funding flow converts source_account (Void) credentials to Address credentials
+     * with a generated nonce. This allows the relayer to substitute its own channel accounts
+     * for fee sponsoring, enabling zero-balance smart accounts to receive their first funds.
      *
      * IMPORTANT: Only works on testnet. Do not use on mainnet.
      *
@@ -667,11 +733,21 @@ class OZTransactionOperations internal constructor(
      *
      * Example:
      * ```kotlin
+     * // Fund wallet (uses relayer if configured)
      * val fundedAmount = txOps.fundWallet(
      *     nativeTokenContract = "CBCD1234..."
      * )
-     * println("Funded smart account with $fundedAmount XLM")
+     * println("Funded $fundedAmount XLM")
+     *
+     * // Fund wallet with direct RPC submission (no relayer)
+     * val kit = OZSmartAccountKit.create(
+     *     config = config.copy(relayerClient = null)
+     * )
+     * val amount = kit.transactionOperations.fundWallet(nativeTokenContract)
+     * println("Funded directly: $amount XLM")
      * ```
+     *
+     * @see convertAndSignAuthEntries for source_account to Address credential conversion
      */
     suspend fun fundWallet(nativeTokenContract: String): Double {
         val (_, contractId) = kit.requireConnected()
@@ -752,7 +828,7 @@ class OZTransactionOperations internal constructor(
         val hostFunction = HostFunctionXdr.InvokeContract(invokeArgs)
         val operation = InvokeHostFunctionOperation(hostFunction, emptyList())
 
-        // STEP 7: Simulate
+        // STEP 7: Simulate to get auth entries
         val transaction = TransactionBuilder(tempAccount, Network(kit.config.networkPassphrase))
             .setBaseFee(100)
             .addOperation(operation)
@@ -767,22 +843,52 @@ class OZTransactionOperations internal constructor(
         }
 
         // Extract auth entries from simulation
-        val decodedAuth = simulation.results?.firstOrNull()?.parseAuth() ?: emptyList()
+        val simulatedAuthEntries = simulation.results?.firstOrNull()?.parseAuth() ?: emptyList()
 
-        // Assemble transaction from simulation
-        val transactionData = simulation.parseTransactionData()
+        // STEP 8: Convert source_account auth entries to Address credentials
+        // This allows the Relayer to use its own channel accounts for fee sponsoring
+        val latestLedger = kit.sorobanServer.getLatestLedger()
+        val expirationLedger = latestLedger.sequence.toUInt() + SmartAccountConstants.AUTH_ENTRY_EXPIRATION_BUFFER.toUInt()
+
+        val signedAuthEntries = convertAndSignAuthEntries(
+            authEntries = simulatedAuthEntries,
+            tempKeypair = tempKeypair,
+            expirationLedger = expirationLedger
+        )
+
+        // STEP 9: Refresh temp account for re-simulation
+        val tempAccountRefresh = kit.sorobanServer.getAccount(tempKeypair.getAccountId())
+
+        // Build transaction with signed auth entries
+        val signedOperation = InvokeHostFunctionOperation(hostFunction, signedAuthEntries)
+        val signedTransaction = TransactionBuilder(tempAccountRefresh, Network(kit.config.networkPassphrase))
+            .setBaseFee(100)
+            .addOperation(signedOperation)
+            .addMemo(MemoNone)
+            .setTimeout(300)
+            .build()
+
+        // STEP 10: Re-simulate with signed auth entries to get correct resource estimates
+        val reSimulation = kit.sorobanServer.simulateTransaction(signedTransaction)
+
+        if (reSimulation.error != null) {
+            throw TransactionException.simulationFailed("Re-simulation error: ${reSimulation.error}")
+        }
+
+        // Assemble transaction from re-simulation
+        val transactionData = reSimulation.parseTransactionData()
             ?: throw TransactionException.submissionFailed(
-                "Failed to get transaction data from simulation"
+                "Failed to get transaction data from re-simulation"
             )
 
-        val minResourceFee = simulation.minResourceFee
+        val minResourceFee = reSimulation.minResourceFee
             ?: throw TransactionException.submissionFailed(
-                "Failed to get min resource fee from simulation"
+                "Failed to get min resource fee from re-simulation"
             )
 
-        // Rebuild transaction with auth entries and Soroban data
-        val finalOperation = InvokeHostFunctionOperation(hostFunction, decodedAuth)
-        val finalTransaction = TransactionBuilder(tempAccount, Network(kit.config.networkPassphrase))
+        // Rebuild transaction with signed auth entries and Soroban data
+        val finalOperation = InvokeHostFunctionOperation(hostFunction, signedAuthEntries)
+        val finalTransaction = TransactionBuilder(tempAccountRefresh, Network(kit.config.networkPassphrase))
             .setBaseFee(100 + minResourceFee)
             .addOperation(finalOperation)
             .addMemo(MemoNone)
@@ -790,17 +896,55 @@ class OZTransactionOperations internal constructor(
             .setSorobanData(transactionData)
             .build()
 
-        // Sign with temp keypair
-        finalTransaction.sign(tempKeypair)
+        // STEP 11: Determine submission method
+        val shouldUseFeeSponsoring = kit.relayerClient != null
+        val hasSourceAuth = shouldUseRelayerMode2(signedAuthEntries)
 
-        // Submit via RPC
-        val sendResult = kit.sorobanServer.sendTransaction(finalTransaction)
+        // Sign with temp keypair only if NOT using fee sponsoring OR has source auth (Mode 2)
+        if (!shouldUseFeeSponsoring || hasSourceAuth) {
+            finalTransaction.sign(tempKeypair)
+        }
 
-        val hash = sendResult.hash
-            ?: throw TransactionException.submissionFailed("Failed to send funding transaction: ${sendResult.errorResultXdr ?: "unknown error"}")
+        // STEP 12: Submit transaction
+        val result = if (shouldUseFeeSponsoring) {
+            // Use relayer submission
+            if (hasSourceAuth) {
+                // Mode 2: Submit signed transaction XDR
+                val txXdr = finalTransaction.toEnvelopeXdr()
+                val relayerResponse = kit.relayerClient!!.sendXdr(txXdr)
 
-        // Poll for confirmation
-        val result = pollForConfirmation(hash)
+                if (relayerResponse.success && relayerResponse.hash != null) {
+                    pollForConfirmation(relayerResponse.hash)
+                } else {
+                    TransactionResult(
+                        success = false,
+                        error = relayerResponse.error ?: "Relayer submission failed"
+                    )
+                }
+            } else {
+                // Mode 1: Submit host function and signed auth entries
+                val relayerResponse = kit.relayerClient!!.send(hostFunction, signedAuthEntries)
+
+                if (relayerResponse.success && relayerResponse.hash != null) {
+                    pollForConfirmation(relayerResponse.hash)
+                } else {
+                    TransactionResult(
+                        success = false,
+                        error = relayerResponse.error ?: "Relayer submission failed"
+                    )
+                }
+            }
+        } else {
+            // Submit via RPC
+            val sendResult = kit.sorobanServer.sendTransaction(finalTransaction)
+
+            val hash = sendResult.hash
+                ?: throw TransactionException.submissionFailed(
+                    "Failed to send funding transaction: ${sendResult.errorResultXdr ?: "unknown error"}"
+                )
+
+            pollForConfirmation(hash)
+        }
 
         if (!result.success) {
             throw TransactionException.submissionFailed(
@@ -808,11 +952,128 @@ class OZTransactionOperations internal constructor(
             )
         }
 
-        // STEP 8: Return funded amount in XLM
+        // STEP 13: Return funded amount in XLM
         return transferStroops.toDouble() / SmartAccountConstants.STROOPS_PER_XLM
     }
 
     // MARK: - Private Helpers
+
+    /**
+     * Converts source_account auth entries to Address credentials and signs them.
+     *
+     * For source_account credentials (Void type), this creates new Address credentials
+     * with a nonce and signature. This allows the Relayer to use its own channel accounts
+     * for fee sponsoring. For Address credentials, signs them with the provided keypair.
+     *
+     * @param authEntries The authorization entries to convert and sign
+     * @param tempKeypair The keypair to use for signing
+     * @param expirationLedger The ledger number at which signatures expire
+     * @return List of signed authorization entries with Address credentials
+     */
+    private suspend fun convertAndSignAuthEntries(
+        authEntries: List<SorobanAuthorizationEntryXdr>,
+        tempKeypair: KeyPair,
+        expirationLedger: UInt
+    ): List<SorobanAuthorizationEntryXdr> {
+        return authEntries.map { entry ->
+            val credType = entry.credentials
+
+            // For source_account credentials, convert to Address credentials
+            if (credType is SorobanCredentialsXdr.Void) {
+                // Generate a nonce for the new Address credential
+                val nonce = Int64Xdr(System.currentTimeMillis())
+
+                // Build auth payload hash
+                val payloadHash = SmartAccountAuth.buildSourceAccountAuthPayloadHash(
+                    entry = entry,
+                    nonce = nonce,
+                    expirationLedger = expirationLedger,
+                    networkPassphrase = kit.config.networkPassphrase
+                )
+
+                // Sign with temp keypair
+                val signature = tempKeypair.sign(payloadHash)
+
+                // Build signature map (public_key -> signature)
+                val publicKeyEntry = SCMapEntryXdr(
+                    key = Scv.toSymbol("public_key"),
+                    `val` = Scv.toBytes(tempKeypair.getPublicKey())
+                )
+                val signatureEntry = SCMapEntryXdr(
+                    key = Scv.toSymbol("signature"),
+                    `val` = Scv.toBytes(signature)
+                )
+
+                // Create signature map and vec
+                val signatureMap = com.soneso.stellar.sdk.xdr.SCMapXdr(listOf(publicKeyEntry, signatureEntry))
+                val signatureVec = com.soneso.stellar.sdk.xdr.SCVecXdr(listOf(
+                    com.soneso.stellar.sdk.xdr.SCValXdr.Map(signatureMap)
+                ))
+
+                // Create new Address credentials entry to replace source_account
+                val addressCredentials = com.soneso.stellar.sdk.xdr.SorobanAddressCredentialsXdr(
+                    address = SCAddressXdr.AccountId(tempKeypair.getXdrAccountId()),
+                    nonce = nonce,
+                    signatureExpirationLedger = Uint32Xdr(expirationLedger),
+                    signature = com.soneso.stellar.sdk.xdr.SCValXdr.Vec(signatureVec)
+                )
+
+                SorobanAuthorizationEntryXdr(
+                    credentials = SorobanCredentialsXdr.Address(addressCredentials),
+                    rootInvocation = entry.rootInvocation
+                )
+            } else if (credType is SorobanCredentialsXdr.Address) {
+                // For Address credentials, sign them
+                // Clone the entry to avoid mutating the original
+                val entryBytes = com.soneso.stellar.sdk.xdr.XdrWriter().also { entry.encode(it) }.toByteArray()
+                val entryCopy = SorobanAuthorizationEntryXdr.decode(com.soneso.stellar.sdk.xdr.XdrReader(entryBytes))
+
+                val credentials = (entryCopy.credentials as SorobanCredentialsXdr.Address).value
+
+                // Build auth payload hash
+                val payloadHash = SmartAccountAuth.buildAuthPayloadHash(
+                    entry = entryCopy,
+                    expirationLedger = expirationLedger,
+                    networkPassphrase = kit.config.networkPassphrase
+                )
+
+                // Sign with temp keypair
+                val signature = tempKeypair.sign(payloadHash)
+
+                // Build signature map
+                val publicKeyEntry = SCMapEntryXdr(
+                    key = Scv.toSymbol("public_key"),
+                    `val` = Scv.toBytes(tempKeypair.getPublicKey())
+                )
+                val signatureEntry = SCMapEntryXdr(
+                    key = Scv.toSymbol("signature"),
+                    `val` = Scv.toBytes(signature)
+                )
+
+                // Create signature map and vec
+                val signatureMap = com.soneso.stellar.sdk.xdr.SCMapXdr(listOf(publicKeyEntry, signatureEntry))
+                val signatureVec = com.soneso.stellar.sdk.xdr.SCVecXdr(listOf(
+                    com.soneso.stellar.sdk.xdr.SCValXdr.Map(signatureMap)
+                ))
+
+                // Create new credentials with updated signature
+                val updatedCredentials = com.soneso.stellar.sdk.xdr.SorobanAddressCredentialsXdr(
+                    address = credentials.address,
+                    nonce = credentials.nonce,
+                    signatureExpirationLedger = Uint32Xdr(expirationLedger),
+                    signature = com.soneso.stellar.sdk.xdr.SCValXdr.Vec(signatureVec)
+                )
+
+                SorobanAuthorizationEntryXdr(
+                    credentials = SorobanCredentialsXdr.Address(updatedCredentials),
+                    rootInvocation = entryCopy.rootInvocation
+                )
+            } else {
+                // Unknown credential type - pass through unchanged
+                entry
+            }
+        }
+    }
 
     /**
      * Determines if relayer Mode 2 should be used based on auth entries.
