@@ -243,6 +243,13 @@ class OZWalletOperations internal constructor(
                 "No WebAuthnProvider configured. Set webauthnProvider in config before calling createWallet()."
             )
 
+        // STEP 1b: Validate autoFund requirements early (before WebAuthn/network)
+        if (autoFund && nativeTokenContract == null) {
+            throw ValidationException.InvalidInput(
+                "nativeTokenContract is required when autoFund is true"
+            )
+        }
+
         // STEP 2: Generate random challenge (32 bytes) and user ID (32 bytes)
         val crypto = getEd25519Crypto()
         val challengeData = crypto.generatePrivateKey() // Reuse for 32 secure random bytes

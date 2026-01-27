@@ -1646,7 +1646,7 @@ class SmartAccountKitTest {
         val config = createTestConfig(webauthnProvider = mockProvider, deployer = deployer)
         val kit = OZSmartAccountKit.create(config)
 
-        assertFailsWith<SmartAccountException> {
+        val exception = assertFailsWith<ValidationException.InvalidInput> {
             kit.walletOperations.createWallet(
                 userName = "Test User",
                 autoSubmit = true,
@@ -1654,6 +1654,8 @@ class SmartAccountKitTest {
                 nativeTokenContract = null
             )
         }
+        assertTrue(exception.message.contains("nativeTokenContract"),
+            "Exception message should contain 'nativeTokenContract', but was: ${exception.message}")
     }
 
     @Test
