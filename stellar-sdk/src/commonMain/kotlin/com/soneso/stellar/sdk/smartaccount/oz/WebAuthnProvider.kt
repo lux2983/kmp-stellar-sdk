@@ -1,0 +1,190 @@
+//
+//  WebAuthnProvider.kt
+//  Stellar SDK Kotlin Multiplatform
+//
+//  Created by Claude on 27.01.26.
+//  Copyright © 2026 Soneso. All rights reserved.
+//
+
+package com.soneso.stellar.sdk.smartaccount.oz
+import com.soneso.stellar.sdk.smartaccount.core.*
+
+/**
+ * WebAuthn authentication result from a passkey ceremony.
+ *
+ * Contains the complete attestation data required to verify biometric or
+ * security key authentication.
+ *
+ * @property credentialId The WebAuthn credential identifier (raw bytes)
+ * @property authenticatorData Raw authenticator data from the WebAuthn ceremony
+ * @property clientDataJSON Client data JSON from the WebAuthn ceremony
+ * @property signature ECDSA signature in DER format (will be normalized to compact format)
+ */
+data class WebAuthnAuthenticationResult(
+    val credentialId: ByteArray,
+    val authenticatorData: ByteArray,
+    val clientDataJSON: ByteArray,
+    val signature: ByteArray
+) {
+    /**
+     * Custom equals implementation that properly compares ByteArray fields.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as WebAuthnAuthenticationResult
+
+        if (!credentialId.contentEquals(other.credentialId)) return false
+        if (!authenticatorData.contentEquals(other.authenticatorData)) return false
+        if (!clientDataJSON.contentEquals(other.clientDataJSON)) return false
+        if (!signature.contentEquals(other.signature)) return false
+
+        return true
+    }
+
+    /**
+     * Custom hashCode implementation that properly handles ByteArray fields.
+     */
+    override fun hashCode(): Int {
+        var result = credentialId.contentHashCode()
+        result = 31 * result + authenticatorData.contentHashCode()
+        result = 31 * result + clientDataJSON.contentHashCode()
+        result = 31 * result + signature.contentHashCode()
+        return result
+    }
+}
+
+/**
+ * WebAuthn registration result from a passkey creation ceremony.
+ *
+ * Contains the public key and credential information needed to deploy
+ * a smart account contract.
+ *
+ * @property credentialId The WebAuthn credential identifier (raw bytes)
+ * @property publicKey Uncompressed secp256r1 public key (65 bytes, starting with 0x04)
+ * @property attestationObject Raw attestation object from WebAuthn registration
+ */
+data class WebAuthnRegistrationResult(
+    val credentialId: ByteArray,
+    val publicKey: ByteArray,
+    val attestationObject: ByteArray
+) {
+    /**
+     * Custom equals implementation that properly compares ByteArray fields.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as WebAuthnRegistrationResult
+
+        if (!credentialId.contentEquals(other.credentialId)) return false
+        if (!publicKey.contentEquals(other.publicKey)) return false
+        if (!attestationObject.contentEquals(other.attestationObject)) return false
+
+        return true
+    }
+
+    /**
+     * Custom hashCode implementation that properly handles ByteArray fields.
+     */
+    override fun hashCode(): Int {
+        var result = credentialId.contentHashCode()
+        result = 31 * result + publicKey.contentHashCode()
+        result = 31 * result + attestationObject.contentHashCode()
+        return result
+    }
+}
+
+/**
+ * Platform-specific WebAuthn provider interface.
+ *
+ * This interface defines the contract for WebAuthn operations across different
+ * platforms (JVM, JS browser, iOS, Android). Each platform provides its own
+ * implementation using expect/actual declarations.
+ *
+ * Implementations must:
+ * - Trigger platform-specific biometric/security key prompts
+ * - Handle WebAuthn credential creation and assertion
+ * - Return properly formatted results with raw byte arrays
+ *
+ * Example implementation pattern (expect/actual):
+ * ```kotlin
+ * // commonMain
+ * expect class WebAuthnProviderImpl : WebAuthnProvider
+ *
+ * // jsMain (browser)
+ * actual class WebAuthnProviderImpl : WebAuthnProvider {
+ *     actual suspend fun register(...) { ... navigator.credentials.create ... }
+ *     actual suspend fun authenticate(...) { ... navigator.credentials.get ... }
+ * }
+ *
+ * // jvmMain
+ * actual class WebAuthnProviderImpl : WebAuthnProvider {
+ *     // Placeholder implementation or integration with Java WebAuthn library
+ * }
+ * ```
+ *
+ * Usage:
+ * ```kotlin
+ * val config = OZSmartAccountConfig(
+ *     ...
+ *     webauthnProvider = WebAuthnProviderImpl()
+ * )
+ * ```
+ */
+interface WebAuthnProvider {
+    /**
+     * Registers a new WebAuthn credential (passkey creation).
+     *
+     * Triggers the platform's credential creation flow, prompting the user
+     * to create a new passkey using biometric authentication or a security key.
+     *
+     * Flow:
+     * 1. Platform shows biometric/security key prompt
+     * 2. User authenticates with fingerprint, face, or security key
+     * 3. Platform generates a secp256r1 keypair and credential ID
+     * 4. Returns public key and attestation data
+     *
+     * IMPORTANT: The challenge parameter MUST be used as-is in the WebAuthn
+     * registration request. It is a cryptographic hash that binds the credential
+     * to the smart account deployment.
+     *
+     * @param challenge The challenge bytes to sign (typically 32 bytes)
+     * @param userId User identifier bytes (typically random, used for discoverable credentials)
+     * @param userName User-friendly name for the credential
+     * @return WebAuthnRegistrationResult with credential ID, public key, and attestation data
+     * @throws WebAuthnException if registration fails or user cancels
+     */
+    suspend fun register(
+        challenge: ByteArray,
+        userId: ByteArray,
+        userName: String
+    ): WebAuthnRegistrationResult
+
+    /**
+     * Authenticates with an existing WebAuthn credential (passkey assertion).
+     *
+     * Triggers the platform's credential assertion flow, prompting the user
+     * to authenticate with their passkey using biometric authentication or
+     * a security key.
+     *
+     * Flow:
+     * 1. Platform shows biometric/security key prompt
+     * 2. User authenticates with fingerprint, face, or security key
+     * 3. Platform signs the challenge with the private key
+     * 4. Returns signature and authenticator data
+     *
+     * IMPORTANT: The challenge parameter MUST be used as-is in the WebAuthn
+     * authentication request. It is the authorization payload hash that must
+     * be signed to authorize the transaction.
+     *
+     * @param challenge The challenge bytes to sign (authorization payload hash, 32 bytes)
+     * @return WebAuthnAuthenticationResult with signature and attestation data
+     * @throws WebAuthnException if authentication fails or user cancels
+     */
+    suspend fun authenticate(
+        challenge: ByteArray
+    ): WebAuthnAuthenticationResult
+}
