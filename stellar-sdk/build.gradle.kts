@@ -2,6 +2,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
     id("org.jetbrains.dokka")
+    id("org.jetbrains.kotlinx.kover")
     id("maven-publish")
     id("signing")
 }
@@ -232,6 +233,21 @@ kotlin {
 
         val macosX64Test by getting { dependsOn(macosTest) }
         val macosArm64Test by getting { dependsOn(macosTest) }
+    }
+}
+
+// Kover Code Coverage Configuration
+kover {
+    reports {
+        // Filter out integration tests from coverage measurement
+        filters {
+            excludes {
+                classes(
+                    "*IntegrationTest*",
+                    "*IntegrationTest\$*"
+                )
+            }
+        }
     }
 }
 
