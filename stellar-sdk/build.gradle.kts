@@ -107,11 +107,22 @@ kotlin {
     }
 
     // Configure C interop for libsodium
+    val libsodiumIosDir = project.projectDir.resolve("native-libs/libsodium-ios")
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         compilations.getByName("main") {
             cinterops {
                 val libsodium by creating {
                     defFile(project.file("src/nativeInterop/cinterop/libsodium.def"))
+                    // iOS targets: use bundled static libsodium (portable paths)
+                    if (konanTarget.family == org.jetbrains.kotlin.konan.target.Family.IOS) {
+                        compilerOpts("-I${libsodiumIosDir.resolve("include")}")
+                        if (konanTarget == org.jetbrains.kotlin.konan.target.KonanTarget.IOS_SIMULATOR_ARM64) {
+                            // Force load for simulator to ensure all symbols are available
+                            linkerOpts("-Wl,-force_load,${libsodiumIosDir.resolve("lib/libsodium.a")}")
+                        } else {
+                            linkerOpts("${libsodiumIosDir.resolve("lib/libsodium.a")}")
+                        }
+                    }
                 }
             }
         }
