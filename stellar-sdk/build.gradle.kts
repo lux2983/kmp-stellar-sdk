@@ -15,6 +15,12 @@ kotlin {
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
 
+            // Exclude integration tests from default test task (they require network access)
+            // Run integration tests explicitly with: ./gradlew :stellar-sdk:jvmTest -PrunIntegrationTests
+            if (!project.hasProperty("runIntegrationTests")) {
+                exclude("**/integrationTests/**")
+            }
+
             // Configure system properties for tests
             systemProperty("javax.net.ssl.trustStore", System.getProperty("javax.net.ssl.trustStore", ""))
             systemProperty("javax.net.ssl.trustStorePassword", System.getProperty("javax.net.ssl.trustStorePassword", ""))
@@ -239,13 +245,10 @@ kotlin {
 // Kover Code Coverage Configuration
 kover {
     reports {
-        // Filter out integration tests from coverage measurement
+        // Filter out integration test classes from coverage reports
         filters {
             excludes {
-                classes(
-                    "*IntegrationTest*",
-                    "*IntegrationTest\$*"
-                )
+                packages("com.soneso.stellar.sdk.integrationTests")
             }
         }
     }
