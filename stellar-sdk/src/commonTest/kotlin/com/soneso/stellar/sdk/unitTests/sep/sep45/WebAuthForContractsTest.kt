@@ -37,6 +37,7 @@ import kotlin.test.*
  * - Challenge validation tests (all security checks)
  */
 class WebAuthForContractsTest {
+    private var nonceCounter = 0L
 
     companion object {
         private const val DOMAIN = "example.stellar.org"
@@ -340,7 +341,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testDefaultSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -375,7 +376,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testDefaultHomeDomainSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -410,7 +411,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testMultipleSignersSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -448,7 +449,7 @@ class WebAuthForContractsTest {
     @Test
     fun testEmptySignersSuccess() = runTest {
         // For contracts that don't require signatures in __check_auth
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -482,7 +483,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testClientDomainWithKeyPairSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val clientDomainKeyPair = KeyPair.random()
         val clientDomainAccount = clientDomainKeyPair.getAccountId()
         val clientDomain = "client.example.com"
@@ -525,7 +526,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testClientDomainWithDelegateSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val clientDomainKeyPair = KeyPair.random()
         val clientDomainAccount = clientDomainKeyPair.getAccountId()
         val clientDomain = "client.example.com"
@@ -621,7 +622,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testFormUrlEncodedSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -688,7 +689,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testJsonContentTypeSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -759,7 +760,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testGetChallengeSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -834,7 +835,7 @@ class WebAuthForContractsTest {
     @Test
     fun testChallengeWithClientDomain() = runTest {
         val clientDomain = "wallet.example.com"
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -888,7 +889,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testSendSignedChallengeSuccess() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -918,7 +919,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testSendSignedChallengeError() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -952,7 +953,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testSendSignedChallengeTimeout() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -1201,7 +1202,7 @@ class WebAuthForContractsTest {
     @Test
     fun testInvalidContractAddress() = runTest {
         val wrongContractId = "CCJCTOZFKPNTFLMORB7RBNKDQU42PBKGVTI4DIWVEMUCXRHWCYXGRRV7"
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
 
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
         val argsMap = buildArgsMap(
@@ -1257,7 +1258,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testInvalidFunctionName() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
 
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
         val argsMap = buildArgsMap(
@@ -1313,7 +1314,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testMissingServerEntry() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
 
         val argsMap = buildArgsMap(
             account = CLIENT_CONTRACT_ID,
@@ -1359,7 +1360,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testMissingClientEntry() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
 
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
         val argsMap = buildArgsMap(
@@ -1407,7 +1408,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testInvalidServerSignature() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
 
         // Build challenge without signing server entry
         val challengeXdr = buildValidChallenge(
@@ -1508,7 +1509,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testInvalidHomeDomain() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
 
         val argsMap = buildArgsMap(
@@ -1564,7 +1565,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testInvalidWebAuthDomain() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
 
         val argsMap = buildArgsMap(
@@ -1621,7 +1622,7 @@ class WebAuthForContractsTest {
     @Test
     fun testInvalidAccount() = runTest {
         val wrongClientAccount = "CBMKBASJGUKV26JB55OKZW3G3PGQ4C7PLRH6L2RW74PYUTE22Y4KFW56"
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
 
         val argsMap = buildArgsMap(
@@ -1677,7 +1678,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testSubInvocationsFound() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val serverKeyPair = KeyPair.fromSecretSeed(SERVER_SECRET_SEED)
 
         val argsMap = buildArgsMap(
@@ -1738,7 +1739,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testInvalidClientDomainAccount() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val clientDomain = "client.example.com"
         val wrongClientDomainAccount = KeyPair.random().getAccountId()
         val actualClientDomainKeyPair = KeyPair.random()
@@ -1780,7 +1781,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testInvalidNetworkPassphrase() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -1817,7 +1818,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testEncodeDecodeAuthorizationEntries() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val argsMap = buildArgsMap(
             account = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -1887,7 +1888,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testUnknownResponseCode() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,
@@ -1963,7 +1964,7 @@ class WebAuthForContractsTest {
 
     @Test
     fun testCustomHttpHeaders() = runTest {
-        val nonce = "test_nonce_${System.currentTimeMillis()}"
+        val nonce = "test_nonce_${nonceCounter++}"
         val challengeXdr = buildValidChallenge(
             clientAccountId = CLIENT_CONTRACT_ID,
             homeDomain = DOMAIN,

@@ -283,5 +283,8 @@ class Ed25519CryptoTest {
         return result
     }
 
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+    private fun ByteArray.toHex(): String = joinToString("") {
+        val hex = (it.toInt() and 0xFF).toString(16)
+        if (hex.length == 1) "0$hex" else hex
+    }
 }

@@ -438,7 +438,7 @@ class Sep29CheckerTest {
         
         // Valid base64 but corrupted XDR should not throw (skip check)
         @OptIn(ExperimentalEncodingApi::class)
-        val corruptedXdr = Base64.encode("corrupted-xdr-data".toByteArray())
+        val corruptedXdr = Base64.encode("corrupted-xdr-data".encodeToByteArray())
         
         checker.checkMemoRequired(corruptedXdr)
     }

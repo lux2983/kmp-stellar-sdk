@@ -143,5 +143,8 @@ class Sha256CryptoTest {
 
     // ========== Helpers ==========
 
-    private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+    private fun ByteArray.toHex(): String = joinToString("") {
+        val hex = (it.toInt() and 0xFF).toString(16)
+        if (hex.length == 1) "0$hex" else hex
+    }
 }
