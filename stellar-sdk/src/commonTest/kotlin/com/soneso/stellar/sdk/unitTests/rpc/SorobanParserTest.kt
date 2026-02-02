@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * These tests do not require network access:
  * ```bash
- * ./gradlew :stellar-sdk:jvmTest --tests "SorobanParserIntegrationTest"
+ * ./gradlew :stellar-sdk:jvmTest --tests "SorobanParserTest"
  * ```
  *
  * ## Ported From
@@ -42,7 +42,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * **Reference**: `/Users/chris/projects/Stellar/stellar_flutter_sdk/test/soroban_test_parser.dart`
  */
-class SorobanParserIntegrationTest {
+class SorobanParserTest {
 
     /**
      * Helper method to get type information from a spec type definition.
