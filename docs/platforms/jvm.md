@@ -16,7 +16,7 @@ This guide covers JVM-specific setup and usage, including Android and server app
 
 The JVM implementation of the Stellar SDK works on:
 - **Android** (API 24+)
-- **Server JVM** (Java 11+)
+- **Server JVM** (Java 17+)
 - **Desktop JVM** applications
 
 ## Android Setup
@@ -34,12 +34,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     // For Jetpack Compose projects
@@ -111,7 +111,7 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(11)  // or higher
+    jvmToolchain(17)  // or higher
 }
 
 dependencies {

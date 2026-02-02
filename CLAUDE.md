@@ -14,7 +14,7 @@ This is a Kotlin Multiplatform (KMP) project for building a Stellar SDK. The SDK
 The SDK is **production-ready** with comprehensive functionality implemented:
 
 ### Platform Support
-- **JVM**: Android API 24+, Server applications (Java 11+)
+- **JVM**: Android API 24+, Server applications (Java 17+)
 - **iOS**: iOS 14.0+ (iosX64, iosArm64, iosSimulatorArm64)
 - **macOS**: macOS 11.0+ (macosX64, macosArm64)
 - **JavaScript**: Browser (WebAssembly) and Node.js 14+

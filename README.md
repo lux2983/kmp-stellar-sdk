@@ -297,7 +297,7 @@ See [Testing Guide](docs/testing.md) for information on running tests.
 
 - **Kotlin**: 2.2.20
 - **Gradle**: 9.0+
-- **JVM**: Java 11+
+- **JVM**: Java 17+
 - **Android**: API 24+ (Android 7.0)
 - **iOS**: iOS 14.0+
 - **macOS**: macOS 11.0+

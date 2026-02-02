@@ -28,7 +28,7 @@ Before starting a release, ensure you have:
 - **Homebrew**: `libsodium` installed (`brew install libsodium`)
 - **GPG**: Installed and configured (`brew install gpg`)
 - **Git**: Clean working directory on `main` branch
-- **Java**: JDK 11 or later
+- **Java**: JDK 17 or later
 
 ## Release Process
 
