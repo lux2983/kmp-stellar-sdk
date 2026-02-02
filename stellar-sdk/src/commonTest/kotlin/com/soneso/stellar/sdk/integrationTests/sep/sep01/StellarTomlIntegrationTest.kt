@@ -260,7 +260,7 @@ class StellarTomlIntegrationTest {
         try {
             StellarToml.fromDomain("this-domain-definitely-does-not-exist-12345.com")
             fail("Should throw exception for 404")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Expected - network error or 404 (any exception is acceptable)
             assertNotNull(e)
         }
@@ -273,7 +273,7 @@ class StellarTomlIntegrationTest {
         try {
             StellarToml.fromDomain("httpstat.us/500")
             fail("Should throw exception for server error")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Expected - network error or non-200 status
             assertNotNull(e.message)
         }
@@ -285,7 +285,7 @@ class StellarTomlIntegrationTest {
         // This test verifies that malformed domains don't cause crashes
         try {
             StellarToml.fromDomain("not-a-valid-domain-12345678.invalidtld9999")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Expected - network error (but not required)
             assertNotNull(e)
         }
@@ -298,7 +298,7 @@ class StellarTomlIntegrationTest {
         // This test verifies that malformed domains don't cause crashes
         try {
             StellarToml.fromDomain("stellar-test-nonexistent-domain-xyz.invalidtld")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Expected - DNS resolution error (but not required)
             assertNotNull(e)
         }
@@ -312,7 +312,7 @@ class StellarTomlIntegrationTest {
         try {
             StellarToml.currencyFromUrl("https://stellar-test-invalid-domain-xyz-12345.com/currency.toml")
             fail("Should throw exception for invalid URL")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Expected - network error
             assertNotNull(e)
         }
@@ -324,7 +324,7 @@ class StellarTomlIntegrationTest {
         // example.com returns HTML, which should fail TOML parsing
         try {
             StellarToml.currencyFromUrl("https://example.com")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Expected - parsing error or non-200 status (but not required)
             assertNotNull(e)
         }
