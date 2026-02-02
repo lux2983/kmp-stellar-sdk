@@ -1,23 +1,26 @@
 # Testing Guide
 
-The SDK includes comprehensive test coverage across all supported platforms.
+The SDK includes comprehensive test coverage across all supported platforms: JVM, JavaScript (Node.js and Browser), macOS native, and iOS simulator.
 
 ## Test Organization
 
 Tests are organized into two categories under `commonTest`:
 
-- **`unitTests/`** — Pure unit tests with no network dependencies. These run by default on all platforms.
-- **`integrationTests/`** — Tests that validate against the live Stellar Testnet. Excluded by default and must be opted into explicitly.
+- **`unitTests/`** — Pure unit tests with no network dependencies.
+- **`integrationTests/`** — Tests that validate against the live Stellar Testnet. These require network access and take longer to run.
 
-## Running Unit Tests
+Both categories run by default in local and IDE environments. In CI, integration tests are excluded via the `-PexcludeIntegrationTests` Gradle property.
 
-By default, only unit tests run. Integration tests are excluded on all platforms.
+## Running Tests
 
 ### JVM
 
 ```bash
-# All unit tests
+# All tests (unit + integration)
 ./gradlew :stellar-sdk:jvmTest
+
+# Unit tests only (excludes integration)
+./gradlew :stellar-sdk:jvmTest -PexcludeIntegrationTests
 
 # Specific test class
 ./gradlew :stellar-sdk:jvmTest --tests "KeyPairTest"
@@ -29,46 +32,79 @@ By default, only unit tests run. Integration tests are excluded on all platforms
 ### JavaScript (Node.js)
 
 ```bash
-# All unit tests
+# All tests (unit + integration)
 ./gradlew :stellar-sdk:jsNodeTest
+
+# Unit tests only
+./gradlew :stellar-sdk:jsNodeTest -PexcludeIntegrationTests
 
 # Specific test class
 ./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"
-
-# Pattern matching
-./gradlew :stellar-sdk:jsNodeTest --tests "*Key*"
 ```
 
 ### JavaScript (Browser)
 
+Requires Chrome installed. The Gradle build handles Karma configuration and WASM file serving automatically.
+
 ```bash
-# Specific test class (requires Chrome)
+# All tests (unit + integration)
+./gradlew :stellar-sdk:jsBrowserTest
+
+# Unit tests only
+./gradlew :stellar-sdk:jsBrowserTest -PexcludeIntegrationTests
+
+# Specific test class
 ./gradlew :stellar-sdk:jsBrowserTest --tests "KeyPairTest"
 ```
 
 ### Native (macOS)
 
 ```bash
+# macOS ARM (Apple Silicon)
 ./gradlew :stellar-sdk:macosArm64Test
+
+# macOS x86_64
 ./gradlew :stellar-sdk:macosX64Test
+
+# Unit tests only
+./gradlew :stellar-sdk:macosArm64Test -PexcludeIntegrationTests
 ```
+
+### Native (iOS Simulator)
+
+```bash
+# Requires Xcode and an iOS simulator runtime
+./gradlew :stellar-sdk:iosSimulatorArm64Test
+```
+
+**Note:** The iOS simulator does not trust all root certificates by default. If integration tests fail with SSL errors (`NSURLErrorDomain Code=-1202`), install the required root certificate:
+
+```bash
+# Extract and install the root cert (Sectigo Public Server Authentication Root R46)
+security find-certificate -c "Sectigo Public Server Authentication Root R46" \
+  -p /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/sectigo-root.pem
+xcrun simctl keychain booted add-root-cert /tmp/sectigo-root.pem
+```
+
+Certificates do not persist across simulator erase.
 
 ## Integration Tests
 
-Integration tests run by default in local/IDE environments. They require network access to the Stellar Testnet. In CI, they are excluded via `-PexcludeIntegrationTests`.
+Integration tests run against the live Stellar Testnet. Test accounts are automatically funded via Friendbot. Requires connectivity to `https://soroban-testnet.stellar.org`.
 
 ```bash
-# Run all tests including integration tests (default)
-./gradlew :stellar-sdk:jvmTest
-
-# Specific integration test class
+# Run a specific integration test class
 ./gradlew :stellar-sdk:jvmTest --tests "*SorobanIntegrationTest"
 
 # Exclude integration tests (used in CI)
 ./gradlew :stellar-sdk:jvmTest -PexcludeIntegrationTests
 ```
 
-Test accounts are automatically funded via Friendbot. Requires connectivity to `https://soroban-testnet.stellar.org`.
+### Timing and Delays
+
+Integration tests use `realDelay()` instead of `delay()` for wait operations. This is necessary because `runTest` uses a virtual time scheduler that skips `delay()` calls. On platforms with fully async I/O (JS Node, JS Browser), this would cause polling loops to fire too fast without real wall-clock delays.
+
+The `realDelay()` function (in `integrationTests/TestUtils.kt`) delegates to `platformDelay()`, which uses platform-native timing: `Thread.sleep` on JVM, `setTimeout` on JS, and `kotlinx.coroutines.delay` with `Dispatchers.Default` on Native.
 
 ## Code Coverage
 
@@ -83,8 +119,10 @@ Reports are generated at:
 - HTML: `stellar-sdk/build/reports/kover/html/index.html`
 - XML: `stellar-sdk/build/reports/kover/report.xml`
 
-Coverage is uploaded to [Codecov](https://codecov.io) automatically in CI (requires `CODECOV_TOKEN` secret).
+Coverage is uploaded to [Codecov](https://codecov.io) automatically in CI (requires `CODECOV_TOKEN` secret in GitHub repository settings).
 
 ## CI Workflow
 
-The GitHub Actions workflow (`.github/workflows/tests.yml`) runs JVM unit tests across JDK 17, 21, and 25. Coverage is collected on JDK 25 and uploaded to Codecov.
+The GitHub Actions workflow (`.github/workflows/tests.yml`) runs JVM unit tests across JDK 17, 21, and 25 (integration tests excluded via `-PexcludeIntegrationTests`). Coverage is collected on JDK 25 and uploaded to Codecov.
+
+JS, macOS native, and iOS simulator tests are run locally. They share the same `commonTest` sources and the same exclusion flag works across all platforms.

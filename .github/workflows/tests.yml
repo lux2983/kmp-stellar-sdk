@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  unit-tests:
+  jvm-tests:
     name: JVM Tests (JDK ${{ matrix.java }})
     runs-on: ubuntu-latest
 
@@ -102,5 +102,64 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-jdk-${{ matrix.java }}
+          path: stellar-sdk/build/reports/tests/
+          retention-days: 30
+
+  js-node-tests:
+    name: JS Node Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run JS Node unit tests
+        run: ./gradlew :stellar-sdk:jsNodeTest -PexcludeIntegrationTests --no-daemon
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-js-node
+          path: stellar-sdk/build/reports/tests/
+          retention-days: 30
+
+  native-tests:
+    name: macOS Native Tests
+    runs-on: macos-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run macOS native unit tests
+        run: ./gradlew :stellar-sdk:macosArm64Test -PexcludeIntegrationTests --no-daemon
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-native-macos
           path: stellar-sdk/build/reports/tests/
           retention-days: 30
