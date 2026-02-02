@@ -72,6 +72,15 @@ jobs:
             echo "⚠️ Coverage report not found at $XML_REPORT" >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: stellar-sdk/build/reports/kover/report.xml
+          fail_ci_if_error: false
+          verbose: true
+
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
