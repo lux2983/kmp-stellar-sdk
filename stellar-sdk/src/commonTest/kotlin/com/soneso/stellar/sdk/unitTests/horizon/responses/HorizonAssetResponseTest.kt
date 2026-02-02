@@ -9,7 +9,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class AssetTest {
+class HorizonAssetResponseTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 

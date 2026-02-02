@@ -1,9 +1,12 @@
 package com.soneso.stellar.sdk.unitTests.horizon.responses
 
+import com.soneso.stellar.sdk.horizon.responses.Link
 import com.soneso.stellar.sdk.horizon.responses.TransactionResponse
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -225,5 +228,198 @@ class TransactionResponseTest {
         assertEquals("inner_hash", tx.innerTransaction?.hash)
         assertEquals(1, tx.innerTransaction?.signatures?.size)
         assertEquals(100L, tx.innerTransaction?.maxFee)
+    }
+
+    @Test
+    fun testFeeAccountMuxedAndMemoBytes() {
+        val txJson = """
+        {
+            "id": "abc123",
+            "paging_token": "abc123",
+            "successful": true,
+            "hash": "deadbeef",
+            "ledger": 7654321,
+            "created_at": "2021-01-01T00:00:00Z",
+            "source_account": "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7",
+            "source_account_sequence": 3298702387052545,
+            "fee_account": "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7",
+            "fee_account_muxed": "MFEE4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCAAAAAAAAAAAAGDFE",
+            "fee_account_muxed_id": "67890",
+            "fee_charged": 100,
+            "max_fee": 200,
+            "operation_count": 1,
+            "signatures": [],
+            "memo_type": "text",
+            "memo": "hello world",
+            "memo_bytes": "aGVsbG8gd29ybGQ=",
+            "_links": {
+                "self": {"href": "https://horizon.stellar.org/transactions/abc123"},
+                "account": {"href": "https://horizon.stellar.org/accounts/GAAZI"},
+                "ledger": {"href": "https://horizon.stellar.org/ledgers/7654321"},
+                "operations": {"href": "https://horizon.stellar.org/transactions/abc123/operations"},
+                "effects": {"href": "https://horizon.stellar.org/transactions/abc123/effects"},
+                "precedes": {"href": "https://horizon.stellar.org/transactions?order=asc&cursor=abc123"},
+                "succeeds": {"href": "https://horizon.stellar.org/transactions?order=desc&cursor=abc123"}
+            }
+        }
+        """.trimIndent()
+
+        val tx = json.decodeFromString<TransactionResponse>(txJson)
+        assertEquals("MFEE4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCAAAAAAAAAAAAGDFE", tx.feeAccountMuxed)
+        assertEquals("67890", tx.feeAccountMuxedId)
+        assertEquals("aGVsbG8gd29ybGQ=", tx.memoBytes)
+        assertEquals("https://horizon.stellar.org/transactions?order=asc&cursor=abc123", tx.links.precedes.href)
+        assertEquals("https://horizon.stellar.org/transactions?order=desc&cursor=abc123", tx.links.succeeds.href)
+    }
+
+    @Test
+    fun testDirectInnerClassConstruction() {
+        val links = TransactionResponse.Links(
+            self = Link("https://self.com"),
+            account = Link("https://account.com"),
+            ledger = Link("https://ledger.com"),
+            operations = Link("https://operations.com"),
+            effects = Link("https://effects.com"),
+            precedes = Link("https://precedes.com"),
+            succeeds = Link("https://succeeds.com")
+        )
+        assertEquals("https://self.com", links.self.href)
+        assertEquals("https://account.com", links.account.href)
+        assertEquals("https://ledger.com", links.ledger.href)
+        assertEquals("https://operations.com", links.operations.href)
+        assertEquals("https://effects.com", links.effects.href)
+        assertEquals("https://precedes.com", links.precedes.href)
+        assertEquals("https://succeeds.com", links.succeeds.href)
+
+        val timeBounds = TransactionResponse.Preconditions.TimeBounds(
+            minTime = "1000",
+            maxTime = "2000"
+        )
+        assertEquals("1000", timeBounds.minTime)
+        assertEquals("2000", timeBounds.maxTime)
+
+        val ledgerBounds = TransactionResponse.Preconditions.LedgerBounds(
+            minLedger = 100L,
+            maxLedger = 200L
+        )
+        assertEquals(100L, ledgerBounds.minLedger)
+        assertEquals(200L, ledgerBounds.maxLedger)
+
+        val preconditions = TransactionResponse.Preconditions(
+            timeBounds = timeBounds,
+            ledgerBounds = ledgerBounds,
+            minAccountSequence = 500L,
+            minAccountSequenceAge = 600L,
+            minAccountSequenceLedgerGap = 10L,
+            extraSigners = listOf("signer1", "signer2")
+        )
+        assertEquals(timeBounds, preconditions.timeBounds)
+        assertEquals(ledgerBounds, preconditions.ledgerBounds)
+        assertEquals(500L, preconditions.minAccountSequence)
+        assertEquals(600L, preconditions.minAccountSequenceAge)
+        assertEquals(10L, preconditions.minAccountSequenceLedgerGap)
+        assertEquals(2, preconditions.extraSigners?.size)
+        assertEquals("signer1", preconditions.extraSigners?.get(0))
+
+        val feeBumpTx = TransactionResponse.FeeBumpTransaction(
+            hash = "bumphashabc",
+            signatures = listOf("bumpsig1", "bumpsig2")
+        )
+        assertEquals("bumphashabc", feeBumpTx.hash)
+        assertEquals(2, feeBumpTx.signatures.size)
+        assertEquals("bumpsig1", feeBumpTx.signatures[0])
+        assertEquals("bumpsig2", feeBumpTx.signatures[1])
+
+        val innerTx = TransactionResponse.InnerTransaction(
+            hash = "innerhashabc",
+            signatures = listOf("innersig1"),
+            maxFee = 1000L
+        )
+        assertEquals("innerhashabc", innerTx.hash)
+        assertEquals(1, innerTx.signatures.size)
+        assertEquals("innersig1", innerTx.signatures[0])
+        assertEquals(1000L, innerTx.maxFee)
+    }
+
+    @Test
+    fun testPreconditionsWithNullFields() {
+        val minimalPreconditionsJson = """
+        {
+            "id": "minimal123",
+            "paging_token": "minimal123",
+            "successful": false,
+            "hash": "minimalhash",
+            "ledger": 100,
+            "created_at": "2021-01-01T00:00:00Z",
+            "source_account": "GMINIMAL",
+            "source_account_sequence": 1,
+            "fee_account": "GMINIMAL",
+            "fee_charged": 100,
+            "max_fee": 100,
+            "operation_count": 0,
+            "signatures": [],
+            "memo_type": "none",
+            "preconditions": {},
+            "_links": {
+                "self": {"href": "self"},
+                "account": {"href": "account"},
+                "ledger": {"href": "ledger"},
+                "operations": {"href": "ops"},
+                "effects": {"href": "fx"},
+                "precedes": {"href": "pre"},
+                "succeeds": {"href": "suc"}
+            }
+        }
+        """.trimIndent()
+
+        val tx = json.decodeFromString<TransactionResponse>(minimalPreconditionsJson)
+        val preconditions = tx.preconditions
+        assertNotNull(preconditions)
+        assertNull(preconditions.timeBounds)
+        assertNull(preconditions.ledgerBounds)
+        assertNull(preconditions.minAccountSequence)
+        assertNull(preconditions.minAccountSequenceAge)
+        assertNull(preconditions.minAccountSequenceLedgerGap)
+        assertNull(preconditions.extraSigners)
+    }
+
+    @Test
+    fun testTimeBoundsWithNullFields() {
+        val timeBoundsNullJson = """
+        {
+            "id": "time123",
+            "paging_token": "time123",
+            "successful": true,
+            "hash": "timehash",
+            "ledger": 200,
+            "created_at": "2021-01-01T00:00:00Z",
+            "source_account": "GTIME",
+            "source_account_sequence": 2,
+            "fee_account": "GTIME",
+            "fee_charged": 100,
+            "max_fee": 100,
+            "operation_count": 0,
+            "signatures": [],
+            "memo_type": "none",
+            "preconditions": {
+                "timebounds": {}
+            },
+            "_links": {
+                "self": {"href": "self"},
+                "account": {"href": "account"},
+                "ledger": {"href": "ledger"},
+                "operations": {"href": "ops"},
+                "effects": {"href": "fx"},
+                "precedes": {"href": "pre"},
+                "succeeds": {"href": "suc"}
+            }
+        }
+        """.trimIndent()
+
+        val tx = json.decodeFromString<TransactionResponse>(timeBoundsNullJson)
+        val timeBounds = tx.preconditions?.timeBounds
+        assertNotNull(timeBounds)
+        assertNull(timeBounds.minTime)
+        assertNull(timeBounds.maxTime)
     }
 }
