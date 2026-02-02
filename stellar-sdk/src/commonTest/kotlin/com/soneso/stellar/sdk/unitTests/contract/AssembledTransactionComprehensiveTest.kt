@@ -39,8 +39,15 @@ class AssembledTransactionComprehensiveTest {
     private lateinit var server: SorobanServer
     private lateinit var builder: TransactionBuilder
 
-    @BeforeTest
-    fun setup() = runTest {
+    /**
+     * Suspend setup function called at the start of each test.
+     *
+     * Note: We intentionally do NOT use @BeforeTest + runTest here because
+     * kotlin.test @BeforeTest does not await the Promise returned by runTest on JS,
+     * causing lateinit properties to remain uninitialized when tests execute.
+     * Instead, each test calls setup() explicitly inside its own runTest block.
+     */
+    private suspend fun setup() {
         keypair = KeyPair.fromSecretSeed(SECRET_SEED)
         server = SorobanServer(RPC_URL)
         builder = createDefaultBuilder()
@@ -48,7 +55,9 @@ class AssembledTransactionComprehensiveTest {
 
     @AfterTest
     fun tearDown() {
-        server.close()
+        if (::server.isInitialized) {
+            server.close()
+        }
     }
 
     private fun createDefaultBuilder(): TransactionBuilder {
@@ -70,7 +79,8 @@ class AssembledTransactionComprehensiveTest {
     // ==================== Constructor and Initial State ====================
 
     @Test
-    fun testConstructorInitializesWithAllProperties() {
+    fun testConstructorInitializesWithAllProperties() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -87,7 +97,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorAcceptsNullSigner() {
+    fun testConstructorAcceptsNullSigner() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -100,7 +111,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorAcceptsCustomParser() {
+    fun testConstructorAcceptsCustomParser() = runTest {
+        setup()
         val parser: (SCValXdr) -> String = { scval ->
             when (scval) {
                 is SCValXdr.Sym -> scval.value.value
@@ -120,7 +132,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorAcceptsVariousTimeouts() {
+    fun testConstructorAcceptsVariousTimeouts() = runTest {
+        setup()
         val timeouts = listOf(1, 10, 30, 60, 300, 600)
 
         timeouts.forEach { timeout ->
@@ -139,7 +152,8 @@ class AssembledTransactionComprehensiveTest {
     // ==================== Pre-Simulation State Tests ====================
 
     @Test
-    fun testResultThrowsNotYetSimulatedException() {
+    fun testResultThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -158,6 +172,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testSignThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -175,6 +190,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testSubmitThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -191,7 +207,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testNeedsNonInvokerSigningByThrowsNotYetSimulatedException() {
+    fun testNeedsNonInvokerSigningByThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -208,7 +225,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testToEnvelopeXdrBase64ThrowsNotYetSimulatedException() {
+    fun testToEnvelopeXdrBase64ThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -225,7 +243,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testIsReadCallThrowsNotYetSimulatedException() {
+    fun testIsReadCallThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -245,6 +264,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testSignThrowsIllegalArgumentExceptionWithoutSigner() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -263,6 +283,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testSignAuthEntriesThrowsNotYetSimulatedExceptionBeforeSimulation() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -282,6 +303,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testSignAuthEntriesWithValidUntilLedgerThrowsNotYetSimulatedException() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -302,7 +324,8 @@ class AssembledTransactionComprehensiveTest {
     // ==================== Result Parser Tests ====================
 
     @Test
-    fun testConstructorWithInt32Parser() {
+    fun testConstructorWithInt32Parser() = runTest {
+        setup()
         val parser: (SCValXdr) -> Int = { scval ->
             Scv.fromInt32(scval)
         }
@@ -319,7 +342,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithInt128Parser() {
+    fun testConstructorWithInt128Parser() = runTest {
+        setup()
         val parser: (SCValXdr) -> BigInteger = { scval ->
             Scv.fromInt128(scval)
         }
@@ -336,7 +360,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithStringParser() {
+    fun testConstructorWithStringParser() = runTest {
+        setup()
         val parser: (SCValXdr) -> String = { scval ->
             Scv.fromString(scval)
         }
@@ -353,7 +378,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithBooleanParser() {
+    fun testConstructorWithBooleanParser() = runTest {
+        setup()
         val parser: (SCValXdr) -> Boolean = { scval ->
             Scv.fromBoolean(scval)
         }
@@ -370,7 +396,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithVecParser() {
+    fun testConstructorWithVecParser() = runTest {
+        setup()
         val parser: (SCValXdr) -> List<Int> = { scval ->
             Scv.fromVec(scval).map { Scv.fromInt32(it) }
         }
@@ -387,7 +414,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithMapParser() {
+    fun testConstructorWithMapParser() = runTest {
+        setup()
         val parser: (SCValXdr) -> Map<SCValXdr, SCValXdr> = { scval ->
             Scv.fromMap(scval)
         }
@@ -404,7 +432,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithCustomObjectParser() {
+    fun testConstructorWithCustomObjectParser() = runTest {
+        setup()
         data class TokenInfo(val name: String, val decimals: Int)
 
         val parser: (SCValXdr) -> TokenInfo = { scval ->
@@ -427,7 +456,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithComplexNestedParser() {
+    fun testConstructorWithComplexNestedParser() = runTest {
+        setup()
         val parser: (SCValXdr) -> List<Map<SCValXdr, SCValXdr>> = { scval ->
             Scv.fromVec(scval).map { Scv.fromMap(it) }
         }
@@ -446,7 +476,8 @@ class AssembledTransactionComprehensiveTest {
     // ==================== Transaction Builder Validation ====================
 
     @Test
-    fun testConstructorWithDifferentOperations() {
+    fun testConstructorWithDifferentOperations() = runTest {
+        setup()
         val operations = listOf(
             InvokeHostFunctionOperation.invokeContractFunction(
                 contractAddress = CONTRACT_ID,
@@ -491,7 +522,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithDifferentFees() {
+    fun testConstructorWithDifferentFees() = runTest {
+        setup()
         val fees = listOf(100L, 500L, 1000L, 10000L, 100000L)
 
         fees.forEach { fee ->
@@ -522,7 +554,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithDifferentTimeouts() {
+    fun testConstructorWithDifferentTimeouts() = runTest {
+        setup()
         val timeouts = listOf(60L, 180L, 300L, 600L, 1800L)
 
         timeouts.forEach { timeout ->
@@ -555,7 +588,8 @@ class AssembledTransactionComprehensiveTest {
     // ==================== Exception Message Quality ====================
 
     @Test
-    fun testNotYetSimulatedExceptionHasDescriptiveMessage() {
+    fun testNotYetSimulatedExceptionHasDescriptiveMessage() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -575,6 +609,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testSignAuthEntriesExceptionHasHelpfulMessage() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 30,
@@ -595,7 +630,8 @@ class AssembledTransactionComprehensiveTest {
     // ==================== Edge Cases ====================
 
     @Test
-    fun testConstructorWithVeryHighSubmitTimeout() {
+    fun testConstructorWithVeryHighSubmitTimeout() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 3600, // 1 hour
@@ -608,7 +644,8 @@ class AssembledTransactionComprehensiveTest {
     }
 
     @Test
-    fun testConstructorWithMinimalSubmitTimeout() {
+    fun testConstructorWithMinimalSubmitTimeout() = runTest {
+        setup()
         val assembled = AssembledTransaction<SCValXdr>(
             server = server,
             submitTimeout = 1, // 1 second
@@ -622,6 +659,7 @@ class AssembledTransactionComprehensiveTest {
 
     @Test
     fun testConstructorWithMultipleSigners() = runTest {
+        setup()
         val signer1 = KeyPair.random()
         val signer2 = KeyPair.random()
 
