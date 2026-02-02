@@ -67,6 +67,14 @@ kotlin {
         }
     }
 
+    // Pass project directory to native tests so they can find test resources.
+    // iOS simulator runs from a different CWD (CoreSimulator sandbox), so relative paths fail.
+    // SIMCTL_CHILD_ prefix makes simctl forward the env var to the spawned process.
+    tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest> {
+        environment("PROJECT_DIR", project.projectDir.absolutePath)
+        environment("SIMCTL_CHILD_PROJECT_DIR", project.projectDir.absolutePath)
+    }
+
     // Configure NODE_PATH for test environment
     tasks.withType<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest> {
         if (name == "jsNodeTest") {
@@ -131,16 +139,21 @@ kotlin {
             cinterops {
                 val libsodium by creating {
                     defFile(project.file("src/nativeInterop/cinterop/libsodium.def"))
-                    // iOS targets: use bundled static libsodium (portable paths)
+                    // iOS targets: pass include path for header resolution
                     if (konanTarget.family == org.jetbrains.kotlin.konan.target.Family.IOS) {
                         compilerOpts("-I${libsodiumIosDir.resolve("include")}")
-                        if (konanTarget == org.jetbrains.kotlin.konan.target.KonanTarget.IOS_SIMULATOR_ARM64) {
-                            // Force load for simulator to ensure all symbols are available
-                            linkerOpts("-Wl,-force_load,${libsodiumIosDir.resolve("lib/libsodium.a")}")
-                        } else {
-                            linkerOpts("${libsodiumIosDir.resolve("lib/libsodium.a")}")
-                        }
                     }
+                }
+            }
+        }
+        // iOS targets: set linker opts on ALL binaries (framework, test, executable)
+        // Note: cinterop's linkerOpts() is silently ignored — linker opts must go here
+        if (konanTarget.family == org.jetbrains.kotlin.konan.target.Family.IOS) {
+            binaries.all {
+                if (konanTarget == org.jetbrains.kotlin.konan.target.KonanTarget.IOS_SIMULATOR_ARM64) {
+                    linkerOpts("-Wl,-force_load,${libsodiumIosDir.resolve("lib/libsodium.a")}")
+                } else {
+                    linkerOpts("${libsodiumIosDir.resolve("lib/libsodium.a")}")
                 }
             }
         }

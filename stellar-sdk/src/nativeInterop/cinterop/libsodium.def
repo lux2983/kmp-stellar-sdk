@@ -14,4 +14,4 @@ compilerOpts.macosX64 = -I/opt/homebrew/include -I/usr/local/include
 linkerOpts.macosX64 = -L/opt/homebrew/lib -L/usr/local/lib -lsodium
 
 # iOS - compilerOpts and linkerOpts are configured in build.gradle.kts
-# using project.projectDir for portable paths (see cinterops block)
+# using project.projectDir for portable paths (see cinterops and binaries blocks)

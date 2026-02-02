@@ -368,7 +368,8 @@ class WebAuthForContractsTest {
         val token = webAuth.jwtToken(
             clientAccountId = CLIENT_CONTRACT_ID,
             signers = listOf(clientSigner),
-            homeDomain = DOMAIN
+            homeDomain = DOMAIN,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -403,7 +404,8 @@ class WebAuthForContractsTest {
         // Not passing homeDomain - should default to server home domain
         val token = webAuth.jwtToken(
             clientAccountId = CLIENT_CONTRACT_ID,
-            signers = listOf(clientSigner)
+            signers = listOf(clientSigner),
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -440,7 +442,8 @@ class WebAuthForContractsTest {
         val token = webAuth.jwtToken(
             clientAccountId = CLIENT_CONTRACT_ID,
             signers = listOf(signer1, signer2, signer3),
-            homeDomain = DOMAIN
+            homeDomain = DOMAIN,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -518,7 +521,8 @@ class WebAuthForContractsTest {
             signers = listOf(clientSigner),
             homeDomain = DOMAIN,
             clientDomain = clientDomain,
-            clientDomainAccountKeyPair = clientDomainKeyPair
+            clientDomainAccountKeyPair = clientDomainKeyPair,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -613,7 +617,8 @@ class WebAuthForContractsTest {
             signers = listOf(clientSigner),
             homeDomain = DOMAIN,
             clientDomain = clientDomain,
-            clientDomainSigningDelegate = delegate
+            clientDomainSigningDelegate = delegate,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -680,7 +685,8 @@ class WebAuthForContractsTest {
         val token = webAuth.jwtToken(
             clientAccountId = CLIENT_CONTRACT_ID,
             signers = listOf(clientSigner),
-            homeDomain = DOMAIN
+            homeDomain = DOMAIN,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -747,7 +753,8 @@ class WebAuthForContractsTest {
         val token = webAuth.jwtToken(
             clientAccountId = CLIENT_CONTRACT_ID,
             signers = listOf(clientSigner),
-            homeDomain = DOMAIN
+            homeDomain = DOMAIN,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
@@ -1141,7 +1148,8 @@ class WebAuthForContractsTest {
         assertFailsWith<IllegalArgumentException> {
             webAuth.jwtToken(
                 clientAccountId = SERVER_ACCOUNT_ID, // G... instead of C...
-                signers = listOf(KeyPair.random())
+                signers = listOf(KeyPair.random()),
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1163,8 +1171,9 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                clientDomain = "wallet.example.com"
+                clientDomain = "wallet.example.com",
                 // Missing both clientDomainAccountKeyPair and clientDomainSigningDelegate
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1190,7 +1199,8 @@ class WebAuthForContractsTest {
                 signers = listOf(KeyPair.random()),
                 clientDomain = "wallet.example.com",
                 clientDomainAccountKeyPair = KeyPair.random(),
-                clientDomainSigningDelegate = delegate
+                clientDomainSigningDelegate = delegate,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1251,7 +1261,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1307,7 +1318,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1353,7 +1365,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1401,7 +1414,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1437,7 +1451,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1502,7 +1517,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1558,7 +1574,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1614,7 +1631,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1671,7 +1689,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1732,7 +1751,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1774,7 +1794,8 @@ class WebAuthForContractsTest {
                 signers = listOf(KeyPair.random()),
                 homeDomain = DOMAIN,
                 clientDomain = clientDomain,
-                clientDomainAccountKeyPair = actualClientDomainKeyPair
+                clientDomainAccountKeyPair = actualClientDomainKeyPair,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1807,7 +1828,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1916,7 +1938,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -1942,7 +1965,8 @@ class WebAuthForContractsTest {
             webAuth.jwtToken(
                 clientAccountId = CLIENT_CONTRACT_ID,
                 signers = listOf(KeyPair.random()),
-                homeDomain = DOMAIN
+                homeDomain = DOMAIN,
+                signatureExpirationLedger = 1000000L
             )
         }
     }
@@ -2023,7 +2047,8 @@ class WebAuthForContractsTest {
         val token = webAuth.jwtToken(
             clientAccountId = CLIENT_CONTRACT_ID,
             signers = listOf(KeyPair.random()),
-            homeDomain = DOMAIN
+            homeDomain = DOMAIN,
+            signatureExpirationLedger = 1000000L
         )
 
         assertEquals(SUCCESS_JWT_TOKEN, token.token)
