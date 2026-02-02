@@ -55,20 +55,17 @@ By default, only unit tests run. Integration tests are excluded on all platforms
 
 ## Integration Tests
 
-Integration tests are excluded by default on all platforms because they require network access to the Stellar Testnet. To include them, pass the `-PrunIntegrationTests` flag:
+Integration tests run by default in local/IDE environments. They require network access to the Stellar Testnet. In CI, they are excluded via `-PexcludeIntegrationTests`.
 
 ```bash
-# JVM
-./gradlew :stellar-sdk:jvmTest -PrunIntegrationTests
-
-# JS (Node.js)
-./gradlew :stellar-sdk:jsNodeTest -PrunIntegrationTests
-
-# macOS
-./gradlew :stellar-sdk:macosArm64Test -PrunIntegrationTests
+# Run all tests including integration tests (default)
+./gradlew :stellar-sdk:jvmTest
 
 # Specific integration test class
-./gradlew :stellar-sdk:jvmTest -PrunIntegrationTests --tests "*SorobanIntegrationTest"
+./gradlew :stellar-sdk:jvmTest --tests "*SorobanIntegrationTest"
+
+# Exclude integration tests (used in CI)
+./gradlew :stellar-sdk:jvmTest -PexcludeIntegrationTests
 ```
 
 Test accounts are automatically funded via Friendbot. Requires connectivity to `https://soroban-testnet.stellar.org`.

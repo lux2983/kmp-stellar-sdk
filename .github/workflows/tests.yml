@@ -38,11 +38,11 @@ jobs:
 
       - name: Run JVM unit tests
         if: matrix.java != '25'
-        run: ./gradlew :stellar-sdk:jvmTest --no-daemon
+        run: ./gradlew :stellar-sdk:jvmTest -PexcludeIntegrationTests --no-daemon
 
       - name: Run JVM unit tests with coverage
         if: matrix.java == '25'
-        run: ./gradlew :stellar-sdk:koverHtmlReport :stellar-sdk:koverXmlReport --no-daemon
+        run: ./gradlew :stellar-sdk:koverHtmlReport :stellar-sdk:koverXmlReport -PexcludeIntegrationTests --no-daemon
 
       - name: Print coverage summary
         if: always() && matrix.java == '25'

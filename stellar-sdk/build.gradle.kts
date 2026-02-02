@@ -15,9 +15,9 @@ kotlin {
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
 
-            // Exclude integration tests from default test task (they require network access)
-            // Run integration tests explicitly with: ./gradlew :stellar-sdk:jvmTest -PrunIntegrationTests
-            if (!project.hasProperty("runIntegrationTests")) {
+            // Exclude integration tests in CI (they require network access to Stellar Testnet)
+            // CI passes -PexcludeIntegrationTests; local/IDE runs include them by default
+            if (project.hasProperty("excludeIntegrationTests")) {
                 exclude("**/integrationTests/**")
             }
 
@@ -56,10 +56,9 @@ kotlin {
         binaries.executable()
     }
 
-    // Exclude integration tests from JS and Native test tasks by default (they require network access)
-    // Run integration tests explicitly with: ./gradlew <testTask> -PrunIntegrationTests
-    // (JVM exclusion is configured separately above via JUnit file exclude)
-    if (!project.hasProperty("runIntegrationTests")) {
+    // Exclude integration tests from JS and Native test tasks in CI
+    // CI passes -PexcludeIntegrationTests; local/IDE runs include them by default
+    if (project.hasProperty("excludeIntegrationTests")) {
         tasks.withType<org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest> {
             filter.excludeTestsMatching("com.soneso.stellar.sdk.integrationTests.*")
         }
