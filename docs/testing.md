@@ -77,16 +77,7 @@ Requires Chrome installed. The Gradle build handles Karma configuration and WASM
 ./gradlew :stellar-sdk:iosSimulatorArm64Test
 ```
 
-**Note:** The iOS simulator does not trust all root certificates by default. If integration tests fail with SSL errors (`NSURLErrorDomain Code=-1202`), install the required root certificate:
-
-```bash
-# Extract and install the root cert (Sectigo Public Server Authentication Root R46)
-security find-certificate -c "Sectigo Public Server Authentication Root R46" \
-  -p /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/sectigo-root.pem
-xcrun simctl keychain booted add-root-cert /tmp/sectigo-root.pem
-```
-
-Certificates do not persist across simulator erase.
+**Note:** iOS simulator integration tests are currently skipped. The simulator does not trust the Sectigo root CA used by Stellar's servers (`NSURLErrorDomain Code=-1202`), and `xcrun simctl keychain add-root-cert` does not reliably resolve this. Unit tests run fine on iOS simulator. Integration tests are validated on macOS native, JVM, and JS Node instead.
 
 ## Integration Tests
 

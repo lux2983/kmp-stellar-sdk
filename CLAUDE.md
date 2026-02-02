@@ -199,11 +199,15 @@ MainScope().launch {
   - Single test class: `./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"`
   - Pattern matching: `./gradlew :stellar-sdk:jsNodeTest --tests "*Key*"`
 - **Run macOS tests**: `./gradlew macosArm64Test` or `./gradlew macosX64Test`
-- **Run iOS Simulator tests**: `./gradlew iosSimulatorArm64Test` or `./gradlew iosX64Test`
+- **Run iOS Simulator tests**: `./gradlew iosSimulatorArm64Test` (unit tests only — see note below)
 
 #### JS Testing Notes
 
 JS Node and JS Browser tests all pass. Browser tests require Chrome to be installed. Karma configuration and WASM file serving are handled automatically by the Gradle build config — no manual setup needed.
+
+#### iOS Simulator Limitation
+
+iOS simulator integration tests are currently skipped. The simulator does not trust the Sectigo root CA used by Stellar's servers (`NSURLErrorDomain Code=-1202`), causing all network-dependent tests to fail. Unit tests (3983) pass fine. Run iOS simulator tests with `-PexcludeIntegrationTests`. Integration tests are validated on macOS native, JVM, and JS Node.
 
 #### Integration Tests
 
