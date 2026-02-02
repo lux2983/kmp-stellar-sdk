@@ -14,28 +14,38 @@ permissions:
 
 jobs:
   unit-tests:
-    name: JVM Unit Tests + Coverage
+    name: JVM Tests (JDK ${{ matrix.java }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['11', '17', '21']
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup JDK 17
+      - name: Setup JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           cache: 'gradle'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Run JVM unit tests
+        if: matrix.java != '21'
+        run: ./gradlew :stellar-sdk:jvmTest --no-daemon
+
       - name: Run JVM unit tests with coverage
+        if: matrix.java == '21'
         run: ./gradlew :stellar-sdk:koverHtmlReport :stellar-sdk:koverXmlReport --no-daemon
 
       - name: Print coverage summary
-        if: always()
+        if: always() && matrix.java == '21'
         run: |
           XML_REPORT="stellar-sdk/build/reports/kover/report.xml"
           if [ -f "$XML_REPORT" ]; then
@@ -43,11 +53,9 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
 
             # Extract coverage counters from JaCoCo XML
-            # Parse line coverage
             LINE_MISSED=$(grep -o 'type="LINE" missed="[0-9]*"' "$XML_REPORT" | tail -1 | grep -o 'missed="[0-9]*"' | grep -o '[0-9]*')
             LINE_COVERED=$(grep -o 'type="LINE".*covered="[0-9]*"' "$XML_REPORT" | tail -1 | grep -o 'covered="[0-9]*"' | grep -o '[0-9]*')
 
-            # Parse branch coverage
             BRANCH_MISSED=$(grep -o 'type="BRANCH" missed="[0-9]*"' "$XML_REPORT" | tail -1 | grep -o 'missed="[0-9]*"' | grep -o '[0-9]*')
             BRANCH_COVERED=$(grep -o 'type="BRANCH".*covered="[0-9]*"' "$XML_REPORT" | tail -1 | grep -o 'covered="[0-9]*"' | grep -o '[0-9]*')
 
@@ -73,7 +81,7 @@ jobs:
           fi
 
       - name: Upload coverage to Codecov
-        if: always()
+        if: always() && matrix.java == '21'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -82,7 +90,7 @@ jobs:
           verbose: true
 
       - name: Upload coverage report
-        if: always()
+        if: always() && matrix.java == '21'
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -93,6 +101,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-jdk-${{ matrix.java }}
           path: stellar-sdk/build/reports/tests/
           retention-days: 30
