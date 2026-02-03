@@ -14,7 +14,7 @@ This is a Kotlin Multiplatform (KMP) project for building a Stellar SDK. The SDK
 The SDK is **production-ready** with comprehensive functionality implemented:
 
 ### Platform Support
-- **JVM**: Android API 24+, Server applications (Java 11+)
+- **JVM**: Android API 24+, Server applications (Java 17+)
 - **iOS**: iOS 14.0+ (iosX64, iosArm64, iosSimulatorArm64)
 - **macOS**: macOS 11.0+ (macosX64, macosArm64)
 - **JavaScript**: Browser (WebAssembly) and Node.js 14+
@@ -188,73 +188,52 @@ MainScope().launch {
 
 ### Testing
 - **Run all tests**: `./gradlew test`
+- **Run all tests (unit only, no integration)**: `./gradlew test -PexcludeIntegrationTests`
 - **Run JVM tests**: `./gradlew jvmTest`
+- **Run JVM unit tests only**: `./gradlew jvmTest -PexcludeIntegrationTests`
 - **Run single test class**: `./gradlew :stellar-sdk:jvmTest --tests "KeyPairTest"`
 - **Run single test method**: `./gradlew :stellar-sdk:jvmTest --tests "KeyPairTest.testRandomKeyPair"`
 - **Run tests with pattern**: `./gradlew :stellar-sdk:jvmTest --tests "*Key*"`
 - **Run JS tests (Browser)**: `./gradlew jsBrowserTest` (requires Chrome)
-- **Run JS tests (Node.js)**:
-  - Individual test class: `./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"`
+- **Run JS tests (Node.js)**: `./gradlew :stellar-sdk:jsNodeTest`
+  - Single test class: `./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"`
   - Pattern matching: `./gradlew :stellar-sdk:jsNodeTest --tests "*Key*"`
-  - **Note**: Running all Node.js tests together currently hangs (see JS Testing Notes below)
 - **Run macOS tests**: `./gradlew macosArm64Test` or `./gradlew macosX64Test`
-- **Run iOS Simulator tests**: `./gradlew iosSimulatorArm64Test` or `./gradlew iosX64Test`
+- **Run iOS Simulator tests**: `./gradlew iosSimulatorArm64Test` (unit tests only — see note below)
 
 #### JS Testing Notes
 
-**Current Status**: Individual test classes work perfectly on both Node.js and Browser, but running all tests together fails.
+JS Node and JS Browser tests all pass. Browser tests require Chrome to be installed. Karma configuration and WASM file serving are handled automatically by the Gradle build config — no manual setup needed.
 
-**Working Approach**:
-```bash
-# Node.js - Run specific test classes
-./gradlew :stellar-sdk:jsNodeTest --tests "KeyPairTest"
-./gradlew :stellar-sdk:jsNodeTest --tests "StrKeyTest"
+#### iOS Simulator Limitation
 
-# Browser - Run specific test classes
-./gradlew :stellar-sdk:jsBrowserTest --tests "KeyPairTest"
-./gradlew :stellar-sdk:jsBrowserTest --tests "StrKeyTest"
-
-# Or use patterns
-./gradlew :stellar-sdk:jsNodeTest --tests "*Test"
-./gradlew :stellar-sdk:jsBrowserTest --tests "*Test"
-```
-
-**Why This Happens**:
-- ✅ Libsodium initialization works correctly
-- ✅ Individual async tests pass (including crypto tests)
-- ✅ NODE_PATH and Karma are properly configured
-- ⚠️ Running all tests in a single bundle causes failures (likely Kotlin/JS test bundling issue)
-- **Node.js**: Tests hang (Kotlin/JS + Mocha interaction)
-- **Browser**: Webpack fails with crypto module errors when bundling all tests
-
-**Investigation Done**:
-- Attempted Mocha `--no-parallel` configuration for Node.js
-- Added webpack fallback configuration for browser (helps but doesn't fully resolve)
-- Tried `.mocharc.js` with sequential settings
-- Confirmed not a timeout issue (individual tests complete quickly)
-- Root cause appears to be test bundling/compilation interaction in Kotlin/JS plugin
-
-**Recommendation**: Use test filtering (common pattern for large test suites) or run test classes individually in CI/CD. This is a Kotlin/JS tooling limitation, not an SDK issue - the web sample app proves browser compatibility works perfectly.
+iOS simulator integration tests are currently skipped. The simulator does not trust the Sectigo root CA used by Stellar's servers (`NSURLErrorDomain Code=-1202`), causing all network-dependent tests to fail. Unit tests (3983) pass fine. Run iOS simulator tests with `-PexcludeIntegrationTests`. Integration tests are validated on macOS native, JVM, and JS Node.
 
 #### Integration Tests
 
 The SDK includes comprehensive integration tests that validate against a live Stellar Testnet:
 
-- **Location**: `stellar-sdk/src/commonTest/kotlin/com/stellar/sdk/contract/ContractClientIntegrationTest.kt`
-- **Documentation**: See `stellar-sdk/src/commonTest/kotlin/com/stellar/sdk/contract/INTEGRATION_TESTS_README.md` for detailed setup
-- **Status**: Integration tests are NOT ignored and always run with testnet connectivity (accounts are automatically funded by Friendbot)
-- **Coverage**: ContractClient, AssembledTransaction, authorization, state restoration, error handling, polling, custom result parsing
-- **Run tests**:
+- **Location**: `stellar-sdk/src/commonTest/kotlin/com/soneso/stellar/sdk/integrationTests/`
+- **Status**: Integration tests run by default when executing tests locally. In CI, they are excluded via `-PexcludeIntegrationTests`.
+- **Coverage**: Accounts, payments, sponsorships, claimable balances, clawback, fee bumps, ContractClient, AssembledTransaction, authorization, state restoration, and more.
+- **Funding**: Test accounts are automatically funded via Friendbot (no manual setup needed).
+- **Timing**: Use `realDelay()` instead of `delay()` in integration tests — `runTest` uses virtual time, so `delay()` completes instantly and won't actually wait for network operations.
+- **Run all tests (including integration)**:
   ```bash
-  ./gradlew :stellar-sdk:jvmTest --tests "ContractClientIntegrationTest"
+  ./gradlew :stellar-sdk:jvmTest
+  ```
+- **Run unit tests only (exclude integration tests)**:
+  ```bash
+  ./gradlew :stellar-sdk:jvmTest -PexcludeIntegrationTests
   ```
 
-**Prerequisites**:
-- Testnet connectivity to `https://soroban-testnet.stellar.org:443`
-- Test accounts are automatically funded via Friendbot
-- Pre-deployed contract (contract ID provided in tests)
+#### CI Workflow
 
-**Duration**: 3-5 minutes for full suite (network latency dependent)
+The GitHub Actions CI uses `-PexcludeIntegrationTests` on all jobs (integration tests require testnet connectivity):
+
+- **JVM unit tests**: Runs on push to `main` and PRs to `main`. Matrix across JDK 17, 21, and 25. Code coverage collected on JDK 25.
+- **JS Node unit tests**: Runs on push to `main` and PRs to `main` (Ubuntu runner).
+- **macOS native unit tests**: Runs on PRs to `main` only (macOS runner — restricted to PRs to save runner minutes).
 
 ### Demo Apps
 

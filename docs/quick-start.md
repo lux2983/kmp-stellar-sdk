@@ -24,7 +24,7 @@ dependencies {
 
 ### JVM/Android
 - Android: API 24+ (Android 7.0)
-- JVM: Java 11+
+- JVM: Java 17+
 
 ### iOS
 Add libsodium via Swift Package Manager:

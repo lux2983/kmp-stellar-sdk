@@ -29,7 +29,7 @@ Use Maven artifact - no additional setup required:
 kotlin {
     jvm("desktop") {
         compilations.all {
-            kotlinOptions.jvmTarget = "11"
+            kotlinOptions.jvmTarget = "17"
         }
     }
 
