@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-03
+
+### Added
+- **Test Infrastructure**: Code coverage tooling and CI workflow improvements
+  - Kover plugin for JVM code coverage with HTML and XML reports
+  - Codecov integration with coverage badge in README
+  - CI workflow: JVM tests across JDK 17/21/25 (push + PR), JS Node tests (push + PR), macOS native tests (PR only)
+  - Integration test exclusion via `-PexcludeIntegrationTests` flag
+  - Real wall-clock delay utilities (`platformDelay()`, `realDelay()`) for integration tests
+  - Test reorganization: Split `commonTest` into `unitTests/` and `integrationTests/` directories
+- **Unit Tests**: 133 new unit test files (~3,984 tests across 5 platforms)
+  - Coverage includes: crypto, StrKey, KeyPair, transactions, operations, assets, accounts, memos, Horizon request builders, Horizon response deserialization, all operation response types, all effect types, Soroban RPC, contract client, assembled transactions, SEP-1/6/9/10/12/24/38/45, XDR round-trips
+
+### Fixed
+- **BigInteger two's complement (JS & Native)**: `bigIntegerToBytesSigned()` used magnitude-only encoding instead of proper two's complement. Negative Int128/Int256 values were silently corrupted on JS and Native targets. JVM was unaffected.
+- **Native empty data crypto**: SHA-256 of empty data crashed (invalid assertion); Ed25519 sign/verify of empty data crashed (`addressOf(0)` on empty ByteArray)
+- **SorobanServer.pollTransaction()**: Added `withContext(Dispatchers.Default)` for real wall-clock delay during polling, fixing too-fast polling on JS and Native
+
+### Changed
+- **JVM Target**: Bumped from Java 11 to Java 17 (required by Android AGP 8.x and Gradle 8+)
+
 ## [1.0.0] - 2026-01-15
 
 ### Added

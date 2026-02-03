@@ -7,7 +7,7 @@
 | SEP | SEP-0006 |
 | Title | Deposit and Withdrawal API |
 | Version | 4.3.0 |
-| SDK Version | 1.0.0 |
+| SDK Version | 1.1.0 |
 | Status | Active |
 | Overall Coverage | 100% (95/95 fields) |
 
