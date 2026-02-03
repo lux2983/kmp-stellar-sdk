@@ -172,7 +172,8 @@ class KeyPairTest {
         assertFalse(publicKey1 === publicKey2)
 
         // Modifying returned array shouldn't affect keypair
-        publicKey1[0] = 0xFF.toByte()
+        val originalByte = publicKey1[0]
+        publicKey1[0] = (originalByte.toInt() xor 0xFF).toByte()  // Flip all bits to guarantee change
         val publicKey3 = keypair.getPublicKey()
         assertFalse(publicKey1.contentEquals(publicKey3))
     }
