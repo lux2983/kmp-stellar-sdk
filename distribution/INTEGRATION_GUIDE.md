@@ -32,7 +32,7 @@ This guide shows you how to integrate the Stellar SDK XCFramework into your iOS 
 
 1. In Xcode: **File → Add Package Dependencies**
 2. Enter URL: `https://github.com/jedisct1/swift-libsodium`
-3. Version: **"Up to Next Major Version"** starting at **1.1.0**
+3. Version: **"Up to Next Major Version"** starting at **1.2.0**
 4. Click **"Add Package"**
 5. Select your target and click **"Add Package"** again
 

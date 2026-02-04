@@ -2,7 +2,7 @@
 
 **Generated:** 2026-02-03 14:18:39
 
-**SDK Version:** 1.1.0
+**SDK Version:** 1.2.0
 
 **Horizon Endpoints Discovered:** 52
 **Public API Endpoints (in matrix):** 50

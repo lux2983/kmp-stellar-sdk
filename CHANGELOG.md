@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-04
+
+### Added
+- **SEP-5 (Key Derivation Methods for Stellar Keys)**: HD wallet support for deriving multiple Stellar accounts from a single mnemonic phrase
+  - `Mnemonic` class with BIP-39 mnemonic generation and SLIP-0010 key derivation:
+    - `generate12/15/18/21/24WordsMnemonic()` - Generate mnemonics with varying entropy
+    - `from()` - Create Mnemonic instance from phrase with optional passphrase
+    - `fromEntropy()` - Create from raw entropy bytes
+    - `fromBip39Seed()` / `fromBip39HexSeed()` - Create from pre-computed seed
+    - `getKeyPair()` / `getAccountId()` - Derive Stellar accounts at index
+    - `getPrivateKey()` / `getPublicKey()` - Get raw key bytes
+    - `validate()` - Validate mnemonic phrase and checksum
+    - `detectLanguage()` - Auto-detect mnemonic language
+    - `close()` - Zero internal seed data for security
+  - `MnemonicLanguage` enum with 9 BIP-39 languages:
+    - English, Japanese, Korean, Spanish, Chinese Simplified, Chinese Traditional, French, Italian, Malay
+  - `MnemonicStrength` enum for word count selection (128-256 bits entropy)
+  - `MnemonicUtils` low-level utilities for advanced use cases
+  - Exception classes: `InvalidMnemonicException`, `InvalidChecksumException`, `InvalidWordException`, `InvalidEntropyException`, `InvalidPathException`
+  - Platform-specific crypto implementations:
+    - JVM: BouncyCastle for PBKDF2-HMAC-SHA512
+    - JS: libsodium-wrappers-sumo
+    - Native: libsodium via C interop
+  - 182 unit tests including all 5 official SEP-5 test vectors
+  - Documentation in `docs/sep/sep-05.md`
+  - SEP-5 compatibility matrix showing 100% feature coverage (31/31 features)
+
 ## [1.1.0] - 2026-02-03
 
 ### Added
