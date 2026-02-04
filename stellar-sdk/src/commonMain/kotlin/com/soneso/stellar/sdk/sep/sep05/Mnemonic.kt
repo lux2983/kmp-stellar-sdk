@@ -475,7 +475,7 @@ public class Mnemonic private constructor(private var seed: ByteArray) : AutoClo
      * @return 64-byte array: [0:32] is private key, [32:64] is chain code
      * @throws InvalidPathException if the path format is invalid
      */
-    private suspend fun derivePath(path: String): ByteArray {
+    internal suspend fun derivePath(path: String): ByteArray {
         // Validate path format
         val pathRegex = Regex("""^(m/)?(\d+'?/)*\d+'?$""")
         if (!pathRegex.matches(path)) {

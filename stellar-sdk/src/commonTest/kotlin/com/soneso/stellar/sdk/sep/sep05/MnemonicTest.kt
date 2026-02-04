@@ -16,13 +16,18 @@
 
 package com.soneso.stellar.sdk.sep.sep05
 
+import com.soneso.stellar.sdk.sep.sep05.exceptions.InvalidChecksumException
+import com.soneso.stellar.sdk.sep.sep05.exceptions.InvalidEntropyException
 import com.soneso.stellar.sdk.sep.sep05.exceptions.InvalidMnemonicException
+import com.soneso.stellar.sdk.sep.sep05.exceptions.InvalidPathException
+import com.soneso.stellar.sdk.sep.sep05.exceptions.InvalidWordException
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -351,5 +356,121 @@ class MnemonicTest {
     fun testDetectLanguage_Unknown() {
         val language = Mnemonic.detectLanguage("foo bar baz qux")
         assertEquals(null, language)
+    }
+
+    // ========== Invalid Path Tests ==========
+
+    @Test
+    fun testDerivePath_InvalidFormat() = runTest {
+        val phrase = "illness spike retreat truth genius clock brain pass fit cave bargain toe"
+        val m = Mnemonic.from(phrase)
+
+        assertFailsWith<InvalidPathException> {
+            m.derivePath("invalid/path/format")
+        }
+
+        m.close()
+    }
+
+    @Test
+    fun testDerivePath_InvalidIndex() = runTest {
+        val phrase = "illness spike retreat truth genius clock brain pass fit cave bargain toe"
+        val m = Mnemonic.from(phrase)
+
+        assertFailsWith<InvalidPathException> {
+            m.derivePath("m/44'/abc'/0'")
+        }
+
+        m.close()
+    }
+
+    @Test
+    fun testDerivePath_EmptyPath() = runTest {
+        val phrase = "illness spike retreat truth genius clock brain pass fit cave bargain toe"
+        val m = Mnemonic.from(phrase)
+
+        assertFailsWith<InvalidPathException> {
+            m.derivePath("")
+        }
+
+        m.close()
+    }
+
+    // ========== Exception Tests ==========
+
+    @Test
+    fun testInvalidPathException_ToString() {
+        val exception = InvalidPathException("bad/path", "Test message")
+        assertTrue(exception.toString().contains("bad/path"))
+        assertEquals("bad/path", exception.path)
+    }
+
+    @Test
+    fun testInvalidChecksumException_ToString() {
+        val exception = InvalidChecksumException("Checksum failed")
+        assertTrue(exception.toString().contains("checksum"))
+    }
+
+    @Test
+    fun testInvalidEntropyException_ToString() {
+        val exception = InvalidEntropyException("Invalid size")
+        assertTrue(exception.toString().contains("entropy"))
+    }
+
+    @Test
+    fun testInvalidMnemonicException_ToString() {
+        val exception = InvalidMnemonicException("Invalid mnemonic")
+        assertTrue(exception.toString().contains("mnemonic"))
+    }
+
+    @Test
+    fun testInvalidWordException_ToString() {
+        val exception = InvalidWordException("badword", MnemonicLanguage.ENGLISH)
+        assertTrue(exception.toString().contains("badword"))
+        assertTrue(exception.toString().contains("ENGLISH"))
+        assertEquals("badword", exception.word)
+        assertEquals(MnemonicLanguage.ENGLISH, exception.language)
+    }
+
+    // ========== MnemonicStrength Tests ==========
+
+    @Test
+    fun testMnemonicStrength_FromWordCount_Valid() {
+        assertEquals(MnemonicStrength.BITS_128, MnemonicStrength.fromWordCount(12))
+        assertEquals(MnemonicStrength.BITS_160, MnemonicStrength.fromWordCount(15))
+        assertEquals(MnemonicStrength.BITS_192, MnemonicStrength.fromWordCount(18))
+        assertEquals(MnemonicStrength.BITS_224, MnemonicStrength.fromWordCount(21))
+        assertEquals(MnemonicStrength.BITS_256, MnemonicStrength.fromWordCount(24))
+    }
+
+    @Test
+    fun testMnemonicStrength_FromWordCount_Invalid() {
+        assertNull(MnemonicStrength.fromWordCount(10))
+        assertNull(MnemonicStrength.fromWordCount(13))
+        assertNull(MnemonicStrength.fromWordCount(0))
+    }
+
+    @Test
+    fun testMnemonicStrength_FromEntropyBits_Valid() {
+        assertEquals(MnemonicStrength.BITS_128, MnemonicStrength.fromEntropyBits(128))
+        assertEquals(MnemonicStrength.BITS_160, MnemonicStrength.fromEntropyBits(160))
+        assertEquals(MnemonicStrength.BITS_192, MnemonicStrength.fromEntropyBits(192))
+        assertEquals(MnemonicStrength.BITS_224, MnemonicStrength.fromEntropyBits(224))
+        assertEquals(MnemonicStrength.BITS_256, MnemonicStrength.fromEntropyBits(256))
+    }
+
+    @Test
+    fun testMnemonicStrength_FromEntropyBits_Invalid() {
+        assertNull(MnemonicStrength.fromEntropyBits(100))
+        assertNull(MnemonicStrength.fromEntropyBits(129))
+        assertNull(MnemonicStrength.fromEntropyBits(0))
+    }
+
+    @Test
+    fun testMnemonicStrength_Properties() {
+        assertEquals(128, MnemonicStrength.BITS_128.entropyBits)
+        assertEquals(12, MnemonicStrength.BITS_128.wordCount)
+        assertEquals(256, MnemonicStrength.BITS_256.entropyBits)
+        assertEquals(24, MnemonicStrength.BITS_256.wordCount)
     }
 }
