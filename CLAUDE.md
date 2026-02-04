@@ -29,7 +29,7 @@ The SDK is **production-ready** with comprehensive functionality implemented:
 - **Soroban RPC**: Contract calls, simulation, state restoration, polling
 - **High-Level API**: ContractClient, AssembledTransaction with full lifecycle
 - **XDR**: Complete XDR type system and serialization
-- **SEP Support**: SEP-1 (Stellar TOML), SEP-6 (Deposit and Withdrawal API), SEP-9/12 (KYC), SEP-10 (Web Authentication), SEP-24 (Hosted Deposit/Withdrawal), SEP-38 (Anchor RFQ), SEP-45 (Web Authentication for Contract Accounts)
+- **SEP Support**: SEP-1 (Stellar TOML), SEP-5 (Key Derivation), SEP-6 (Deposit and Withdrawal API), SEP-9/12 (KYC), SEP-10 (Web Authentication), SEP-24 (Hosted Deposit/Withdrawal), SEP-38 (Anchor RFQ), SEP-45 (Web Authentication for Contract Accounts)
 
 ### Demo Application
 - **Platforms**: Android, iOS, macOS, Desktop (JVM), Web
@@ -89,6 +89,59 @@ The SDK uses **production-ready, audited cryptographic libraries** - no custom/e
    - Proper cleanup in native code
 4. **Input Validation**: All inputs validated before crypto operations
 5. **Error Handling**: Comprehensive validation with clear error messages
+
+### SEP-5 Key Derivation (HD Wallets)
+
+The SDK implements SEP-5 (Key Derivation Methods for Stellar Keys) for hierarchical deterministic wallet support:
+
+#### Features
+- **BIP-39 Mnemonic**: Generation and validation (12, 15, 18, 21, 24 words)
+- **9 Languages**: English, Chinese (Simplified/Traditional), French, Italian, Japanese, Korean, Spanish, Malay
+- **SLIP-0010**: Ed25519 hierarchical key derivation
+- **Stellar Path**: `m/44'/148'/x'` (all hardened indices)
+- **Passphrase Support**: Optional BIP-39 passphrase for additional security
+
+#### Package Structure
+```
+com.soneso.stellar.sdk.sep.sep05/
+├── Mnemonic.kt              # High-level mnemonic and HD key derivation API
+├── MnemonicUtils.kt       # BIP-39 mnemonic operations
+├── WordList.kt            # 9 language word lists (2048 words each)
+├── MnemonicLanguage.kt    # Language enum
+├── MnemonicStrength.kt    # Word count/entropy enum
+├── MnemonicConstants.kt   # BIP-39/SLIP-0010 constants
+├── HexCodec.kt            # Hex encoding utilities
+├── crypto/                # Platform-specific crypto (PBKDF2, HMAC-SHA512, SHA-256)
+└── exceptions/            # SEP-5 specific exceptions
+```
+
+#### Usage Example
+```kotlin
+// Generate 24-word mnemonic phrase
+val phrase = Mnemonic.generate24WordsMnemonic()
+
+// Create Mnemonic instance from phrase
+val mnemonic = Mnemonic.from(phrase)
+
+// Derive multiple accounts
+val account0 = mnemonic.getKeyPair(index = 0)  // m/44'/148'/0'
+val account1 = mnemonic.getKeyPair(index = 1)  // m/44'/148'/1'
+
+// With passphrase
+val secureMnemonic = Mnemonic.from(phrase, passphrase = "secret")
+
+// Cleanup
+mnemonic.close()
+secureMnemonic.close()
+```
+
+#### Security Features
+- CSPRNG for entropy generation (SecureRandom/randombytes_buf/crypto.getRandomValues)
+- O(1) HashMap word lookup (timing attack mitigation)
+- Constant-time checksum comparison
+- NFKD normalization for mnemonic and passphrase
+- Memory cleanup (entropy zeroed after use, close() zeros seed)
+- PBKDF2-HMAC-SHA512 with 2048 iterations
 
 ## Documentation Standards
 
